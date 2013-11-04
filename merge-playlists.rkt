@@ -26,9 +26,7 @@
 
 ;; TODO: remove duplicates
 
-(require srfi/13)
-(require racket/dict)
-(require racket/mpair)
+(require srfi/13) ; string-prefix-length
 
 ;; Chain playlists together
 (define (playlists-join . xs)
@@ -36,75 +34,15 @@
 
 ;; Create a randomized playlist
 (define (playlists-shuffle . xs)
-  (shuffle-unique (apply playlists-join xs)))
-
-(define (playlists-shuffle-fair . xs)
-  (apply playlists-merge-shuffle-fair (map playlists-shuffle xs)))
+  (shuffle-fairly (apply playlists-join xs)))
 
 ;; Interleave playlists by alternating between them
 (define (playlists-merge . xs)
-  (let ((xs (remove '() xs)))
-    (cond
-     ((null? xs)
-      xs)
-     (else
-      (append (map car xs)
-              (apply playlists-merge (map cdr xs)))))))
+  (apply playlists-merge-window 0 xs))
 
 ;; Interleave playlists by randomly alternating between them
 (define (playlists-merge-shuffle . xs)
-  (let ((xs (shuffle-unique (remove '() xs))))
-    (cond
-     ((null? xs)
-      xs)
-     (else
-      (cons (car (car xs))
-            (apply playlists-merge-shuffle
-                   (cons (cdr (car xs)) (cdr xs))))))))
-
-;; Interleave playlists by randomly alternating between them fairly
-(define (playlists-merge-shuffle-fair . xs)
-  (let ((xs (shuffle-unique (remove '() xs))))
-    (cond
-     ((null? xs)
-      xs)
-     (else
-      (append (map car xs) ; fair
-              (apply playlists-merge-shuffle (map cdr xs)))))))
-
-;; Split a playlist into several playlists (artists, albums, etc.)
-(define (playlists-split . xs)
-  (let* ((xs (apply playlists-join xs))
-         (prefix (string-prefix xs)))
-    (define (find-key str)
-      (let ((regexp (format "^~a([^/]+)" (regexp-quote prefix))))
-        (match (regexp-match regexp str)
-          [(list prefix key matches ...)
-           key]
-          [_ ""])))
-    ;; (define (insert lst key val)
-    ;;   (let ((pair (massoc key lst)))
-    ;;     (match pair
-    ;;       [(mcons key v)
-    ;;        (set-mcdr! pair (mappend v (mlist val)))
-    ;;        lst]
-    ;;       [_ (mappend lst (mlist (mcons key (mlist val))))])))
-    (define (insert lst key val)
-      (if (assoc key lst)
-          (map (lambda (pair)
-                 (if (equal? (car pair) key)
-                     (cons key (append (cdr pair) (list val)))
-                     pair))
-               lst)
-          (append lst (list (cons key (list val))))))
-    (define (split xs acc)
-      (if (null? xs)
-          (map cdr acc)
-          (let* ((x (car xs))
-                 (xs (cdr xs))
-                 (key (find-key x)))
-            (split xs (insert acc key x)))))
-    (split xs '())))
+  (apply playlists-merge-window-shuffle 0 xs))
 
 ;; Interleave m playlists at once
 (define (playlists-merge-window m . xs)
@@ -136,11 +74,11 @@
                              queue))))
          (else
           (let ((x (random k)))
+            (do () ((< (length queue) (/ k 2)))
+              (set! queue (cdr queue)))
             (do () ((not (member x queue)))
               (set! x (random k)))
             (set! queue (append queue (list x)))
-            (when (> (length queue) (/ k 2))
-              (set! queue (cdr queue)))
             x))))))
   (define (merge window queue random acc)
     (cond
@@ -167,6 +105,8 @@
 (define (playlists-trim n . xs)
   (define (trim xs)
     (cond
+     ((= n 0)
+      xs)
      ((null? xs)
       '())
      ((member '() xs)
@@ -180,38 +120,6 @@
                          xs))))))
   (trim xs))
 
-;; Create an increasing buffer of playlists
-(define (playlists-increasing-gradient m . xs)
-  (define (gradient n xs)
-    (cond
-     ((null? xs)
-      (values '() '()))
-     ((> n m)
-      (values '() xs))
-     (else
-      (let*-values (((x) (car xs))
-                    ((y z) (split-at x (min n (length x))))
-                    ((ys zs) (gradient (+ n 1) (cdr xs))))
-        (values (cons y ys) (cons z zs))))))
-  (let*-values (((y z) (gradient 1 xs)))
-    (append y z)))
-
-;; Create an decreasing buffer of playlists
-(define (playlists-decreasing-gradient m . xs)
-  (define (gradient n xs)
-    (cond
-     ((null? xs)
-      (values '() '()))
-     ((>= n m)
-      (values '() xs))
-     (else
-      (let*-values (((x) (car xs))
-                    ((y z) (split-at x (min (- m n) (length x))))
-                    ((ys zs) (gradient (+ n 1) (cdr xs))))
-        (values (cons y ys) (cons z zs))))))
-  (let*-values (((y z) (gradient 0 xs)))
-    (append y z)))
-
 ;; Interleave n tracks from m playlists at once
 (define (playlists-merge-window-trimmed m n . xs)
   (apply playlists-merge-window m
@@ -221,11 +129,6 @@
 (define (playlists-merge-window-trimmed-shuffle m n . xs)
   (apply playlists-merge-window-shuffle m
          (apply playlists-trim n xs)))
-
-;; "Normalize" a mixed playlist by merging five artists at a time
-(define (playlists-normalize . xs)
-  (apply playlists-merge-window-trimmed-shuffle 5 5
-         (apply playlists-split xs)))
 
 ;; Interleave two playlists in preference of unique elements.
 ;; Elements unique to XS are picked over elements unique to YS,
@@ -303,62 +206,75 @@
     (overlay2 xs-orig ys-orig))
   (foldl overlay '() xs))
 
-;; (playlists-decreasing-gradient 3
-;;                 '("en" "to" "tre" "fire")
-;;                 '("one" "two" "three" "four")
-;;                 '("foo" "bar" "baz" "quux")
-;;                 '("la" "dee" "da")
-;;                 '("ein" "zwei" "drei")
-;;                 '("jau" "jo" "jepp"))
+;; Split a playlist into several playlists (artists, albums, etc.)
+(define (playlists-split . xs)
+  (let* ((xs (apply playlists-join xs))
+         (prefix (string-prefix xs)))
+    (define (find-key str)
+      (let ((regexp (format "^~a([^/]+)" (regexp-quote prefix))))
+        (match (regexp-match regexp str)
+          [(list prefix key matches ...)
+           key]
+          [_ ""])))
+    (define (insert lst key val)
+      (if (assoc key lst)
+          (map (lambda (pair)
+                 (if (equal? (car pair) key)
+                     (cons key (append (cdr pair) (list val)))
+                     pair))
+               lst)
+          (append lst (list (cons key (list val))))))
+    (define (split xs acc)
+      (if (null? xs)
+          (map cdr acc)
+          (let* ((x (car xs))
+                 (xs (cdr xs))
+                 (key (find-key x)))
+            (split xs (insert acc key x)))))
+    (split xs '())))
 
-;; (playlists-merge-window-shuffle 2
-;;                 '("en" "to" "tre" "fire")
-;;                 '("one" "two" "three" "four")
-;;                 '("foo" "bar" "baz" "quux")
-;;                 '("la" "dee" "da")
-;;                 '("ein" "zwei" "drei")
-;;                 '("jau" "jo" "jepp"))
+;; "Normalize" a mixed playlist by merging five artists at a time
+(define (playlists-normalize . xs)
+  (apply playlists-merge-window-trimmed-shuffle 5 5
+         (apply playlists-split xs)))
 
-;; (playlists-merge-window-trimmed-shuffle 3 3
-;;                 '("en" "to" "tre" "fire")
-;;                 '("one" "two" "three" "four")
-;;                 '("foo" "bar" "baz" "quux")
-;;                 '("la" "dee" "da")
-;;                 '("ein" "zwei" "drei")
-;;                 '("jau" "jo" "jepp"))
+;; Create an increasing buffer of playlists
+(define (playlists-increasing-gradient m . xs)
+  (define (gradient n xs)
+    (cond
+     ((null? xs)
+      (values '() '()))
+     ((> n m)
+      (values '() xs))
+     (else
+      (let*-values (((x) (car xs))
+                    ((y z) (split-at x (min n (length x))))
+                    ((ys zs) (gradient (+ n 1) (cdr xs))))
+        (values (cons y ys) (cons z zs))))))
+  (let*-values (((y z) (gradient 1 xs)))
+    (append y z)))
+
+;; Create an decreasing buffer of playlists
+(define (playlists-decreasing-gradient m . xs)
+  (define (gradient n xs)
+    (cond
+     ((null? xs)
+      (values '() '()))
+     ((>= n m)
+      (values '() xs))
+     (else
+      (let*-values (((x) (car xs))
+                    ((y z) (split-at x (min (- m n) (length x))))
+                    ((ys zs) (gradient (+ n 1) (cdr xs))))
+        (values (cons y ys) (cons z zs))))))
+  (let*-values (((y z) (gradient 0 xs)))
+    (append y z)))
 
 ;; Utility functions
 
-;; Generate random numbers with fair distribution.
-(define (my-random-generator)
-  (let ((queue '()))
-    (lambda (k)
-      (let ((x (random k)))
-        (do () ((not (member x queue)))
-          (display "random")
-          (set! x (random k)))
-        (set! queue (append queue (list x)))
-        (when (> (length queue) (/ k 2))
-          (set! queue (cdr queue)))
-        x))))
-
-;; Shuffle a list fairly.
-(define shuffle-fairly-generator (my-random-generator))
-(define (shuffle-fairly lst)
-  (define (permute lst pos)
-    (cond
-     ((= pos 0)
-      lst)
-     (else
-      (cons (list-ref lst pos)
-            (append (take lst pos)
-                    (drop lst (+ pos 1)))))))
-  (let ((pos (shuffle-fairly-generator (length lst))))
-    (permute lst pos)))
-
 ;; Randomly permute the elements of LST.
 ;; Ensure that a different list is returned.
-(define (shuffle-unique lst)
+(define (shuffle-fairly lst)
   (define (fair-shuffle lst)
     (let ((newlst (shuffle lst)))
       (if (equal? newlst lst)
@@ -399,14 +315,10 @@
      playlists-join]
     [(or "random" "randomize" "shuffle")
      playlists-shuffle]
-    [(or "random-fair" "randomize-fair" "shuffle-fair")
-     playlists-shuffle-fair]
     [(or "interleave" "merge")
      playlists-merge]
     [(or "shuffle-merge" "shuffle-interleave" "interleave-shuffle" "merge-shuffle")
      playlists-merge-shuffle]
-    [(or "shuffle-merge-fair" "shuffle-interleave-fair" "interleave-shuffle-fair" "merge-shuffle-fair")
-     playlists-merge-shuffle-fair]
     [(or "unique-merge" "unique-interleave" "interleave-unique" "merge-unique")
      playlists-merge-unique]
     [(or "overlay" "overlay-merge" "overlay-interleave" "interleave-overlay" "merge-overlay")
@@ -414,7 +326,7 @@
     [(or "normalize")
      playlists-normalize]
     [else
-     playlists-merge-shuffle-fair]))
+     playlists-merge-shuffle]))
 
 (define merge-arg (make-parameter ""))
 
