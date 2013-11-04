@@ -149,7 +149,7 @@
 ;; -- common element
 ;; merge (x:xs) (ys1 ++ [x] ++ ys2) =
 ;; x:merge xs (ys1 ++ ys2)
-(define (playlists-merge-union . xs)
+(define (playlists-union . xs)
   (define (union ys-orig xs-orig)
     (define (union2 xs ys)
       (cond
@@ -174,7 +174,7 @@
   (foldl union '() xs))
 
 ;; Interleave the intersection of playlists
-(define (playlists-merge-intersection . xs)
+(define (playlists-intersection . xs)
   (define (intersect xs ys)
     (cond
      ((null? xs)
@@ -188,10 +188,10 @@
      ;; unique element
      (else
       (intersect (cdr xs) ys))))
-  (foldl intersect '() xs))
+  (foldl (lambda (v l) (intersect l v)) '() xs))
 
 ;; Interleave the symmetric difference of playlists
-(define (playlists-merge-symmetric-difference . xs)
+(define (playlists-symmetric-difference . xs)
   (define (diff ys-orig xs-orig)
     (define (diff2 xs ys)
       (cond
@@ -209,9 +209,23 @@
               (diff2 xs (cdr ys))))
        ;; common element
        (else
-        (diff2 (cdr xs) ys))))
+        (diff2 (cdr xs) (remove (car xs) ys)))))
     (diff2 xs-orig ys-orig))
   (foldl diff '() xs))
+
+;; Calculate the difference between two playlists
+(define (playlists-difference . xs)
+  (define (diff xs ys)
+    (cond
+     ((null? xs)
+      '())
+     ;; unique xs element
+     ((not (member (car xs) ys))
+      (cons (car xs) (diff (cdr xs) ys)))
+     ;; common element
+     (else
+      (diff (cdr xs) ys))))
+  (foldl (lambda (v l) (diff l v)) (car xs) (cdr xs)))
 
 ;; Interleave two playlists by overlaying unique elements.
 ;; Elements from YS are only picked if they are unique.
@@ -360,11 +374,13 @@
     [(or "shuffle-merge" "shuffle-interleave" "interleave-shuffle" "merge-shuffle")
      playlists-merge-shuffle]
     [(or "union" "merge-union" "unique-merge" "unique-interleave" "interleave-unique" "merge-unique")
-     playlists-merge-union]
+     playlists-union]
     [(or "intersection" "merge-intersection" "intersect")
-     playlists-merge-intersection]
-    [(or "symmetric-difference" "difference")
-     playlists-merge-symmetric-difference]
+     playlists-intersection]
+    [(or "symmetric-difference")
+     playlists-symmetric-difference]
+    [(or "difference")
+     playlists-difference]
     [(or "overlay" "overlay-merge" "overlay-interleave" "interleave-overlay" "merge-overlay")
      playlists-merge-overlay]
     [(or "normalize")
