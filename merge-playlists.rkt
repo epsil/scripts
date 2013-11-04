@@ -18,7 +18,7 @@
 ;;     ./merge-playlists.rkt -m JOIN in1.m3u in2.m3u > out.m3u
 ;;     ./merge-playlists.rkt -m SHUFFLE in1.m3u in2.m3u > out.m3u
 ;;     ./merge-playlists.rkt -m MERGE in1.m3u in2.m3u > out.m3u
-;;     ./merge-playlists.rkt -m MERGE-UNIQUE in1.m3u in2.m3u > out.m3u
+;;     ./merge-playlists.rkt -m UNION in1.m3u in2.m3u > out.m3u
 ;;     ./merge-playlists.rkt -m OVERLAY in1.m3u in2.m3u > out.m3u
 ;;
 ;; To install: chmod +x, symlink to /usr/local/bin/merge-playlists
@@ -130,7 +130,7 @@
   (apply playlists-merge-window-shuffle m
          (apply playlists-trim n xs)))
 
-;; Interleave two playlists in preference of unique elements.
+;; Interleave the union of two playlists.
 ;; Elements unique to XS are picked over elements unique to YS,
 ;; which are picked over common elements. Common elements are
 ;; picked from XS and removed from YS. The general case is a left fold,
@@ -149,9 +149,9 @@
 ;; -- common element
 ;; merge (x:xs) (ys1 ++ [x] ++ ys2) =
 ;; x:merge xs (ys1 ++ ys2)
-(define (playlists-merge-unique . xs)
-  (define (merge ys-orig xs-orig)
-    (define (merge2 xs ys)
+(define (playlists-merge-union . xs)
+  (define (union ys-orig xs-orig)
+    (define (union2 xs ys)
       (cond
        ((null? xs)
         ys)
@@ -160,18 +160,58 @@
        ;; unique xs element
        ((not (member (car xs) ys-orig))
         (cons (car xs)
-              (merge2 (cdr xs) ys)))
+              (union2 (cdr xs) ys)))
        ;; unique ys element
        ((not (member (car ys) xs))
         (cons (car ys)
-              (merge2 xs (cdr ys))))
+              (union2 xs (cdr ys))))
        ;; common element
        (else
         (cons (car xs)
-              (merge2 (cdr xs)
+              (union2 (cdr xs)
                       (remove (car xs) ys))))))
-    (merge2 xs-orig ys-orig))
-  (foldl merge '() xs))
+    (union2 xs-orig ys-orig))
+  (foldl union '() xs))
+
+;; Interleave the intersection of playlists
+(define (playlists-merge-intersection . xs)
+  (define (intersect xs ys)
+    (cond
+     ((null? xs)
+      ys)
+     ((null? ys)
+      xs)
+     ;; common element
+     ((member (car xs) ys)
+      (cons (car xs)
+            (intersect (cdr xs) (remove (car xs) ys))))
+     ;; unique element
+     (else
+      (intersect (cdr xs) ys))))
+  (foldl intersect '() xs))
+
+;; Interleave the symmetric difference of playlists
+(define (playlists-merge-symmetric-difference . xs)
+  (define (diff ys-orig xs-orig)
+    (define (diff2 xs ys)
+      (cond
+       ((null? xs)
+        ys)
+       ((null? ys)
+        xs)
+       ;; unique xs element
+       ((not (member (car xs) ys-orig))
+        (cons (car xs)
+              (diff2 (cdr xs) ys)))
+       ;; unique ys element
+       ((not (member (car ys) xs))
+        (cons (car ys)
+              (diff2 xs (cdr ys))))
+       ;; common element
+       (else
+        (diff2 (cdr xs) ys))))
+    (diff2 xs-orig ys-orig))
+  (foldl diff '() xs))
 
 ;; Interleave two playlists by overlaying unique elements.
 ;; Elements from YS are only picked if they are unique.
@@ -319,8 +359,12 @@
      playlists-merge]
     [(or "shuffle-merge" "shuffle-interleave" "interleave-shuffle" "merge-shuffle")
      playlists-merge-shuffle]
-    [(or "unique-merge" "unique-interleave" "interleave-unique" "merge-unique")
-     playlists-merge-unique]
+    [(or "union" "merge-union" "unique-merge" "unique-interleave" "interleave-unique" "merge-unique")
+     playlists-merge-union]
+    [(or "intersection" "merge-intersection" "intersect")
+     playlists-merge-intersection]
+    [(or "symmetric-difference" "difference")
+     playlists-merge-symmetric-difference]
     [(or "overlay" "overlay-merge" "overlay-interleave" "interleave-overlay" "merge-overlay")
      playlists-merge-overlay]
     [(or "normalize")
