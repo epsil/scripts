@@ -89,14 +89,14 @@
       (merge (append window (list (car queue)))
              (cdr queue) random acc))
      ((null? window)
-      acc)
+      (reverse acc))
      (else
       (let ((pos (random (length window))))
         (merge (append (take window pos)
                        (list (cdr (list-ref window pos)))
                        (drop window (+ pos 1)))
                queue random
-               (append acc (list (car (list-ref window pos)))))))))
+               (cons (car (list-ref window pos)) acc))))))
   (merge '() xs (random-generator) '()))
 
 ;; Trim playlists to n elements at a time
@@ -272,13 +272,13 @@
       (if (assoc key lst)
           (map (lambda (pair)
                  (if (equal? (car pair) key)
-                     (cons key (append (cdr pair) (list val)))
+                     (cons key (cons val (cdr pair)))
                      pair))
                lst)
-          (append lst (list (cons key (list val))))))
+          (cons (cons key (list val)) lst)))
     (define (split xs acc)
       (if (null? xs)
-          (map cdr acc)
+          (map (lambda (lst) (reverse (cdr lst))) (reverse acc))
           (let* ((x (car xs))
                  (xs (cdr xs))
                  (key (find-key x)))
