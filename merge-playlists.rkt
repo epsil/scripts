@@ -24,8 +24,6 @@
 ;; To install: chmod +x, symlink to /usr/local/bin/merge-playlists
 ;; and invoke without the .rkt suffix.
 
-;; TODO: remove duplicates
-
 (require srfi/13) ; string-prefix-length
 
 ;; Chain playlists together
@@ -323,6 +321,29 @@
         (values (cons y ys) (cons z zs))))))
   (let*-values (((y z) (gradient 0 xs)))
     (append y z)))
+
+;; Delete duplicates across playlists
+(define (playlists-delete-duplicates . xs)
+  (define (list->set xs)
+    (define (convert xs acc)
+      (cond
+       ((null? xs)
+        (reverse acc))
+       ((member (car xs) acc)
+        (convert (cdr xs) acc))
+       (else
+        (convert (cdr xs) (cons (car xs) acc)))))
+    (convert xs '()))
+  (define (delete xs acc)
+    (cond
+     ((null? xs)
+      (reverse acc))
+     (else
+      (let* ((x  (car xs))
+             (xs (cdr xs)))
+        (delete (map (lambda (l) (foldl remove l x)) xs)
+                (cons x acc))))))
+  (delete (map list->set xs) '()))
 
 ;; Utility functions
 
