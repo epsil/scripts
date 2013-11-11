@@ -426,7 +426,7 @@
    filename))
 
 ;; Seed the random number generator
-(random-seed (current-milliseconds))
+(random-seed (abs (current-milliseconds)))
 
 (define input-lists (map file->lines input-files))
 
