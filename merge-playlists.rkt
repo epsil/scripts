@@ -285,10 +285,13 @@
             (split xs (insert acc key x)))))
     (split xs '())))
 
+;; Merge five artists at a time
+(define (playlists-merge-5x5 . xs)
+  (apply playlists-merge-window-trimmed-shuffle 5 5 xs))
+
 ;; "Normalize" a mixed playlist by merging five artists at a time
 (define (playlists-normalize . xs)
-  (apply playlists-merge-window-trimmed-shuffle 5 5
-         (apply playlists-split xs)))
+  (apply playlists-merge-5x5 (apply playlists-split xs)))
 
 ;; Create an increasing buffer of playlists
 (define (playlists-increasing-gradient m . xs)
@@ -404,6 +407,8 @@
      playlists-difference]
     [(or "overlay" "overlay-merge" "overlay-interleave" "interleave-overlay" "merge-overlay")
      playlists-merge-overlay]
+    [(or "5x5")
+     playlists-merge-5x5]
     [(or "normalize")
      playlists-normalize]
     [else
