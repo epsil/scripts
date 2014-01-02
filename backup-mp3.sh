@@ -1,2 +1,2 @@
 #!/bin/bash
-rsync -av --delete --progress --modify-window=1 --exclude="iTunes" /home/vegard/Musikk/ /media/Music
+rsync -av --delete --ignore-errors --progress --modify-window=1 --exclude="iTunes" /home/vegard/Musikk/ /media/Music
