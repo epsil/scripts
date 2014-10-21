@@ -2,6 +2,7 @@
 
 import bs4
 import os
+import re
 import sys
 import urllib
 import urlparse
@@ -12,7 +13,6 @@ def download(url, path, ask=True):
     """Create download script."""
     script = 'run.sh'
     try:
-        input = urllib.urlopen(url)
         if not os.path.exists(path): os.mkdir(path)
         os.chdir(path)
         output = open(script, 'w')
@@ -20,6 +20,22 @@ def download(url, path, ask=True):
             output.write('#!/bin/sh\n')
             output.write('DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"\n')
             output.write('cd "$DIR"\n')
+        finally:
+            output.close()
+        while url:
+            url = links(url, path, script)
+    except IOError:
+        return
+    os.system('chmod +x "%s"' % script)
+    if ask and raw_input("Start downloading? (Y/N) ").upper() == 'Y':
+        os.system('./%s' % script)
+
+def links(url, path, script):
+    """Add download links."""
+    try:
+        input = urllib.urlopen(url)
+        output = open(script, 'a')
+        try:
             soup = bs4.BeautifulSoup(input)
             table = soup.find('table', 'c')
             if not table: return
@@ -32,17 +48,21 @@ def download(url, path, ask=True):
                 link = urlparse.urljoin(url,
                                        tds[9].find('a')['href'])
                 ext = tds[8].get_text()
-                wget = 'wget -c -w 60 -t inf -T 10 -O "%s %s.%s" "%s"\n' % (id, path, ext, link)
+                wget = ('wget -c -w 60 -t inf -T 10 -O "%s %s.%s" "%s"\n' %
+                        (id, path, ext, link))
                 print(wget)
                 output.write(wget)
+            a = soup.find('a', text=re.compile(u'\u25BA')) # >
+            if a:
+                url = urlparse.urljoin(url, a['href'])
+            else:
+                url = ''
         finally:
             input.close()
             output.close()
     except IOError:
         return
-    os.system('chmod +x "%s"' % script)
-    if ask and raw_input("Start downloading? (Y/N) ").upper() == 'Y':
-        os.system('./%s' % script)
+    return url
 
 def main():
     path = sys.argv[1]
