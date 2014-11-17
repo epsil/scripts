@@ -3,5 +3,5 @@
 # Symlink to /usr/local/bin.
 for dir in "$@";
 do
-	rsync -avz --progress vegardoy@login.ifi.uio.no:$dir ~/Dokumenter
+	rsync -avz --progress vegardoy@login.ifi.uio.no:$dir ~/Documents
 done
