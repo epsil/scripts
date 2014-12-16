@@ -27,7 +27,8 @@ def download(url, path, ask=True):
     except IOError:
         return
     os.system('chmod +x "%s"' % script)
-    if ask and raw_input("Start downloading? (Y/N) ").upper() == 'Y':
+    if ask and (ask == 'Y' or
+                raw_input("Start downloading? (Y/N) ").upper() == 'Y'):
         os.system('./%s' % script)
 
 def links(url, path, script):
@@ -65,11 +66,25 @@ def links(url, path, script):
     return url
 
 def main():
+    ask = True
+    open = False
+    if sys.argv[1] == '-y':
+        ask = 'Y'
+        sys.argv.pop(1)
+    elif sys.argv[1] == '-n':
+        ask = False
+        sys.argv.pop(1)
+    elif sys.argv[1] == '-o':
+        open = True
+        sys.argv.pop(1)
     path = sys.argv[1]
     url = (sys.argv[2] if len(sys.argv) > 2 else
            'http://gen.lib.rus.ec/search.php?req=%s' %
            urllib.quote_plus(path))
-    download(url, path)
+    if open:
+        os.system('open %s' % url)
+    else:
+        download(url, path, ask)
 
 if __name__ == '__main__':
     main()
