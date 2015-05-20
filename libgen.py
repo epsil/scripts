@@ -66,10 +66,10 @@ def links(url, path, script):
     return url
 
 def main():
-    ask = True
+    ask = 'Y'
     open = False
     if sys.argv[1] == '-y':
-        ask = 'Y'
+        ask = True
         sys.argv.pop(1)
     elif sys.argv[1] == '-n':
         ask = False
