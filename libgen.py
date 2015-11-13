@@ -46,8 +46,9 @@ def links(url, path, script):
             for tr in trs:
                 tds = tr.findAll('td')
                 id = tds[0].get_text()
-                link = urlparse.urljoin(url,
-                                       tds[9].find('a')['href'])
+                fn = lambda x: x and re.compile("libgen.io").search(x)
+                href = tr.find(href=fn)['href']
+                link = urlparse.urljoin(url, href)
                 ext = tds[8].get_text()
                 wget = ('wget -c -w 60 -t inf -T 10 -O "%s %s.%s" "%s"\n' %
                         (id, path, ext, link))
