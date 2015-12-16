@@ -21,7 +21,7 @@ def amazon(title):
     try:
         input = urllib.urlopen(url)
         try:
-            soup = bs4.BeautifulSoup(input)
+            soup = bs4.BeautifulSoup(input, "html.parser")
             div = soup.find('div', id='atfResults')
             if not div: return ""
             a = div.find('a', class_='a-link-normal')

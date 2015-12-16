@@ -37,7 +37,7 @@ def links(url, path, script):
         input = urllib.urlopen(url)
         output = open(script, 'a')
         try:
-            soup = bs4.BeautifulSoup(input)
+            soup = bs4.BeautifulSoup(input, "html.parser")
             table = soup.find('table', 'c')
             if not table: return
             trs = table.findAll('tr')
