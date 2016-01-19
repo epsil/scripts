@@ -9,27 +9,34 @@ import urlparse
 
 urllib.URLopener.version = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT 5.0; T312461)'
 
-def download(url, path, ask=True):
+def download(url, path, ask=True, ext='sh'):
     """Create download script."""
-    script = 'run.sh'
+    script = 'run.sh' if ext == 'sh' else 'run.bat'
     try:
         if not os.path.exists(path): os.mkdir(path)
         os.chdir(path)
         output = open(script, 'w')
         try:
-            output.write('#!/bin/sh\n')
-            output.write('DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"\n')
-            output.write('cd "$DIR"\n')
+            if ext == 'sh':
+                output.write('#!/bin/sh\n')
+                output.write('DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"\n')
+                output.write('cd "$DIR"\n')
+            else:
+                output.write('@echo off\n')
         finally:
             output.close()
         while url:
             url = links(url, path, script)
     except IOError:
         return
-    os.system('chmod +x "%s"' % script)
+    if ext == 'sh':
+        os.system('chmod +x "%s"' % script)
     if ask and (ask == 'Y' or
                 raw_input("Start downloading? (Y/N) ").upper() == 'Y'):
-        os.system('./%s' % script)
+        if ext == 'sh':
+            os.system('./%s' % script)
+        else:
+            os.system(script)
 
 def links(url, path, script):
     """Add download links."""
@@ -69,6 +76,7 @@ def links(url, path, script):
 def main():
     ask = 'Y'
     open = False
+    ext = 'bat' if os.name == 'nt' else 'sh'
     if sys.argv[1] == '-y':
         ask = True
         sys.argv.pop(1)
@@ -85,7 +93,7 @@ def main():
     if open:
         os.system('open %s' % url)
     else:
-        download(url, path, ask)
+        download(url, path, ask, ext)
 
 if __name__ == '__main__':
     main()
