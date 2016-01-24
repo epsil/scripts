@@ -56,9 +56,10 @@ def links(url, path, script):
                 fn = lambda x: x and re.compile("libgen.io").search(x)
                 href = tr.find(href=fn)['href']
                 link = urlparse.urljoin(url, href)
+                link2 = link.replace("get_ads", "get")
                 ext = tds[8].get_text()
-                wget = ('wget -c -w 60 -t inf -T 10 -O "%s %s.%s" "%s"\n' %
-                        (id, path, ext, link))
+                wget = ('wget -c -w 60 -t inf -T 10 -O "%s %s.%s" --referer "%s" "%s"\n' %
+                        (id, path, ext, link, link2))
                 print(wget)
                 output.write(wget)
             a = soup.find('a', text=re.compile(u'\u25BA')) # >
