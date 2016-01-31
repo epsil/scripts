@@ -56,7 +56,7 @@ def links(url, path, script):
                 fn = lambda x: x and re.compile("libgen.io").search(x)
                 href = tr.find(href=fn)['href']
                 link = urlparse.urljoin(url, href)
-                link2 = link.replace("get_ads", "get")
+                link2 = ads(link)
                 ext = tds[8].get_text()
                 wget = ('wget -c -w 60 -t inf -T 10 -O "%s %s.%s" --referer "%s" "%s"\n' %
                         (id, path, ext, link, link2))
@@ -70,6 +70,21 @@ def links(url, path, script):
         finally:
             input.close()
             output.close()
+    except IOError:
+        return
+    return url
+
+def ads(url):
+    """Follow ads link."""
+    try:
+        input = urllib.urlopen(url)
+        try:
+            soup = bs4.BeautifulSoup(input, "html.parser")
+            a = soup.find('a')
+            if not a: return
+            url = urlparse.urljoin(url, a['href'])
+        finally:
+            input.close()
     except IOError:
         return
     return url
