@@ -58,8 +58,9 @@ def links(url, path, script):
                 link = urlparse.urljoin(url, href)
                 link2 = ads(link)
                 ext = tds[8].get_text()
-                wget = ('wget -c -w 60 -t inf -T 10 -O "%s %s.%s" --referer "%s" "%s"\n' %
-                        (id, path, ext, link, link2))
+                wget = ('wget -c -w 60 -t inf -T 10 -U "%s" -O "%s %s.%s" --referer "%s" "%s"\n' %
+                        (urllib.URLopener.version,
+                         id, path, ext, link, link2))
                 print(wget)
                 output.write(wget)
             a = soup.find('a', text=re.compile(u'\u25BA')) # >
