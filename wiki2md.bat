@@ -1,2 +1,2 @@
 @echo off
-sh wiki2md.sh %1
+sh %~dp0\wiki2md.sh %1

@@ -1,2 +1,2 @@
 @echo off
-sh html2md.sh %1
+sh %~dp0\html2md.sh %1

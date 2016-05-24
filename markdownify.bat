@@ -1,2 +1,2 @@
 @echo off
-sh markdownify.sh %1 %2
+sh %~dp0\markdownify.sh %1 %2
