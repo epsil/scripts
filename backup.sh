@@ -28,5 +28,5 @@ fi
 
 # Cloud backup
 echo "Backing up to cloud ..."
-rsync $ARCHIVE $HOME/GoogleDrive/ $CLOUD
+rsync $DELETE $HOME/GoogleDrive/ $CLOUD
 echo "Backup completed"
