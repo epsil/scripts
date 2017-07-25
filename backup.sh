@@ -9,7 +9,7 @@ CLOUD="vegardye@ananke.feralhosting.com:www/vegardye.ananke.feralhosting.com/pub
 
 # Preparations
 echo "Preparing backup ..."
-rsync $ARCHIVE $HOME/wiki/Leseliste.md $HOME/GoogleDrive/Calibre\ Library/Ukjent/Leseliste\ \(1700\)/Leseliste\ -\ Ukjent.txt
+rsync $ARCHIVE $HOME/wiki/leseliste/index.md $HOME/GoogleDrive/Calibre\ Library/Ukjent/Leseliste\ \(1700\)/Leseliste\ -\ Ukjent.txt
 
 # Disk backup
 if [ ! -e "$BACKUP" ]; then
@@ -19,6 +19,8 @@ else
     rsync $DELETE $HOME/Music $BACKUP
     rsync $DELETE $HOME/GoogleDrive/Calibre\ Library $BACKUP
     rsync $DELETE $HOME/GoogleDrive/Documents $BACKUP
+    rsync $ARCHIVE $HOME/wiki $BACKUP
+    rsync $ARCHIVE $HOME/Dropbox $BACKUP
     rsync $ARCHIVE $HOME/Movies $BACKUP
     rsync $ARCHIVE $HOME/Downloads $BACKUP
     rsync $ARCHIVE $HOME/GoogleDrive/Calibre\ Library $BACKUP/Downloads
@@ -28,5 +30,9 @@ fi
 
 # Cloud backup
 echo "Backing up to cloud ..."
-rsync $DELETE $HOME/GoogleDrive/ $CLOUD
+# rsync $DELETE $HOME/GoogleDrive/ $CLOUD
+rsync $DELETE $HOME/GoogleDrive/Calibre\ Library/ "$CLOUD/Calibre\ Library"
+# rsync $DELETE $HOME/GoogleDrive/Documents/ $CLOUD/Documents
+rsync $DELETE $HOME/wiki/ $CLOUD/wiki
+# rsync $ARCHIVE $HOME/Downloads/stuff/stuff/ $CLOUD/stuff/stuff
 echo "Backup completed"
