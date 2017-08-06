@@ -44,6 +44,15 @@ function cloud {
     echo "Backup completed"
 }
 
-prepare
-cloud
-disk
+# Execute
+if [ $PARAM == "--disk" ]; then
+    prepare
+    disk
+elif [ $PARAM == "--cloud" ]; then
+    prepare
+    cloud
+else
+    prepare
+    cloud
+    disk
+fi
