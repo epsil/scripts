@@ -45,10 +45,10 @@ function cloud {
 }
 
 # Execute
-if [ $PARAM == "--disk" ]; then
+if [ "$PARAM" == "--disk" ]; then
     prepare
     disk
-elif [ $PARAM == "--cloud" ]; then
+elif [ "$PARAM" == "--cloud" ]; then
     prepare
     cloud
 else
