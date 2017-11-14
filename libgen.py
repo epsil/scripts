@@ -81,7 +81,7 @@ def ads(url):
         input = urllib.urlopen(url)
         try:
             soup = bs4.BeautifulSoup(input, "html.parser")
-            a = soup.find('a', text=re.compile('DOWNLOAD'))
+            a = soup.find('a', text=re.compile('GET'))
             if not a: return
             url = urlparse.urljoin(url, a['href'])
         finally:
