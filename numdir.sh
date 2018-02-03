@@ -1,0 +1,36 @@
+#!/bin/zsh
+echo Deleting old folders ...
+rm -rf 0 1 2 3 4 5 6 7 8 9
+echo Creating new folders ...
+mkdir -p 0 1 2 3 4 5 6 7 8 9
+for i in {0..4}; do
+    echo Iteration: $i
+    mkdir 00
+    mv 0 1 2 3 4 5 6 7 8 9 00
+    mv 00 0
+    echo copying into 1 ...
+    cp -r 0 1
+    echo copying into 2 ...
+    cp -r 0 2
+    echo copying into 3 ...
+    cp -r 0 3
+    echo copying into 4 ...
+    cp -r 0 4
+    echo copying into 5 ...
+    cp -r 0 5
+    echo copying into 6 ...
+    cp -r 0 6
+    echo copying into 7 ...
+    cp -r 0 7
+    echo copying into 8 ...
+    cp -r 0 8
+    echo copying into 9 ...
+    cp -r 0 9
+done
+# tree
+
+# for i in {0..9}; do
+#     for f in **/; do
+#         mkdir -p $f/0 $f/1 $f/2 $f/3 $f/4 $f/5 $f/6 $f/7 $f/8 $f/9
+#     done
+# done

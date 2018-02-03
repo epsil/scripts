@@ -1,11 +1,12 @@
 #!/bin/bash
+ORIG=$(pwd)
 for dir in "$@";
 do
-	cd ~; cd "$dir"
+	cd "$ORIG"; cd "$dir"
 	echo "Setting directory permissions ..."
-	sudo nice -n -20 find -type d -exec chmod 775 {} \;
+	sudo nice -n -20 find -type d -exec chmod 755 {} \;
 	echo "Setting file permissions ..."
-	sudo nice -n -20 find -type f -exec chmod 664 {} \;
+	sudo nice -n -20 find -type f -exec chmod 644 {} \;
 	echo "Setting file ownership ..."
 	sudo nice -n -20 find -exec chown vegard:vegard {} \;
 done
