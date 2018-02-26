@@ -1,7 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 PARAM=$1
-HOME=/Users/vegard
-BACKUP=/Volumes/Backup
+# HOME=/Users/vegard
+HOME=/home/vegard
+# BACKUP=/Volumes/Backup
+BACKUP=/media/vegard/Backup
 WINDOW=3600
 PARAMS="--progress --modify-window=$WINDOW"
 DELETE="-av --delete $PARAMS"
@@ -11,7 +13,7 @@ CLOUD="vegardye@ananke.feralhosting.com:www/vegardye.ananke.feralhosting.com/pub
 # Preparations
 function prepare {
     echo "Preparing backup ..."
-    rsync $ARCHIVE $HOME/wiki/ref/books/index.md $HOME/GoogleDrive/Calibre\ Library/Ukjent/Leseliste\ \(1700\)/Leseliste\ -\ Ukjent.txt
+    rsync $ARCHIVE $HOME/wiki/ref/books/index.md $HOME/Calibre\ Library/Ukjent/Leseliste\ \(1700\)/Leseliste\ -\ Ukjent.txt
 }
 
 # Disk backup
@@ -21,15 +23,15 @@ function disk {
     else
         echo "Backing up to disk ..."
         rsync $DELETE $HOME/Music $BACKUP
-        rsync $DELETE $HOME/GoogleDrive/Calibre\ Library $BACKUP
-        rsync $DELETE $HOME/GoogleDrive/Documents $BACKUP
+        rsync $DELETE $HOME/Calibre\ Library $BACKUP
+        rsync $DELETE $HOME/Documents $BACKUP
         # rsync $ARCHIVE $HOME/.* $BACKUP
         rsync $DELETE $HOME/.[^.]* $BACKUP
         rsync $ARCHIVE $HOME/wiki $BACKUP
         rsync $ARCHIVE $HOME/Dropbox $BACKUP
         rsync $ARCHIVE $HOME/Movies $BACKUP
         rsync $ARCHIVE $HOME/Downloads $BACKUP
-        rsync $ARCHIVE $HOME/GoogleDrive/Calibre\ Library $BACKUP/Downloads
+        rsync $ARCHIVE $HOME/Calibre\ Library $BACKUP/Downloads
         rsync $ARCHIVE $HOME/Music $BACKUP/Downloads
         rsync $ARCHIVE $HOME/.[^.]* $BACKUP/Downloads
         rsync $ARCHIVE $HOME/Documents/scripts/backup.sh $BACKUP
@@ -40,7 +42,7 @@ function disk {
 function cloud {
     echo "Backing up to cloud ..."
     # rsync $DELETE $HOME/GoogleDrive/ $CLOUD
-    rsync $DELETE $HOME/GoogleDrive/Calibre\ Library/ "$CLOUD/Calibre\ Library"
+    rsync $DELETE $HOME/Calibre\ Library/ "$CLOUD/Calibre\ Library"
     # rsync $DELETE $HOME/GoogleDrive/Documents/ $CLOUD/Documents
     rsync $DELETE $HOME/wiki/ $CLOUD/wiki
     # rsync $ARCHIVE $HOME/Downloads/stuff/stuff/ $CLOUD/stuff/stuff
