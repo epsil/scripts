@@ -13,7 +13,7 @@ CLOUD="vegardye@ananke.feralhosting.com:www/vegardye.ananke.feralhosting.com/pub
 # Preparations
 function prepare {
     echo "Preparing backup ..."
-    rsync $ARCHIVE $HOME/wiki/ref/books/index.md $HOME/Calibre\ Library/Ukjent/Leseliste\ \(1700\)/Leseliste\ -\ Ukjent.txt
+    rsync $ARCHIVE $HOME/wiki/lib/books/index.md $HOME/Calibre\ Library/Ukjent/Leseliste\ \(1700\)/Leseliste\ -\ Ukjent.txt
 }
 
 # Disk backup
