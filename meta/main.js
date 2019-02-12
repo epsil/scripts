@@ -83,9 +83,20 @@ function referencedAbsoluteFilePath(view) {
 }
 
 function processMetaData(meta) {
+  printMetaData(meta);
+  processTags(meta);
+}
+
+function printMetaData(meta) {
   console.log(referencedFilePath(meta));
   console.log(meta);
-  makeCopy(meta);
+}
+
+function processTags(meta) {
+  const tags = meta.tags || [];
+  tags.forEach(tag => {
+    makeTagLink(meta.filePath, tag);
+  });
 }
 
 function processMetaFiles() {
@@ -93,8 +104,19 @@ function processMetaFiles() {
   iterateOverMetaFiles(processMetaData);
 }
 
+function makeFolder(folder) {
+  const folderPath = path.normalize(folder);
+  return execAsync(`mkdir ${folderPath}`).catch(x => x);
+}
+
 function makeTagFolder() {
-  return execAsync('mkdir tag').catch(x => x);
+  return makeFolder('tag');
+}
+
+async function makeTagLink(filePath, tag) {
+  await makeTagFolder();
+  await makeFolder(`tag/${tag}`);
+  execAsync(`cp ${filePath} tag/${tag}`);
 }
 
 function makeCopy(meta) {
