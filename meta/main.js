@@ -9,17 +9,30 @@ import { exec } from 'child_process';
 // http://stackoverflow.com/questions/20643470/execute-a-command-line-binary-with-node-js#20643568
 const execAsync = util.promisify(exec);
 
+/**
+ * The folder to look for metadata in.
+ */
 const sourceFolder = 'lib';
 
 /**
+ * The folder to store tags in.
+ */
+const tagFolder = 'tag';
+
+/**
  * The "main" function.
+ *
+ * Execution begins here when the script is run from the command line with Node.
+ * (Note that the execution actually begins in `index.js`, which includes this
+ * file, which in turn invokes `main()`.)
  */
 function main() {
   processMetaFiles(sourceFolder);
 }
 
 /**
- * Process all metadata files in the current directory.
+ * Process all metadata files in the given directory.
+ * @param dir the directory to look in
  */
 function processMetaFiles(dir) {
   console.log(`Processing metadata in ${dir}/ ...\n`);
@@ -53,7 +66,7 @@ function processTags(meta) {
  */
 async function makeTagLink(filePath, tag) {
   await makeTagFolder(tag);
-  await makeCopy(filePath, `tag/${tag}`);
+  await makeCopy(filePath, `${tagFolder}/${tag}`);
 }
 
 /**
@@ -61,14 +74,14 @@ async function makeTagLink(filePath, tag) {
  */
 async function makeTagFolder(tag) {
   await makeTagContainer();
-  await makeFolder(`tag/${tag}`);
+  await makeFolder(`${tagFolder}/${tag}`);
 }
 
 /**
  * Make a tag container.
  */
 async function makeTagContainer() {
-  await makeFolder('tag');
+  await makeFolder(tagFolder);
 }
 
 /**
@@ -278,4 +291,5 @@ function folderName(filePath) {
   return filePath.substr(0, filePath.length - path.basename(filePath).length);
 }
 
+// invoke the "main" function
 main();

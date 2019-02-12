@@ -1,3 +1,5 @@
+// CommonJS-to-ES6 loader
+
 // Transpile all code following this line with babel
 // and use 'env' (aka ES6) preset
 require('@babel/register')({
@@ -5,5 +7,6 @@ require('@babel/register')({
 });
 require('@babel/polyfill');
 
-// Import the rest of the application
+// Import the rest of the application,
+// which is written in ES6
 require('./main.js');
