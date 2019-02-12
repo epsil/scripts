@@ -20,6 +20,11 @@ const sourceDir = 'lib';
 const tagDir = 'tag';
 
 /**
+ * Whether to make symbolic links or copies.
+ */
+const makeSymLinks = false;
+
+/**
  * The "main" function.
  *
  * Execution begins here when the script is run from the command line with Node.
@@ -66,7 +71,13 @@ function processTags(meta) {
  */
 async function makeTagLink(filePath, tag) {
   await makeTagDirectory(tag);
-  await makeCopy(filePath, `${tagDir}/${tag}`);
+  if (makeSymLinks) {
+    const ln = await hasLn();
+    if (ln) {
+      return makeLink(filePath, `${tagDir}/${tag}`);
+    }
+  }
+  return makeCopy(filePath, `${tagDir}/${tag}`);
 }
 
 /**
@@ -90,7 +101,16 @@ async function makeTagContainer() {
  */
 function makeDirectory(dir) {
   const dirPath = path.normalize(dir);
-  return invokeMkdir(dirPath).catch(x => x);
+  return invokeMkdir(dirPath).catch(err => null);
+}
+
+/**
+ * Make a link to a file.
+ * @param source the file to link to
+ * @param destination the location of the link
+ */
+function makeLink(source, destination) {
+  return invokeLn(source, destination);
 }
 
 /**
@@ -98,25 +118,21 @@ function makeDirectory(dir) {
  * @param source the source file
  * @param destination the destination file
  */
-function makeCopy(source, destination) {
+async function makeCopy(source, destination) {
+  const rsync = await hasRsync();
+  if (rsync) {
+    return invokeRsync(source, destination);
+  }
   return invokeCp(source, destination);
 }
 
 /**
- * Use `mkdir` to make a directory in the current directory.
- * @param dir the directory to make
+ * Use `ln` to make a symbolic link to a file.
+ * @param source the file to link to
+ * @param destination the location of the link
  */
-function invokeMkdir(dir) {
-  return execAsync(`mkdir "${dir}"`);
-}
-
-/**
- * Use `cp` to make a copy of a file.
- * @param source the source file
- * @param destination the destination file
- */
-function invokeCp(source, destination) {
-  return execAsync(`cp "${source}" "${destination}"`);
+function invokeLn(source, destination) {
+  return execAsync(`ln -s "${source}" "${destination}"`);
 }
 
 /**
@@ -129,12 +145,47 @@ function invokeRsync(source, destination) {
 }
 
 /**
- * Use `ln` to make a symbolic link to a file.
- * @param source the file to link to
- * @param destination the location of the link
+ * Use `cp` to make a copy of a file.
+ * @param source the source file
+ * @param destination the destination file
  */
-function invokeLn(source, destination) {
-  return execAsync(`ln -s "${source}" "${destination}"`);
+function invokeCp(source, destination) {
+  return execAsync(`cp "${source}" "${destination}"`);
+}
+
+/**
+ * Use `mkdir` to make a directory in the current directory.
+ * @param dir the directory to make
+ */
+function invokeMkdir(dir) {
+  return execAsync(`mkdir "${dir}"`);
+}
+
+/**
+ * Whether `rsync` is available on the system.
+ * @return `true` if `rsync` is available, `false` otherwise
+ */
+function hasRsync() {
+  return hasCmd('rsync');
+}
+
+/**
+ * Whether `ln` is available on the system.
+ * @return `true` if `ln` is available, `false` otherwise
+ */
+function hasLn() {
+  return hasCmd('ln');
+}
+
+/**
+ * Whether a command is available on the system.
+ * @param cmd the command
+ * @return `true` if `cmd` is available, `false` otherwise
+ */
+function hasCmd(cmd) {
+  return execAsync(`${cmd} --version`)
+    .then(() => true)
+    .catch(err => false);
 }
 
 /**
