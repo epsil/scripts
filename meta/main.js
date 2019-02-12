@@ -55,7 +55,7 @@ function processMetaData(meta) {
 function processTags(meta) {
   const tags = meta.tags || [];
   tags.forEach(tag => {
-    makeTagLink(meta.filePath, tag);
+    makeTagLink(meta.file, tag);
   });
 }
 
@@ -197,8 +197,9 @@ function parseMetadata(str, filePath) {
   if (meta.file === undefined) {
     meta.file = getFilenameFromMetaFilename(filePath);
   }
-  meta.yaml = filePath;
-  meta.filePath = referencedAbsoluteFilePath(meta);
+  meta.meta = filePath;
+  meta.path = meta.file;
+  meta.file = referencedAbsoluteFilePath(meta);
   return meta;
 }
 
@@ -259,7 +260,7 @@ function referencedAbsoluteFilePath(meta) {
  * @return a file path (relative to the current directory)
  */
 function referencedFilePath(meta) {
-  return relativeTo(folderName(meta.yaml), meta.file);
+  return relativeTo(folderName(meta.meta), meta.path);
 }
 
 /**
