@@ -15,6 +15,7 @@ function readMetaFile(filePath) {
     view.file = getFilenameFromMetaFilename(filePath);
   }
   view.yaml = filePath;
+  view.filePath = referencedAbsoluteFilePath(view);
   return view;
 }
 
@@ -25,6 +26,15 @@ function parseYaml(str) {
     const data = _.assign({}, view.data);
     delete view.data;
     view = _.assign({}, data, view);
+    if (view.content === '') {
+      delete view.content;
+    }
+    if (view.excerpt === '') {
+      delete view.excerpt;
+    }
+    if (!view.isEmpty) {
+      delete view.isEmpty;
+    }
   } catch (err) {
     return {};
   }
@@ -41,15 +51,15 @@ function getFilenameFromMetaFilename(filePath) {
 }
 
 function findAllMetaFiles() {
-  const files = glob
+  return glob
     .sync('**/.meta/*.yml', { dot: true, ignore: 'node_modules/**' })
     .sort();
-  files.map(readMetaFile).map(meta => {
-    console.log(meta);
-    console.log(referencedFilePath(meta));
-    console.log(referencedAbsoluteFilePath(meta));
-    return meta;
-  });
+}
+
+function iterateOverMetaFiles(fn) {
+  findAllMetaFiles()
+    .map(readMetaFile)
+    .forEach(fn);
 }
 
 function fileName(filePath) {
@@ -68,8 +78,17 @@ function referencedAbsoluteFilePath(view) {
   return path.resolve(referencedFilePath(view));
 }
 
+function processMetaData(view) {
+  console.log(referencedFilePath(view));
+  console.log(view);
+}
+
+function processMetaFiles() {
+  iterateOverMetaFiles(processMetaData);
+}
+
 function main() {
-  findAllMetaFiles();
+  processMetaFiles();
 }
 
 main();
