@@ -22,7 +22,7 @@ const tagDir = 'tag';
 /**
  * Whether to make symbolic links or copies.
  */
-const makeSymLinks = false;
+const makeSymLinks = true;
 
 /**
  * The "main" function.
