@@ -347,9 +347,13 @@ function fileName(filePath) {
  * @param filePath a file path
  * @return a directory path
  */
-function dirName(filePath) {
+export function dirName(filePath) {
   return filePath.substr(0, filePath.length - path.basename(filePath).length);
 }
+
+export default {
+  dirName
+};
 
 // invoke the "main" function
 main();

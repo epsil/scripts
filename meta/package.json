@@ -16,7 +16,8 @@
     "eslint-fix": "eslint . --fix --ext .js,.jsx",
     "format": "npm run prettier && npm run eslint-fix",
     "format!": "npm run lint && npm run format",
-    "lint": "npm run prettier && npm run eslint"
+    "lint": "npm run prettier && npm run eslint",
+    "test": "mocha test.js"
   },
   "keywords": [],
   "author": "",
@@ -36,11 +37,14 @@
   },
   "devDependencies": {
     "babel-eslint": "^10.0.1",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
     "eslint": "^5.13.0",
     "eslint-config-airbnb": "^17.1.0",
     "eslint-plugin-import": "^2.16.0",
     "eslint-plugin-jsx-a11y": "^6.2.1",
     "eslint-plugin-react": "^7.12.4",
+    "mocha": "^5.2.0",
     "prettier": "^1.16.4"
   }
 }
