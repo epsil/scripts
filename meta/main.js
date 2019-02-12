@@ -132,7 +132,7 @@ async function makeCopy(source, destination) {
  * @param destination the location of the link
  */
 function invokeLn(source, destination) {
-  return execAsync(`ln -s "${source}" "${destination}"`);
+  return execAsync(`ln -s "${source}" "${destination}"`).catch(err => null);
 }
 
 /**
