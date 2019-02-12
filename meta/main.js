@@ -267,10 +267,10 @@ function parseMetadata(str, filePath) {
  * @param str a YAML string (may be fenced by `---`)
  * @return a metadata object, containing the YAML properties
  */
-function parseYaml(str) {
+export function parseYaml(str) {
   let meta = {};
   try {
-    meta = matter(str);
+    meta = matter(addYamlFences(str));
     const data = _.assign({}, meta.data);
     delete meta.data;
     meta = _.assign({}, data, meta);
@@ -287,6 +287,13 @@ function parseYaml(str) {
     return {};
   }
   return meta;
+}
+
+function addYamlFences(str) {
+  if (!str.match(/^---/)) {
+    return '---\n' + str;
+  }
+  return str;
 }
 
 /**
