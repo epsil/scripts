@@ -36,7 +36,7 @@ function processMetaData(meta) {
 }
 
 /**
- * Process the `tags` field of a metadata object.
+ * Process the `tags` property of a metadata object.
  * @param meta a metadata object
  */
 function processTags(meta) {
@@ -77,7 +77,7 @@ async function makeTagContainer() {
  */
 function makeFolder(folder) {
   const folderPath = path.normalize(folder);
-  return execAsync(`mkdir ${folderPath}`).catch(x => x);
+  return execAsync(`mkdir "${folderPath}"`).catch(x => x);
 }
 
 /**
@@ -86,7 +86,7 @@ function makeFolder(folder) {
  * @param destination the destination file
  */
 function makeCopy(source, destination) {
-  execAsync(`cp ${source} ${destination}`);
+  return execAsync(`cp "${source}" "${destination}"`);
 }
 
 /**
@@ -113,7 +113,7 @@ function iterateOverMetaFiles(dir, fn) {
 
 /**
  * Find all metadata files in the current directory
- * (i.e., in the .meta subdirectory of the current directory).
+ * (i.e., in the .meta subdirectories of the current directory).
  * @return an array of strings, where each string is
  * the file path of a metadata file
  */
@@ -125,16 +125,34 @@ function findAllMetaFiles(dir) {
 }
 
 /**
- * Read a metadata file into memory.
+ * Read metadata from a metadata file.
  * @param filePath the file path to the metadata file
- * @return a metadat object
+ * @return a metadata object
  */
 function readMetaFile(filePath) {
-  const str =
+  return parseMetadata(readTextFile(filePath), filePath);
+}
+
+/**
+ * Read a text file synchronously.
+ * @param filePath the file path of the text file
+ * @return a string containing the file's contents
+ */
+function readTextFile(filePath) {
+  return (
     fs
       .readFileSync(filePath)
       .toString()
-      .trim() + '\n';
+      .trim() + '\n'
+  );
+}
+
+/**
+ * Create a metadata object from a YAML string.
+ * @param str a YAML string
+ * @return a metadata object
+ */
+function parseMetadata(str, filePath) {
   const meta = parseYaml(str);
   if (meta.file === undefined) {
     meta.file = getFilenameFromMetaFilename(filePath);
@@ -147,7 +165,7 @@ function readMetaFile(filePath) {
 /**
  * Parse a YAML string.
  * @param str a YAML string (may be fenced by `---`)
- * @return a metadata object
+ * @return a metadata object, containing the YAML properties
  */
 function parseYaml(str) {
   let meta = {};
@@ -173,7 +191,7 @@ function parseYaml(str) {
 
 /**
  * Get the filename of the file that a metadata file is referring to,
- * by looking at the medata file's filename.
+ * by looking at the metadata file's filename.
  * @param filePath the filename of the metadata file
  * @return the filename of the referenced file
  */

@@ -15,6 +15,7 @@
     "eslint": "eslint . --ext .js,.jsx",
     "eslint-fix": "eslint . --fix --ext .js,.jsx",
     "format": "npm run prettier && npm run eslint-fix",
+    "format!": "npm run lint && npm run format",
     "lint": "npm run prettier && npm run eslint"
   },
   "keywords": [],
