@@ -3,6 +3,10 @@ import fs from 'fs';
 import matter from 'gray-matter';
 import path from 'path';
 import _ from 'lodash';
+import util from 'util';
+import { exec } from 'child_process';
+
+const execAsync = util.promisify(exec);
 
 function readMetaFile(filePath) {
   const str =
@@ -78,13 +82,23 @@ function referencedAbsoluteFilePath(view) {
   return path.resolve(referencedFilePath(view));
 }
 
-function processMetaData(view) {
-  console.log(referencedFilePath(view));
-  console.log(view);
+function processMetaData(meta) {
+  console.log(referencedFilePath(meta));
+  console.log(meta);
+  makeCopy(meta);
 }
 
 function processMetaFiles() {
+  makeTagFolder();
   iterateOverMetaFiles(processMetaData);
+}
+
+function makeTagFolder() {
+  return execAsync('mkdir tag').catch(x => x);
+}
+
+function makeCopy(meta) {
+  exec('cp ' + meta.filePath + ' tag');
 }
 
 function main() {
