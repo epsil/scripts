@@ -86,7 +86,34 @@ function makeFolder(folder) {
  * @param destination the destination file
  */
 function makeCopy(source, destination) {
+  return invokeCp(source, destination);
+}
+
+/**
+ * Use `cp` to make a copy of a file.
+ * @param source the source file
+ * @param destination the destination file
+ */
+function invokeCp(source, destination) {
   return execAsync(`cp "${source}" "${destination}"`);
+}
+
+/**
+ * Use `rsync` to make a copy of a file.
+ * @param source the source file
+ * @param destination the destination file
+ */
+function invokeRsync(source, destination) {
+  return execAsync(`rsync -avz "${source}" "${destination}"`);
+}
+
+/**
+ * Use `ln` to make a symbolic link to a file.
+ * @param source the file to link to
+ * @param destination the location of the link
+ */
+function invokeLn(source, destination) {
+  return execAsync(`ln -s "${source}" "${destination}"`);
 }
 
 /**
