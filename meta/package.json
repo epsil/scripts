@@ -4,9 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "uninstall": "rm -rf node_modules",
     "uninstall!": "npm run uninstall && rm -f package-lock.json",
-    "reinstall": "npm run uninstall! && npm install"
+    "reinstall": "npm run uninstall! && npm install",
+    "prettier": "npm run prettier-js && npm run prettier-json && npm run eslint",
+    "prettier-js": "prettier --single-quote --write \"**/*.{js,jsx,ts}\"",
+    "prettier-json": "prettier --single-quote --write \"**/*.json\"",
+    "eslint": "eslint . --ext .js,.jsx"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +20,16 @@
     "@babel/core": "^7.2.2",
     "@babel/polyfill": "^7.2.5",
     "@babel/preset-env": "^7.3.1",
-    "@babel/register": "^7.0.0"
+    "@babel/register": "^7.0.0",
+    "glob": "^7.1.3"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.13.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-jsx-a11y": "^6.2.1",
+    "eslint-plugin-react": "^7.12.4",
+    "prettier": "^1.16.4"
   }
 }
