@@ -1,4 +1,4 @@
-// CommonJS-to-ES6 loader
+#!/usr/bin/env node
 
 // Transpile all code following this line with babel
 // and use 'env' (aka ES6) preset
