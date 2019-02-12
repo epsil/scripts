@@ -205,9 +205,7 @@ function printMetaData(meta) {
  * @return an array of return values
  */
 function iterateOverMetaFiles(dir, fn) {
-  return findAllMetaFiles(dir)
-    .map(readMetaFile)
-    .map(fn);
+  return findAllMetaFiles(dir).map(file => fn(readMetaFile(file)));
 }
 
 /**
@@ -218,7 +216,11 @@ function iterateOverMetaFiles(dir, fn) {
  */
 function findAllMetaFiles(dir) {
   return glob
-    .sync('**/.meta/*.yml', { cwd: dir, dot: true, ignore: 'node_modules/**' })
+    .sync('**/.meta/*.{yml,yaml}', {
+      cwd: dir,
+      dot: true,
+      ignore: 'node_modules/**'
+    })
     .map(file => relativeTo(dir, file))
     .sort();
 }

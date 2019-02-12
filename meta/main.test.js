@@ -12,6 +12,10 @@ describe('parseYaml', () => {
     parseYaml('---\ntags:\n  - foo\n  - bar\n---\n').should.eql({
       tags: ['foo', 'bar']
     });
+
+    parseYaml('---\ntags:\n  - foo\n  - bar\n---\n').should.eql({
+      tags: ['foo', 'bar']
+    });
   });
 
   it('should parse unfenced YAML', () => {
