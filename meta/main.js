@@ -10,14 +10,14 @@ import { exec } from 'child_process';
 const execAsync = util.promisify(exec);
 
 /**
- * The folder to look for metadata in.
+ * The directory to look for metadata in.
  */
-const sourceFolder = 'lib';
+const sourceDir = 'lib';
 
 /**
- * The folder to store tags in.
+ * The directory to store tags in.
  */
-const tagFolder = 'tag';
+const tagDir = 'tag';
 
 /**
  * The "main" function.
@@ -27,7 +27,7 @@ const tagFolder = 'tag';
  * file, which in turn invokes `main()`.)
  */
 function main() {
-  processMetaFiles(sourceFolder);
+  processMetaFiles(sourceDir);
 }
 
 /**
@@ -65,32 +65,32 @@ function processTags(meta) {
  * @param tag the tag to create a link for
  */
 async function makeTagLink(filePath, tag) {
-  await makeTagFolder(tag);
-  await makeCopy(filePath, `${tagFolder}/${tag}`);
+  await makeTagDirectory(tag);
+  await makeCopy(filePath, `${tagDir}/${tag}`);
 }
 
 /**
- * Make a tag folder.
+ * Make a tag directory.
  */
-async function makeTagFolder(tag) {
+async function makeTagDirectory(tag) {
   await makeTagContainer();
-  await makeFolder(`${tagFolder}/${tag}`);
+  await makeDirectory(`${tagDir}/${tag}`);
 }
 
 /**
  * Make a tag container.
  */
 async function makeTagContainer() {
-  await makeFolder(tagFolder);
+  await makeDirectory(tagDir);
 }
 
 /**
- * Make a folder in the current directory.
- * No error is thrown if the folder already exists.
+ * Make a directory in the current directory.
+ * No error is thrown if the directory already exists.
  */
-function makeFolder(folder) {
-  const folderPath = path.normalize(folder);
-  return execAsync(`mkdir "${folderPath}"`).catch(x => x);
+function makeDirectory(dir) {
+  const dirPath = path.normalize(dir);
+  return invokeMkdir(dirPath).catch(x => x);
 }
 
 /**
@@ -100,6 +100,14 @@ function makeFolder(folder) {
  */
 function makeCopy(source, destination) {
   return invokeCp(source, destination);
+}
+
+/**
+ * Use `mkdir` to make a directory in the current directory.
+ * @param dir the directory to make
+ */
+function invokeMkdir(dir) {
+  return execAsync(`mkdir "${dir}"`);
 }
 
 /**
@@ -237,11 +245,11 @@ function parseYaml(str) {
  * @return the filename of the referenced file
  */
 function getFilenameFromMetaFilename(filePath) {
-  const fileFolder = '..';
+  const dir = '..';
   const basename = path.basename(filePath);
   let origname = fileName(basename);
   origname = origname.replace(/^\./, '');
-  origname = fileFolder + '/' + origname;
+  origname = dir + '/' + origname;
   return origname;
 }
 
@@ -260,7 +268,7 @@ function referencedAbsoluteFilePath(meta) {
  * @return a file path (relative to the current directory)
  */
 function referencedFilePath(meta) {
-  return relativeTo(folderName(meta.meta), meta.path);
+  return relativeTo(dirName(meta.meta), meta.path);
 }
 
 /**
@@ -284,11 +292,11 @@ function fileName(filePath) {
 }
 
 /**
- * Get the folder part of a file path.
+ * Get the directory part of a file path.
  * @param filePath a file path
- * @return a folder path
+ * @return a directory path
  */
-function folderName(filePath) {
+function dirName(filePath) {
   return filePath.substr(0, filePath.length - path.basename(filePath).length);
 }
 
