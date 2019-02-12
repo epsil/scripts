@@ -270,7 +270,8 @@ function parseMetadata(str, filePath) {
 export function parseYaml(str) {
   let meta = {};
   try {
-    meta = matter(addYamlFences(str));
+    const yaml = addYamlFences(str);
+    meta = matter(yaml, { lang: 'yaml' });
     const data = _.assign({}, meta.data);
     delete meta.data;
     meta = _.assign({}, data, meta);
@@ -289,6 +290,11 @@ export function parseYaml(str) {
   return meta;
 }
 
+/**
+ * Add `---` fences to a YAML string if they are missing.
+ * @param str a YAML string
+ * @return a fenced YAML string
+ */
 function addYamlFences(str) {
   if (!str.match(/^---/)) {
     return '---\n' + str;
