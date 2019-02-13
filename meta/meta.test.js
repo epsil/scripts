@@ -1,5 +1,9 @@
 /* global describe, it */
-import { getFilenameFromMetaFilename, parseYaml } from './meta';
+import {
+  getFilenameFromMetaFilename,
+  parseYaml,
+  referencedFilePath
+} from './meta';
 
 describe('parseYaml', () => {
   it('should parse fenced YAML', () => {
@@ -30,5 +34,16 @@ describe('parseYaml', () => {
 describe('getFilenameFromMetaFilename', () => {
   it('should translate a dotfile YAML file name to a regular file name', () => {
     getFilenameFromMetaFilename('.file.txt.yml').should.eql('../file.txt');
+  });
+});
+
+describe('referencedFilePath', () => {
+  it('should get the file path of the file referenced by a meta object', () => {
+    referencedFilePath({
+      meta: 'lib\\.meta\\.enfil.txt.yml',
+      path: '../enfil.txt'
+    })
+      .replace(/\\/g, '/')
+      .should.eql('lib/enfil.txt');
   });
 });
