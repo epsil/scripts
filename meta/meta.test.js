@@ -63,6 +63,10 @@ describe('getFilenameFromMetaFilename', () => {
   it('should translate a dotfile YAML file name to a regular file name', () => {
     getFilenameFromMetaFilename('.file.txt.yml').should.eql('../file.txt');
   });
+
+  it('should translate non-dotfile file names too', () => {
+    getFilenameFromMetaFilename('file.txt.yml').should.eql('../file.txt');
+  });
 });
 
 describe('referencedFilePath', () => {

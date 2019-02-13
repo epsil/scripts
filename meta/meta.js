@@ -1,10 +1,10 @@
-import glob from 'glob';
 import fs from 'fs';
+import glob from 'glob';
 import matter from 'gray-matter';
 import os from 'os';
 import path from 'path';
-import _ from 'lodash';
 import util from 'util';
+import _ from 'lodash';
 import { exec } from 'child_process';
 
 // http://stackoverflow.com/questions/20643470/execute-a-command-line-binary-with-node-js#20643568
