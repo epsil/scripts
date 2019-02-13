@@ -9,6 +9,8 @@ describe('parseYaml', () => {
   });
 
   it('should parse the same YAML multiple times', () => {
+    // there is a weird caching bug in gray-matter
+    // which is avoided if one provides an options object
     parseYaml('---\ntags:\n  - foo\n  - bar\n---\n').should.eql({
       tags: ['foo', 'bar']
     });
