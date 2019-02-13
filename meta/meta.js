@@ -200,14 +200,17 @@ export function iterateOverMetaFiles(dir, fn) {
 }
 
 /**
- * Find all metadata files in the current directory
- * (i.e., in the .meta subdirectories of the current directory).
+ * Find all metadata files in a directory
+ * (i.e., in the `.meta` subdirectories of the directory).
+ * @param dir the directory to look in
+ * @param [options] options object passed to `glob.sync()`
  * @return an array of strings, where each string is
  * the file path of a metadata file
  */
-export function findAllMetaFiles(dir) {
+export function findAllMetaFiles(dir, options) {
   return glob
     .sync('**/.meta/*.{yml,yaml}', {
+      ...options,
       cwd: dir,
       dot: true,
       ignore: 'node_modules/**'
@@ -330,7 +333,8 @@ export function referencedFilePath(meta) {
 
 /**
  * Return a file path relative to a base path.
- * The returned path is relative to the current working directory, `.`.
+ * The returned path is itself relative -- i.e., it is relative
+ * to the current working directory, `.`.
  * @param base the base path
  * @param filePath the file path
  * @return a relative file path
