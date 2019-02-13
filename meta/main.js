@@ -1,4 +1,4 @@
-import { sourceDir, processMetaFiles } from './meta';
+import { processMetaFiles } from './meta';
 
 /**
  * The "main" function.
@@ -8,7 +8,7 @@ import { sourceDir, processMetaFiles } from './meta';
  * file, which in turn invokes `main()`.)
  */
 function main() {
-  processMetaFiles(sourceDir);
+  processMetaFiles('lib');
 }
 
 // invoke the "main" function
