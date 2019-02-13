@@ -1,5 +1,5 @@
 /* global describe, it */
-import { dirName, parseYaml } from './meta';
+import { dirName, getFilenameFromMetaFilename, parseYaml } from './meta';
 
 describe('parseYaml', () => {
   it('should parse fenced YAML', () => {
@@ -30,5 +30,11 @@ describe('parseYaml', () => {
 describe('dirName', () => {
   it('should return the directory part of a path', () => {
     dirName('foo/bar.txt').should.eql('foo/');
+  });
+});
+
+describe('getFilenameFromMetaFilename', () => {
+  it('should translate a dotfile YAML file name to a regular file name', () => {
+    getFilenameFromMetaFilename('.file.txt.yml').should.eql('../file.txt');
   });
 });

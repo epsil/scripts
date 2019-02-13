@@ -26,11 +26,12 @@ export const makeSymLinks = true;
 
 /**
  * Process all metadata files in the given directory.
- * @param dir the directory to look in
+ * @param [dir] the directory to look in
  */
 export function processMetaFiles(dir) {
-  console.log(`Processing metadata in ${dir}/ ...\n`);
-  iterateOverMetaFiles(dir, processMetaData);
+  const folder = dir || sourceDir;
+  console.log(`Processing metadata in ${folder}/ ...\n`);
+  iterateOverMetaFiles(folder, processMetaData);
 }
 
 /**
@@ -301,11 +302,11 @@ export function addYamlFences(str) {
  */
 export function getFilenameFromMetaFilename(filePath) {
   const dir = '..';
-  const basename = path.basename(filePath);
-  let origname = fileName(basename);
-  origname = origname.replace(/^\./, '');
-  origname = dir + '/' + origname;
-  return origname;
+  let origName = path.basename(filePath);
+  origName = origName.replace(/^\./, '');
+  origName = origName.replace(/\.ya?ml$/, '');
+  origName = dir + '/' + origName;
+  return origName;
 }
 
 /**
@@ -335,15 +336,6 @@ export function referencedFilePath(meta) {
  */
 export function relativeTo(base, filePath) {
   return path.relative('.', path.resolve(base, filePath));
-}
-
-/**
- * Get the filename part of a file path.
- * @param filePath a file path
- * @return a filename
- */
-export function fileName(filePath) {
-  return filePath.substr(0, filePath.length - path.extname(filePath).length);
 }
 
 /**
