@@ -292,8 +292,13 @@ export function parseYaml(str) {
  * @return a fenced YAML string
  */
 export function addYamlFences(str) {
-  if (!str.match(/^---/)) {
-    return '---\n' + str;
+  let yaml = str.trim();
+  if (!yaml.match(/^---/)) {
+    yaml = '---\n' + yaml;
+    if (!yaml.match(/---$/)) {
+      yaml += '\n---\n';
+    }
+    return yaml;
   }
   return str;
 }

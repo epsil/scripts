@@ -1,5 +1,6 @@
 /* global describe, it */
 import {
+  addYamlFences,
   getFilenameFromMetaFilename,
   parseYaml,
   referencedFilePath
@@ -28,6 +29,33 @@ describe('parseYaml', () => {
     parseYaml('tags:\n  - foo\n  - bar').should.eql({
       tags: ['foo', 'bar']
     });
+  });
+});
+
+describe('addYamlFences', () => {
+  it('should add fences to a YAML string missing them', () => {
+    addYamlFences(`tags:
+  - foo
+  - bar`).should.eql(`---
+tags:
+  - foo
+  - bar
+---
+`);
+  });
+
+  it('should not add fences to a YAML string that already has them', () => {
+    addYamlFences(`---
+tags:
+  - foo
+  - bar
+---
+`).should.eql(`---
+tags:
+  - foo
+  - bar
+---
+`);
   });
 });
 
