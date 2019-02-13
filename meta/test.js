@@ -13,4 +13,4 @@ chai.should();
 
 // Import the rest of the application,
 // which is written in ES6
-require('./main.test.js');
+require('./meta.test.js');

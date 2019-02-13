@@ -1,5 +1,5 @@
 /* global describe, it */
-import { dirName, parseYaml } from './main';
+import { dirName, parseYaml } from './meta';
 
 describe('parseYaml', () => {
   it('should parse fenced YAML', () => {
