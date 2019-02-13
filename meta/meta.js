@@ -215,7 +215,7 @@ export function findAllMetaFiles(dir, options) {
       dot: true,
       ignore: 'node_modules/**'
     })
-    .map(file => relativeTo(dir, file))
+    .map(file => join(dir, file))
     .sort();
 }
 
@@ -328,7 +328,7 @@ export function referencedAbsoluteFilePath(meta) {
  * @return a file path (relative to the current directory)
  */
 export function referencedFilePath(meta) {
-  return relativeTo(dirName(meta.meta), meta.path);
+  return join(dirName(meta.meta), meta.path);
 }
 
 /**
@@ -339,7 +339,7 @@ export function referencedFilePath(meta) {
  * @param filePath the file path
  * @return a relative file path
  */
-export function relativeTo(base, filePath) {
+export function join(base, filePath) {
   return path.relative('.', path.resolve(base, filePath));
 }
 
