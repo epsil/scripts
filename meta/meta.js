@@ -215,7 +215,7 @@ export function findAllMetaFiles(dir, options) {
       dot: true,
       ignore: 'node_modules/**'
     })
-    .map(file => join(dir, file))
+    .map(file => path.join(dir, file))
     .sort();
 }
 
@@ -328,28 +328,7 @@ export function referencedAbsoluteFilePath(meta) {
  * @return a file path (relative to the current directory)
  */
 export function referencedFilePath(meta) {
-  return join(dirName(meta.meta), meta.path);
-}
-
-/**
- * Return a file path relative to a base path.
- * The returned path is itself relative -- i.e., it is relative
- * to the current working directory, `.`.
- * @param base the base path
- * @param filePath the file path
- * @return a relative file path
- */
-export function join(base, filePath) {
-  return path.relative('.', path.resolve(base, filePath));
-}
-
-/**
- * Get the directory part of a file path.
- * @param filePath a file path
- * @return a directory path
- */
-export function dirName(filePath) {
-  return filePath.substr(0, filePath.length - path.basename(filePath).length);
+  return path.join(path.dirname(meta.meta), meta.path);
 }
 
 /**
@@ -362,6 +341,5 @@ export function isWindows() {
 
 export default {
   sourceDir,
-  processMetaFiles,
-  dirName
+  processMetaFiles
 };

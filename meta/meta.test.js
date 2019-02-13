@@ -1,5 +1,5 @@
 /* global describe, it */
-import { dirName, getFilenameFromMetaFilename, join, parseYaml } from './meta';
+import { getFilenameFromMetaFilename, parseYaml } from './meta';
 
 describe('parseYaml', () => {
   it('should parse fenced YAML', () => {
@@ -30,19 +30,5 @@ describe('parseYaml', () => {
 describe('getFilenameFromMetaFilename', () => {
   it('should translate a dotfile YAML file name to a regular file name', () => {
     getFilenameFromMetaFilename('.file.txt.yml').should.eql('../file.txt');
-  });
-});
-
-describe('join', () => {
-  it('should concatenate a directory and a path', () => {
-    join('foo', 'bar')
-      .replace('\\', '/')
-      .should.eql('foo/bar');
-  });
-});
-
-describe('dirName', () => {
-  it('should return the directory part of a path', () => {
-    dirName('foo/bar.txt').should.eql('foo/');
   });
 });
