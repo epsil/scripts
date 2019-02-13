@@ -1,6 +1,7 @@
 import glob from 'glob';
 import fs from 'fs';
 import matter from 'gray-matter';
+import os from 'os';
 import path from 'path';
 import _ from 'lodash';
 import util from 'util';
@@ -164,7 +165,7 @@ export function hasRsync() {
  * @return `true` if `ln` is available, `false` otherwise
  */
 export function hasLn() {
-  return hasCmd('ln');
+  return !isWindows() && hasCmd('ln');
 }
 
 /**
@@ -345,6 +346,14 @@ export function relativeTo(base, filePath) {
  */
 export function dirName(filePath) {
   return filePath.substr(0, filePath.length - path.basename(filePath).length);
+}
+
+/**
+ * Whether the current system is Windows.
+ * @return `true` if the system is Windows, `false` otherwise
+ */
+export function isWindows() {
+  return os.platform() === 'win32';
 }
 
 export default {
