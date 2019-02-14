@@ -72,7 +72,7 @@ describe('getFilenameFromMetaFilename', () => {
 describe('referencedFilePath', () => {
   it('should get the file path of the file referenced by a meta object', () => {
     referencedFilePath({
-      meta: 'lib\\.meta\\.enfil.txt.yml',
+      meta: 'lib/.meta/.enfil.txt.yml',
       path: '../enfil.txt'
     })
       .replace(/\\/g, '/')

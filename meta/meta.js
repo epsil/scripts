@@ -21,6 +21,11 @@ export const sourceDir = 'lib';
 export const tagDir = 'tag';
 
 /**
+ * The directory to store categories in.
+ */
+export const categoryDir = 'cat';
+
+/**
  * Whether to make symbolic links or copies.
  */
 export const makeSymLinks = true;
@@ -41,7 +46,28 @@ export function processMetaFiles(dir) {
  */
 export function processMetaData(meta) {
   printMetaData(meta);
-  processTags(meta);
+  // processTags(meta);
+  processTagsAndCategories(meta);
+}
+
+/**
+ * Process the `categories` and `tags` properties of a metadata object.
+ * @param meta a metadata object
+ */
+export function processTagsAndCategories(meta) {
+  const tags = meta.tags || [];
+  const categories = meta.categories;
+  if (!categories) {
+    tags.forEach(tag => {
+      makeTagLink(meta.file, tag);
+    });
+  } else {
+    categories.forEach(category => {
+      tags.forEach(tag => {
+        makeTagLinkInCategory(meta.file, category, tag);
+      });
+    });
+  }
 }
 
 /**
@@ -56,43 +82,76 @@ export function processTags(meta) {
 }
 
 /**
+ * Make a tag link within a category.
+ * @param filePath the file path of the referenced file
+ * @param category the category to create a link within
+ * @param tag the tag to create a link for
+ */
+export async function makeTagLinkInCategory(filePath, category, tag) {
+  const dir = await makeCategoryDirectory(category);
+  await makeTagLink(filePath, tag, { cwd: dir, tag: '.' });
+}
+
+/**
  * Make a tag link.
  * @param filePath the file path of the referenced file
  * @param tag the tag to create a link for
  */
-export async function makeTagLink(filePath, tag) {
-  await makeTagDirectory(tag);
+export async function makeTagLink(filePath, tag, options) {
+  const dir = await makeTagDirectory(tag, options);
   if (makeSymLinks) {
     const ln = await hasLn();
     if (ln) {
-      return makeLink(filePath, `${tagDir}/${tag}`);
+      return makeLink(filePath, dir, options);
     }
   }
-  return makeCopy(filePath, `${tagDir}/${tag}`);
+  return makeCopy(filePath, dir, options);
+}
+
+/**
+ * Make a category directory.
+ */
+export async function makeCategoryDirectory(category, options) {
+  const dir = await makeCategoryContainer(options);
+  return makeDirectory(`${dir}/${category}`, options);
 }
 
 /**
  * Make a tag directory.
  */
-export async function makeTagDirectory(tag) {
-  await makeTagContainer();
-  await makeDirectory(`${tagDir}/${tag}`);
+export async function makeTagDirectory(tag, options) {
+  let dir = options && options.tag;
+  if (!dir) {
+    dir = await makeTagContainer(options);
+  }
+  return makeDirectory(`${dir}/${tag}`, options);
+}
+
+/**
+ * Make a category container.
+ */
+export async function makeCategoryContainer(options) {
+  await makeDirectory(categoryDir, options);
+  return categoryDir;
 }
 
 /**
  * Make a tag container.
  */
-export async function makeTagContainer() {
-  await makeDirectory(tagDir);
+export async function makeTagContainer(options) {
+  await makeDirectory(tagDir, options);
+  return tagDir;
 }
 
 /**
  * Make a directory in the current directory.
  * No error is thrown if the directory already exists.
  */
-export function makeDirectory(dir) {
+export function makeDirectory(dir, options) {
   const dirPath = path.normalize(dir);
-  return invokeMkdir(dirPath).catch(err => null);
+  return invokeMkdir(dirPath, options)
+    .then(() => dir)
+    .catch(err => dir);
 }
 
 /**
@@ -100,8 +159,8 @@ export function makeDirectory(dir) {
  * @param source the file to link to
  * @param destination the location of the link
  */
-export function makeLink(source, destination) {
-  return invokeLn(source, destination);
+export function makeLink(source, destination, options) {
+  return invokeLn(source, destination, options);
 }
 
 /**
@@ -122,8 +181,10 @@ export async function makeCopy(source, destination) {
  * @param source the file to link to
  * @param destination the location of the link
  */
-export function invokeLn(source, destination) {
-  return execAsync(`ln -s "${source}" "${destination}"`).catch(err => null);
+export function invokeLn(source, destination, options) {
+  return execAsync(`ln -s "${source}" "${destination}"`, options)
+    .then(() => destination)
+    .catch(err => destination);
 }
 
 /**
@@ -131,8 +192,8 @@ export function invokeLn(source, destination) {
  * @param source the source file
  * @param destination the destination file
  */
-export function invokeRsync(source, destination) {
-  return execAsync(`rsync -avz "${source}" "${destination}"`);
+export function invokeRsync(source, destination, options) {
+  return execAsync(`rsync -avz "${source}" "${destination}"`, options);
 }
 
 /**
@@ -140,16 +201,16 @@ export function invokeRsync(source, destination) {
  * @param source the source file
  * @param destination the destination file
  */
-export function invokeCp(source, destination) {
-  return execAsync(`cp "${source}" "${destination}"`);
+export function invokeCp(source, destination, options) {
+  return execAsync(`cp "${source}" "${destination}"`, options);
 }
 
 /**
  * Use `mkdir` to make a directory in the current directory.
  * @param dir the directory to make
  */
-export function invokeMkdir(dir) {
-  return execAsync(`mkdir "${dir}"`);
+export function invokeMkdir(dir, options) {
+  return execAsync(`mkdir "${dir}"`, options);
 }
 
 /**
@@ -173,8 +234,8 @@ export function hasLn() {
  * @param cmd the command
  * @return `true` if `cmd` is available, `false` otherwise
  */
-export function hasCmd(cmd) {
-  return execAsync(`${cmd} --version`)
+export function hasCmd(cmd, options) {
+  return execAsync(`${cmd} --version`, options)
     .then(() => true)
     .catch(err => false);
 }
@@ -185,8 +246,8 @@ export function hasCmd(cmd) {
  */
 export function printMetaData(meta) {
   console.log(referencedFilePath(meta));
-  console.log(meta);
-  console.log('');
+  // console.log(meta);
+  // console.log('');
 }
 
 /**
@@ -344,7 +405,4 @@ export function isWindows() {
   return os.platform() === 'win32';
 }
 
-export default {
-  sourceDir,
-  processMetaFiles
-};
+export default {};
