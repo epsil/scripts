@@ -46,7 +46,6 @@ export function processMetaFiles(dir) {
  */
 export function processMetaData(meta) {
   printMetaData(meta);
-  // processTags(meta);
   processTagsAndCategories(meta);
 }
 
@@ -89,7 +88,7 @@ export function processTags(meta) {
  */
 export async function makeTagLinkInCategory(filePath, category, tag) {
   const dir = await makeCategoryDirectory(category);
-  await makeTagLink(filePath, tag, { cwd: dir, tag: '.' });
+  return makeTagLink(filePath, tag, { cwd: dir, tag: '.' });
 }
 
 /**
@@ -131,16 +130,14 @@ export async function makeTagDirectory(tag, options) {
  * Make a category container.
  */
 export async function makeCategoryContainer(options) {
-  await makeDirectory(categoryDir, options);
-  return categoryDir;
+  return makeDirectory(categoryDir, options);
 }
 
 /**
  * Make a tag container.
  */
 export async function makeTagContainer(options) {
-  await makeDirectory(tagDir, options);
-  return tagDir;
+  return makeDirectory(tagDir, options);
 }
 
 /**
@@ -149,9 +146,7 @@ export async function makeTagContainer(options) {
  */
 export function makeDirectory(dir, options) {
   const dirPath = path.normalize(dir);
-  return invokeMkdir(dirPath, options)
-    .then(() => dir)
-    .catch(err => dir);
+  return invokeMkdir(dirPath, options).catch(err => dir);
 }
 
 /**
@@ -193,7 +188,9 @@ export function invokeLn(source, destination, options) {
  * @param destination the destination file
  */
 export function invokeRsync(source, destination, options) {
-  return execAsync(`rsync -avz "${source}" "${destination}"`, options);
+  return execAsync(`rsync -avz "${source}" "${destination}"`, options).then(
+    () => destination
+  );
 }
 
 /**
@@ -202,7 +199,9 @@ export function invokeRsync(source, destination, options) {
  * @param destination the destination file
  */
 export function invokeCp(source, destination, options) {
-  return execAsync(`cp "${source}" "${destination}"`, options);
+  return execAsync(`cp "${source}" "${destination}"`, options).then(
+    () => destination
+  );
 }
 
 /**
@@ -210,7 +209,7 @@ export function invokeCp(source, destination, options) {
  * @param dir the directory to make
  */
 export function invokeMkdir(dir, options) {
-  return execAsync(`mkdir "${dir}"`, options);
+  return execAsync(`mkdir "${dir}"`, options).then(() => dir);
 }
 
 /**
