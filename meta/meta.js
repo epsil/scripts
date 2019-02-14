@@ -59,7 +59,7 @@ export function processTagsAndCategories(meta) {
   const categories = meta.categories;
   if (!categories) {
     tags.forEach(tag => {
-      makeTagLink(meta.file, tag);
+      makeTagLinkInCategory(meta.file, tagDir, tag);
     });
   } else {
     categories.forEach(category => {
