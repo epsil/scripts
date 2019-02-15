@@ -17,7 +17,7 @@ import {
 } from './meta';
 
 describe('makeCategoryContainer', () => {
-  it('should make a tag container', () => {
+  it('should make a category container', () => {
     makeCategoryContainer({
       debug: true
     }).should.eql(`mkdir "${categoryDir}"`);

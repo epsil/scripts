@@ -7,7 +7,7 @@
     "metalinks": "index.js"
   },
   "scripts": {
-    "clean": "rm -rf tag",
+    "clean": "rm -rf cat tag",
     "start": "npm run clean && node index.js",
     "uninstall": "rm -rf node_modules",
     "uninstall!": "npm run uninstall && rm -f package-lock.json",
