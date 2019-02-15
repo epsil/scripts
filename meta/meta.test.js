@@ -54,9 +54,18 @@ describe('hasCmd', () => {
 
 describe('parseMetadata', () => {
   it('should create a metadata object from a YAML string', () => {
-    parseMetadata('---\ntags:\n  - foo\n  - bar\n---\n', '.meta.file.yml', {
-      debug: true
-    }).should.eql({
+    parseMetadata(
+      `---
+tags:
+  - foo
+  - bar
+---
+`,
+      '.meta.file.yml',
+      {
+        debug: true
+      }
+    ).should.eql({
       file: '../meta.file',
       meta: '.meta.file.yml',
       path: '../meta.file',
@@ -67,7 +76,12 @@ describe('parseMetadata', () => {
 
 describe('parseYaml', () => {
   it('should parse fenced YAML', () => {
-    parseYaml('---\ntags:\n  - foo\n  - bar\n---\n').should.eql({
+    parseYaml(`---
+tags:
+  - foo
+  - bar
+---
+`).should.eql({
       tags: ['foo', 'bar']
     });
   });
@@ -75,17 +89,28 @@ describe('parseYaml', () => {
   it('should parse the same YAML multiple times', () => {
     // there is a weird caching bug in gray-matter
     // which is avoided if one provides an options object
-    parseYaml('---\ntags:\n  - foo\n  - bar\n---\n').should.eql({
+    parseYaml(`---
+tags:
+  - foo
+  - bar
+---
+`).should.eql({
       tags: ['foo', 'bar']
     });
 
-    parseYaml('---\ntags:\n  - foo\n  - bar\n---\n').should.eql({
+    parseYaml(`---
+tags:
+  - foo
+  - bar
+---`).should.eql({
       tags: ['foo', 'bar']
     });
   });
 
   it('should parse unfenced YAML', () => {
-    parseYaml('tags:\n  - foo\n  - bar').should.eql({
+    parseYaml(`tags:
+  - foo
+  - bar`).should.eql({
       tags: ['foo', 'bar']
     });
   });
