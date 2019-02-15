@@ -8,11 +8,11 @@ Spesifikasjon
 
 En *metadatafil* inneholder metadata for en *originalfil*. Filnavnet til metadatafilen er avledet av navnet til originalfilen, men er prefikset med punktum, `.`, og har endelsen `.yml`. Metadatafilen ligger i undermappen `.meta`:
 
-| Originalfil | Metadatafil |
-| ----------- | ----------- |
-| `foo.txt` | `.meta/.foo.txt.yml` |
-| `bar` | `.meta/.bar.yml` |
-| `.baz` | `.meta/..baz.yml` |
+| Originalfil | Metadatafil          |
+| ----------- | -------------------- |
+| `foo.txt`   | `.meta/.foo.txt.yml` |
+| `bar`       | `.meta/.bar.yml`     |
+| `.baz`      | `.meta/..baz.yml`    |
 
 Mappen `.meta` er alltid en undermappe av mappen som originalfilen ligger i. Det er altså én `.meta`-mappe per mappe. Et mappehierarki kan se slik ut:
 
