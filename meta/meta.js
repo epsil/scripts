@@ -16,14 +16,14 @@ export const execAsync = util.promisify(exec);
 export const sourceDir = 'lib';
 
 /**
- * The directory to store tags in.
- */
-export const tagDir = 'tag';
-
-/**
  * The directory to store categories in.
  */
 export const categoryDir = 'cat';
+
+/**
+ * The directory to store tags in.
+ */
+export const tagDir = 'tag';
 
 /**
  * Whether to make symbolic links or copies.
@@ -32,7 +32,7 @@ export const makeSymLinks = true;
 
 /**
  * Process all metadata files in the given directory.
- * @param [dir] the directory to look in
+ * @param [dir] the directory to look in, default `.`
  */
 export function processMetaFiles(dir, options) {
   const folder = dir || sourceDir;
@@ -184,14 +184,14 @@ export async function makeTagDirectory(tag, options) {
 /**
  * Make a category container.
  */
-export async function makeCategoryContainer(options) {
+export function makeCategoryContainer(options) {
   return makeDirectory(categoryDir, options);
 }
 
 /**
  * Make a tag container.
  */
-export async function makeTagContainer(options) {
+export function makeTagContainer(options) {
   return makeDirectory(tagDir, options);
 }
 
@@ -200,8 +200,7 @@ export async function makeTagContainer(options) {
  * No error is thrown if the directory already exists.
  */
 export function makeDirectory(dir, options) {
-  const dirPath = path.normalize(dir);
-  return invokeMkdir(dirPath, options).catch(err => dir);
+  return invokeMkdir(path.normalize(dir), options);
 }
 
 /**
@@ -232,13 +231,11 @@ export async function makeCopy(source, destination, options) {
  * @param destination the location of the link
  */
 export function invokeLn(source, destination, options) {
-  const cmd = `ln -s "${source}" "${destination}"`;
-  if (options && options.debug) {
-    return cmd;
-  }
-  return execAsync(cmd, options)
-    .then(() => destination)
-    .catch(err => destination);
+  return invokeCmd(`ln -s "${source}" "${destination}"`, {
+    ...options,
+    successValue: destination,
+    errorValue: true
+  });
 }
 
 /**
@@ -247,11 +244,10 @@ export function invokeLn(source, destination, options) {
  * @param destination the destination file
  */
 export function invokeRsync(source, destination, options) {
-  const cmd = `rsync -avz "${source}" "${destination}"`;
-  if (options && options.debug) {
-    return cmd;
-  }
-  return execAsync(cmd, options).then(() => destination);
+  return invokeCmd(`rsync -avz "${source}" "${destination}"`, {
+    ...options,
+    successValue: destination
+  });
 }
 
 /**
@@ -260,23 +256,41 @@ export function invokeRsync(source, destination, options) {
  * @param destination the destination file
  */
 export function invokeCp(source, destination, options) {
-  const cmd = `cp "${source}" "${destination}"`;
-  if (options && options.debug) {
-    return cmd;
-  }
-  return execAsync(cmd, options).then(() => destination);
+  return invokeCmd(`cp "${source}" "${destination}"`, {
+    ...options,
+    successValue: destination
+  });
 }
 
 /**
  * Use `mkdir` to make a directory in the current directory.
+ * No error is thrown if the directory already exists.
  * @param dir the directory to make
  */
 export function invokeMkdir(dir, options) {
-  const cmd = `mkdir "${dir}"`;
+  return invokeCmd(`mkdir "${dir}"`, {
+    ...options,
+    successValue: dir,
+    errorValue: dir
+  });
+}
+
+/**
+ * Invoke a command in the current working directory.
+ * @param cmd the command to invoke
+ */
+export function invokeCmd(cmd, options) {
   if (options && options.debug) {
     return cmd;
   }
-  return execAsync(cmd, options).then(() => dir);
+  let promise = execAsync(cmd, options);
+  if (options && options.successValue !== undefined) {
+    promise = promise.then(() => options.successValue);
+  }
+  if (options && options.errorValue !== undefined) {
+    promise = promise.catch(() => options.errorValue);
+  }
+  return promise;
 }
 
 /**
@@ -301,13 +315,11 @@ export function hasLn(options) {
  * @return `true` if `command` is available, `false` otherwise
  */
 export function hasCmd(command, options) {
-  const cmd = `${command} --version`;
-  if (options && options.debug) {
-    return cmd;
-  }
-  return execAsync(cmd, options)
-    .then(() => true)
-    .catch(err => false);
+  return invokeCmd(`${command} --version`, {
+    ...options,
+    successValue: true,
+    errorValue: false
+  });
 }
 
 /**

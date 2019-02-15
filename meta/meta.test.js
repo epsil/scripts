@@ -1,16 +1,36 @@
 /* global describe, it */
 import {
   addYamlFences,
+  categoryDir,
   getFilenameFromMetaFilename,
   hasCmd,
   invokeCp,
-  invokeMkdir,
   invokeLn,
+  invokeMkdir,
   invokeRsync,
+  makeCategoryContainer,
+  makeTagContainer,
   parseMetadata,
   parseYaml,
-  referencedFilePath
+  referencedFilePath,
+  tagDir
 } from './meta';
+
+describe('makeCategoryContainer', () => {
+  it('should make a tag container', () => {
+    makeCategoryContainer({
+      debug: true
+    }).should.eql(`mkdir "${categoryDir}"`);
+  });
+});
+
+describe('makeTagContainer', () => {
+  it('should make a tag container', () => {
+    makeTagContainer({
+      debug: true
+    }).should.eql(`mkdir "${tagDir}"`);
+  });
+});
 
 describe('invokeLn', () => {
   it('should invoke ln', () => {
