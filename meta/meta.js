@@ -34,36 +34,91 @@ export const makeSymLinks = true;
  * Process all metadata files in the given directory.
  * @param [dir] the directory to look in
  */
-export function processMetaFiles(dir) {
+export function processMetaFiles(dir, options) {
   const folder = dir || sourceDir;
   console.log(`Processing metadata in ${folder}/ ...\n`);
-  iterateOverMetaFiles(folder, processMetaData);
+  iterateOverMetaFiles(folder, processMetaData, options);
+}
+
+/**
+ * Iterate over all metadata files in the given directory.
+ * @param dir the directory to look in
+ * @param fn an iterator function, receiving a metadata object for each file
+ * @return an array of return values
+ */
+export function iterateOverMetaFiles(dir, fn, options) {
+  return findAllMetaFiles(dir, options).map(file =>
+    fn(readMetaFile(file), options)
+  );
+}
+
+/**
+ * Find all metadata files in a directory
+ * (i.e., in the `.meta` subdirectories of the directory).
+ * @param dir the directory to look in
+ * @param [options] options object passed to `glob.sync()`
+ * @return an array of strings, where each string is
+ * the file path of a metadata file
+ */
+export function findAllMetaFiles(dir, options) {
+  return glob
+    .sync('**/.meta/*.{yml,yaml}', {
+      ...options,
+      cwd: dir,
+      dot: true,
+      ignore: 'node_modules/**'
+    })
+    .map(file => path.join(dir, file))
+    .sort();
+}
+
+/**
+ * Read metadata from a metadata file.
+ * @param filePath the file path to the metadata file
+ * @return a metadata object
+ */
+export function readMetaFile(filePath) {
+  return parseMetadata(readTextFile(filePath), filePath);
+}
+
+/**
+ * Read a text file synchronously.
+ * @param filePath the file path of the text file
+ * @return a string containing the file's contents
+ */
+export function readTextFile(filePath) {
+  return (
+    fs
+      .readFileSync(filePath)
+      .toString()
+      .trim() + '\n'
+  );
 }
 
 /**
  * Process a metadata object.
  * @param meta a metadata object
  */
-export function processMetaData(meta) {
+export function processMetaData(meta, options) {
   printMetaData(meta);
-  processTagsAndCategories(meta);
+  processTagsAndCategories(meta, options);
 }
 
 /**
  * Process the `categories` and `tags` properties of a metadata object.
  * @param meta a metadata object
  */
-export function processTagsAndCategories(meta) {
+export function processTagsAndCategories(meta, options) {
   const tags = meta.tags || [];
   const categories = meta.categories;
   if (!categories) {
     tags.forEach(tag => {
-      makeTagLinkInCategory(meta.file, tagDir, tag);
+      makeTagLinkInCategory(meta.file, tagDir, tag, options);
     });
   } else {
     categories.forEach(category => {
       tags.forEach(tag => {
-        makeTagLinkInCategory(meta.file, category, tag);
+        makeTagLinkInCategory(meta.file, category, tag, options);
       });
     });
   }
@@ -73,10 +128,10 @@ export function processTagsAndCategories(meta) {
  * Process the `tags` property of a metadata object.
  * @param meta a metadata object
  */
-export function processTags(meta) {
+export function processTags(meta, options) {
   const tags = meta.tags || [];
   tags.forEach(tag => {
-    makeTagLink(meta.file, tag);
+    makeTagLink(meta.file, tag, options);
   });
 }
 
@@ -86,9 +141,9 @@ export function processTags(meta) {
  * @param category the category to create a link within
  * @param tag the tag to create a link for
  */
-export async function makeTagLinkInCategory(filePath, category, tag) {
+export async function makeTagLinkInCategory(filePath, category, tag, options) {
   const dir = await makeCategoryDirectory(category);
-  return makeTagLink(filePath, tag, { cwd: dir, tag: '.' });
+  return makeTagLink(filePath, tag, { ...options, cwd: dir, tag: '.' });
 }
 
 /**
@@ -163,12 +218,12 @@ export function makeLink(source, destination, options) {
  * @param source the source file
  * @param destination the destination file
  */
-export async function makeCopy(source, destination) {
+export async function makeCopy(source, destination, options) {
   const rsync = await hasRsync();
   if (rsync) {
-    return invokeRsync(source, destination);
+    return invokeRsync(source, destination, options);
   }
-  return invokeCp(source, destination);
+  return invokeCp(source, destination, options);
 }
 
 /**
@@ -177,7 +232,11 @@ export async function makeCopy(source, destination) {
  * @param destination the location of the link
  */
 export function invokeLn(source, destination, options) {
-  return execAsync(`ln -s "${source}" "${destination}"`, options)
+  const cmd = `ln -s "${source}" "${destination}"`;
+  if (options && options.debug) {
+    return cmd;
+  }
+  return execAsync(cmd, options)
     .then(() => destination)
     .catch(err => destination);
 }
@@ -188,9 +247,11 @@ export function invokeLn(source, destination, options) {
  * @param destination the destination file
  */
 export function invokeRsync(source, destination, options) {
-  return execAsync(`rsync -avz "${source}" "${destination}"`, options).then(
-    () => destination
-  );
+  const cmd = `rsync -avz "${source}" "${destination}"`;
+  if (options && options.debug) {
+    return cmd;
+  }
+  return execAsync(cmd, options).then(() => destination);
 }
 
 /**
@@ -199,9 +260,11 @@ export function invokeRsync(source, destination, options) {
  * @param destination the destination file
  */
 export function invokeCp(source, destination, options) {
-  return execAsync(`cp "${source}" "${destination}"`, options).then(
-    () => destination
-  );
+  const cmd = `cp "${source}" "${destination}"`;
+  if (options && options.debug) {
+    return cmd;
+  }
+  return execAsync(cmd, options).then(() => destination);
 }
 
 /**
@@ -209,32 +272,40 @@ export function invokeCp(source, destination, options) {
  * @param dir the directory to make
  */
 export function invokeMkdir(dir, options) {
-  return execAsync(`mkdir "${dir}"`, options).then(() => dir);
+  const cmd = `mkdir "${dir}"`;
+  if (options && options.debug) {
+    return cmd;
+  }
+  return execAsync(cmd, options).then(() => dir);
 }
 
 /**
  * Whether `rsync` is available on the system.
  * @return `true` if `rsync` is available, `false` otherwise
  */
-export function hasRsync() {
-  return hasCmd('rsync');
+export function hasRsync(options) {
+  return hasCmd('rsync', options);
 }
 
 /**
  * Whether `ln` is available on the system.
  * @return `true` if `ln` is available, `false` otherwise
  */
-export function hasLn() {
-  return !isWindows() && hasCmd('ln');
+export function hasLn(options) {
+  return !isWindows() && hasCmd('ln', options);
 }
 
 /**
  * Whether a command is available on the system.
- * @param cmd the command
- * @return `true` if `cmd` is available, `false` otherwise
+ * @param command the command
+ * @return `true` if `command` is available, `false` otherwise
  */
-export function hasCmd(cmd, options) {
-  return execAsync(`${cmd} --version`, options)
+export function hasCmd(command, options) {
+  const cmd = `${command} --version`;
+  if (options && options.debug) {
+    return cmd;
+  }
+  return execAsync(cmd, options)
     .then(() => true)
     .catch(err => false);
 }
@@ -250,71 +321,20 @@ export function printMetaData(meta) {
 }
 
 /**
- * Iterate over all metadata files in the given directory.
- * @param dir the directory to look in
- * @param fn an iterator function, receiving a metadata object for each file
- * @return an array of return values
- */
-export function iterateOverMetaFiles(dir, fn) {
-  return findAllMetaFiles(dir).map(file => fn(readMetaFile(file)));
-}
-
-/**
- * Find all metadata files in a directory
- * (i.e., in the `.meta` subdirectories of the directory).
- * @param dir the directory to look in
- * @param [options] options object passed to `glob.sync()`
- * @return an array of strings, where each string is
- * the file path of a metadata file
- */
-export function findAllMetaFiles(dir, options) {
-  return glob
-    .sync('**/.meta/*.{yml,yaml}', {
-      ...options,
-      cwd: dir,
-      dot: true,
-      ignore: 'node_modules/**'
-    })
-    .map(file => path.join(dir, file))
-    .sort();
-}
-
-/**
- * Read metadata from a metadata file.
- * @param filePath the file path to the metadata file
- * @return a metadata object
- */
-export function readMetaFile(filePath) {
-  return parseMetadata(readTextFile(filePath), filePath);
-}
-
-/**
- * Read a text file synchronously.
- * @param filePath the file path of the text file
- * @return a string containing the file's contents
- */
-export function readTextFile(filePath) {
-  return (
-    fs
-      .readFileSync(filePath)
-      .toString()
-      .trim() + '\n'
-  );
-}
-
-/**
  * Create a metadata object from a YAML string.
  * @param str a YAML string
  * @return a metadata object
  */
-export function parseMetadata(str, filePath) {
+export function parseMetadata(str, filePath, options) {
   const meta = parseYaml(str);
   if (meta.file === undefined) {
     meta.file = getFilenameFromMetaFilename(filePath);
   }
   meta.meta = filePath;
   meta.path = meta.file;
-  meta.file = referencedAbsoluteFilePath(meta);
+  if (!(options && options.debug)) {
+    meta.file = referencedAbsoluteFilePath(meta);
+  }
   return meta;
 }
 

@@ -20,8 +20,9 @@
     "format": "npm run prettier && npm run eslint-fix",
     "format!": "npm run lint && npm run format",
     "lint": "npm run prettier && npm run eslint",
-    "test": "npm run lint && mocha test.js",
-    "test!": "npm run format! && npm run test"
+    "test": "npm run lint && npm run mocha",
+    "test!": "npm run format! && npm run test",
+    "mocha": "mocha test.js"
   },
   "keywords": [],
   "author": "",

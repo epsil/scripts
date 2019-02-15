@@ -2,9 +2,68 @@
 import {
   addYamlFences,
   getFilenameFromMetaFilename,
+  hasCmd,
+  invokeCp,
+  invokeMkdir,
+  invokeLn,
+  invokeRsync,
+  parseMetadata,
   parseYaml,
   referencedFilePath
 } from './meta';
+
+describe('invokeLn', () => {
+  it('should invoke ln', () => {
+    invokeLn('foo', 'bar', {
+      debug: true
+    }).should.eql('ln -s "foo" "bar"');
+  });
+});
+
+describe('invokeRsync', () => {
+  it('should invoke rsync', () => {
+    invokeRsync('foo', 'bar', {
+      debug: true
+    }).should.eql('rsync -avz "foo" "bar"');
+  });
+});
+
+describe('invokeCp', () => {
+  it('should invoke cp', () => {
+    invokeCp('foo', 'bar', {
+      debug: true
+    }).should.eql('cp "foo" "bar"');
+  });
+});
+
+describe('invokeMkdir', () => {
+  it('should invoke mkdir', () => {
+    invokeMkdir('foo', {
+      debug: true
+    }).should.eql('mkdir "foo"');
+  });
+});
+
+describe('hasCmd', () => {
+  it('should invoke a command with --version', () => {
+    hasCmd('foo', {
+      debug: true
+    }).should.eql('foo --version');
+  });
+});
+
+describe('parseMetadata', () => {
+  it('should create a metadata object from a YAML string', () => {
+    parseMetadata('---\ntags:\n  - foo\n  - bar\n---\n', '.meta.file.yml', {
+      debug: true
+    }).should.eql({
+      file: '../meta.file',
+      meta: '.meta.file.yml',
+      path: '../meta.file',
+      tags: ['foo', 'bar']
+    });
+  });
+});
 
 describe('parseYaml', () => {
   it('should parse fenced YAML', () => {
