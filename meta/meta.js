@@ -1,5 +1,5 @@
 import fs from 'fs';
-import glob from 'glob';
+import fg from 'fast-glob';
 import matter from 'gray-matter';
 import os from 'os';
 import path from 'path';
@@ -47,29 +47,19 @@ export function processMetaFiles(dir, options) {
  * @return an array of return values
  */
 export function iterateOverMetaFiles(dir, fn, options) {
-  return findAllMetaFiles(dir, options).map(file =>
-    fn(readMetaFile(file), options)
-  );
-}
-
-/**
- * Find all metadata files in a directory
- * (i.e., in the `.meta` subdirectories of the directory).
- * @param dir the directory to look in
- * @param [options] options object passed to `glob.sync()`
- * @return an array of strings, where each string is
- * the file path of a metadata file
- */
-export function findAllMetaFiles(dir, options) {
-  return glob
-    .sync('**/.meta/*.{yml,yaml}', {
-      ...options,
+  return new Promise((resolve, reject) => {
+    const result = [];
+    const stream = fg.stream(['**/.meta/*.yml'], {
       cwd: dir,
       dot: true,
-      nosort: true,
-      ignore: 'node_modules/**'
-    })
-    .map(file => path.join(dir, file))
+      ignore: ['node_modules/**']
+    });
+    stream.on('data', entry => {
+      const file = path.join(dir, entry);
+      result.push(fn(readMetaFile(file)));
+    });
+    stream.once('end', () => resolve(result));
+  });
 }
 
 /**
@@ -101,7 +91,7 @@ export function readTextFile(filePath) {
  */
 export function processMetaData(meta, options) {
   printMetaData(meta);
-  processTagsAndCategories(meta, options);
+  return processTagsAndCategories(meta, options);
 }
 
 /**
@@ -122,6 +112,7 @@ export function processTagsAndCategories(meta, options) {
       });
     });
   }
+  return meta;
 }
 
 /**
@@ -133,6 +124,7 @@ export function processTags(meta, options) {
   tags.forEach(tag => {
     makeTagLink(meta.file, tag, options);
   });
+  return meta;
 }
 
 /**
