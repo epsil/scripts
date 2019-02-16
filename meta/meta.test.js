@@ -108,7 +108,7 @@ tags:
 
   it('should parse the same YAML multiple times', () => {
     // there is a weird caching bug in gray-matter
-    // which is avoided if one provides an options object
+    // which is prevented if one provides an options object
     parseYaml(`---
 tags:
   - foo
@@ -179,7 +179,7 @@ describe('referencedFilePath', () => {
       meta: 'lib/.meta/.enfil.txt.yml',
       path: '../enfil.txt'
     })
-      .replace(/\\/g, '/')
+      .replace(/\\/g, '/') // Windows: `\` to `/`
       .should.eql('lib/enfil.txt');
   });
 });
