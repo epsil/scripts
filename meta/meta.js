@@ -66,10 +66,10 @@ export function findAllMetaFiles(dir, options) {
       ...options,
       cwd: dir,
       dot: true,
+      nosort: true,
       ignore: 'node_modules/**'
     })
     .map(file => path.join(dir, file))
-    .sort();
 }
 
 /**
