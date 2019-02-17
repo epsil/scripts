@@ -56,33 +56,12 @@ export function iterateOverMetaFiles(dir, fn, options) {
     });
     stream.on('data', entry => {
       const file = path.join(dir, entry);
-      result.push(fn(readMetaFile(file)));
+      fs.readFile(file, 'utf8', (err, data) => {
+        result.push(fn(parseMetadata(data.toString().trim() + '\n', file)));
+      });
     });
     stream.once('end', () => resolve(result));
   });
-}
-
-/**
- * Read metadata from a metadata file.
- * @param filePath the file path to the metadata file
- * @return a metadata object
- */
-export function readMetaFile(filePath) {
-  return parseMetadata(readTextFile(filePath), filePath);
-}
-
-/**
- * Read a text file synchronously.
- * @param filePath the file path of the text file
- * @return a string containing the file's contents
- */
-export function readTextFile(filePath) {
-  return (
-    fs
-      .readFileSync(filePath)
-      .toString()
-      .trim() + '\n'
-  );
 }
 
 /**
