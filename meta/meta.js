@@ -37,7 +37,7 @@ export const makeSymLinks = true;
 export function processMetaFiles(dir, options) {
   const folder = dir || sourceDir;
   console.log(`Processing metadata in ${folder}/ ...\n`);
-  iterateOverMetaFiles(folder, processMetaData, options);
+  iterateOverMetaFilesAsync(folder, processMetaData, options);
 }
 
 /**
@@ -49,24 +49,28 @@ export function processMetaFiles(dir, options) {
 export function iterateOverMetaFiles(dir, fn, options) {
   return new Promise((resolve, reject) => {
     const result = [];
+    const iterator = fn || (x => x);
     const stream = fg.stream(['**/.meta/*.yml'], {
       cwd: dir,
       dot: true,
       ignore: ['node_modules/**']
     });
-    stream.on(
-      'data',
-      entry =>
-        new Promise((iResolve, iReject) => {
-          const file = path.join(dir, entry);
-          fs.readFile(file, 'utf8', (err, data) => {
-            result.push(fn(parseMetadata(data.toString().trim() + '\n', file)));
-          });
-          iResolve(file);
-        })
-    );
-    stream.once('end', () => resolve(result));
+    stream.on('data', entry => {
+      const file = path.join(dir, entry);
+      const data = fs.readFileSync(file, { encoding: 'utf8' });
+      result.push(iterator(parseMetadata(data.toString().trim() + '\n', file)));
+    });
+    stream.once('end', () => {
+      resolve(result);
+    });
   });
+}
+
+async function iterateOverMetaFilesAsync(dir, fn, options) {
+  const iterator = fn || (x => x);
+  const files = await iterateOverMetaFiles(dir, null, options);
+  const proms = files.map(iterator);
+  return Promise.all(proms);
 }
 
 /**
