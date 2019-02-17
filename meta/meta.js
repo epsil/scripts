@@ -77,10 +77,11 @@ async function iterateOverFilesAsync(dir, fn, options) {
  * @param meta a metadata object
  */
 export function processMetaData(file, options) {
-  const data = fs.readFileSync(file, { encoding: 'utf8' });
-  const meta = parseMetadata(data.toString().trim() + '\n', file);
-  printMetaData(meta);
-  return processTagsAndCategories(meta, options);
+  fs.readFile(file, 'utf8', (err, data) => {
+    const meta = parseMetadata(data.toString().trim() + '\n', file);
+    printMetaData(meta);
+    return processTagsAndCategories(meta, options);
+  });
 }
 
 /**
