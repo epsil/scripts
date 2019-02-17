@@ -57,8 +57,7 @@ export function iterateOverFiles(dir, fn, options) {
     });
     stream.on('data', entry => {
       const file = path.join(dir, entry);
-      const data = fs.readFileSync(file, { encoding: 'utf8' });
-      result.push(iterator(parseMetadata(data.toString().trim() + '\n', file)));
+      result.push(iterator(file));
     });
     stream.once('end', () => {
       resolve(result);
@@ -77,7 +76,9 @@ async function iterateOverFilesAsync(dir, fn, options) {
  * Process a metadata object.
  * @param meta a metadata object
  */
-export function processMetaData(meta, options) {
+export function processMetaData(file, options) {
+  const data = fs.readFileSync(file, { encoding: 'utf8' });
+  const meta = parseMetadata(data.toString().trim() + '\n', file);
   printMetaData(meta);
   return processTagsAndCategories(meta, options);
 }
