@@ -54,12 +54,17 @@ export function iterateOverMetaFiles(dir, fn, options) {
       dot: true,
       ignore: ['node_modules/**']
     });
-    stream.on('data', entry => {
-      const file = path.join(dir, entry);
-      fs.readFile(file, 'utf8', (err, data) => {
-        result.push(fn(parseMetadata(data.toString().trim() + '\n', file)));
-      });
-    });
+    stream.on(
+      'data',
+      entry =>
+        new Promise((iResolve, iReject) => {
+          const file = path.join(dir, entry);
+          fs.readFile(file, 'utf8', (err, data) => {
+            result.push(fn(parseMetadata(data.toString().trim() + '\n', file)));
+          });
+          iResolve(file);
+        })
+    );
     stream.once('end', () => resolve(result));
   });
 }
