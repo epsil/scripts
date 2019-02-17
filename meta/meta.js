@@ -46,7 +46,24 @@ export function processMetaFiles(dir, options) {
  * @param fn an iterator function, receiving a metadata object for each file
  * @return an array of return values
  */
-export function iterateOverFiles(dir, fn, options) {
+function iterateOverFiles(dir, fn, options) {
+  const iterator = fn || (x => x);
+  return fg
+    .async(['**/.meta/*.yml'], {
+      ...options,
+      cwd: dir,
+      dot: true,
+      ignore: ['node_modules/**']
+    })
+    .then(entries =>
+      entries.map(entry => {
+        const file = path.join(dir, entry);
+        return iterator(file);
+      })
+    );
+}
+
+export function iterateOverFilesStream(dir, fn, options) {
   return new Promise((resolve, reject) => {
     const result = [];
     const iterator = fn || (x => x);
@@ -59,9 +76,7 @@ export function iterateOverFiles(dir, fn, options) {
       const file = path.join(dir, entry);
       result.push(iterator(file));
     });
-    stream.once('end', () => {
-      resolve(result);
-    });
+    stream.once('end', () => resolve(result));
   });
 }
 
