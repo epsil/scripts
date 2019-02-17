@@ -37,7 +37,7 @@ export const makeSymLinks = true;
 export function processMetaFiles(dir, options) {
   const folder = dir || sourceDir;
   console.log(`Processing metadata in ${folder}/ ...\n`);
-  iterateOverMetaFilesAsync(folder, processMetaData, options);
+  iterateOverFilesAsync(folder, processMetaData, options);
 }
 
 /**
@@ -46,7 +46,7 @@ export function processMetaFiles(dir, options) {
  * @param fn an iterator function, receiving a metadata object for each file
  * @return an array of return values
  */
-export function iterateOverMetaFiles(dir, fn, options) {
+export function iterateOverFiles(dir, fn, options) {
   return new Promise((resolve, reject) => {
     const result = [];
     const iterator = fn || (x => x);
@@ -66,9 +66,9 @@ export function iterateOverMetaFiles(dir, fn, options) {
   });
 }
 
-async function iterateOverMetaFilesAsync(dir, fn, options) {
+async function iterateOverFilesAsync(dir, fn, options) {
   const iterator = fn || (x => x);
-  const files = await iterateOverMetaFiles(dir, null, options);
+  const files = await iterateOverFiles(dir, null, options);
   const proms = files.map(iterator);
   return Promise.all(proms);
 }
