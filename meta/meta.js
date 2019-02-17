@@ -37,7 +37,7 @@ export const makeSymLinks = true;
 export function processMetaFiles(dir, options) {
   const folder = dir || sourceDir;
   console.log(`Processing metadata in ${folder}/ ...\n`);
-  iterateOverFilesAsync(folder, processMetaData, options);
+  return iterateOverFilesStream(folder, processMetaData, options);
 }
 
 /**
