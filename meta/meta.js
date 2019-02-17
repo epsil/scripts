@@ -63,6 +63,12 @@ function iterateOverFiles(dir, fn, options) {
     );
 }
 
+/**
+ * Iterate over all metadata files in the given directory, as a stream.
+ * @param dir the directory to look in
+ * @param fn an iterator function, receiving a metadata object for each file
+ * @return an array of return values
+ */
 export function iterateOverFilesStream(dir, fn, options) {
   return new Promise((resolve, reject) => {
     const result = [];
@@ -80,6 +86,12 @@ export function iterateOverFilesStream(dir, fn, options) {
   });
 }
 
+/**
+ * Iterate over all metadata files in the given directory, in parallel.
+ * @param dir the directory to look in
+ * @param fn an iterator function, receiving a metadata object for each file
+ * @return an array of return values
+ */
 async function iterateOverFilesAsync(dir, fn, options) {
   const iterator = fn || (x => x);
   const files = await iterateOverFiles(dir, null, options);
@@ -278,7 +290,7 @@ export function invokeMkdir(dir, options) {
  */
 export function invokeCmd(cmd, options) {
   if (options && options.debug) {
-    return cmd;
+    return cmd; // test
   }
   let promise = execAsync(cmd, options);
   if (options && options.successValue !== undefined) {
@@ -342,7 +354,7 @@ export function parseMetadata(str, filePath, options) {
   meta.meta = filePath;
   meta.path = meta.file;
   if (!(options && options.debug)) {
-    meta.file = referencedAbsoluteFilePath(meta);
+    meta.file = referencedAbsoluteFilePath(meta); // test
   }
   return meta;
 }

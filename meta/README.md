@@ -52,4 +52,4 @@ Man kan representere kombinasjonen av flere tagger med en *taggliste*. En prakti
 -   `bar foo`
 -   `bar foo quux.baz`
 
-Vi kan forstå `bar foo` som en forespørsel om filer som er tagget med *både* `bar` og `foo`. Med andre ord: `bar foo` betegner *snittet* av filer som er tagget med `bar` og filer som er tagget med `foo`, og kan leses som "`bar` og `foo`".
+Man kan forstå `bar foo` som en forespørsel om filer som er tagget med *både* `bar` og `foo`. Med andre ord: `bar foo` betegner *snittet* av filer som er tagget med `bar` og filer som er tagget med `foo`, og kan leses som "`bar` og `foo`".
