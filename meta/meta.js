@@ -104,10 +104,14 @@ async function iterateOverFilesAsync(dir, fn, options) {
  * @param meta a metadata object
  */
 export function processMetaData(file, options) {
-  fs.readFile(file, 'utf8', (err, data) => {
-    const meta = parseMetadata(data.toString().trim() + '\n', file);
-    printMetaData(meta);
-    return processTagsAndCategories(meta, options);
+  return new Promise((resolve, reject) => {
+    fs.readFile(file, 'utf8', (err, data) => {
+      const meta = parseMetadata(data.toString().trim() + '\n', file);
+      printMetaData(meta);
+      processTagsAndCategories(meta, options).then(() => {
+        resolve(file);
+      });
+    });
   });
 }
 
@@ -116,20 +120,22 @@ export function processMetaData(file, options) {
  * @param meta a metadata object
  */
 export function processTagsAndCategories(meta, options) {
-  const tags = meta.tags || [];
-  const categories = meta.categories;
-  if (!categories) {
-    tags.forEach(tag => {
-      makeTagLinkInCategory(meta.file, tagDir, tag, options);
-    });
-  } else {
-    categories.forEach(category => {
+  return new Promise((resolve, reject) => {
+    const tags = meta.tags || [];
+    const categories = meta.categories;
+    if (!categories) {
       tags.forEach(tag => {
-        makeTagLinkInCategory(meta.file, category, tag, options);
+        makeTagLinkInCategory(meta.file, tagDir, tag, options);
       });
-    });
-  }
-  return meta;
+    } else {
+      categories.forEach(category => {
+        tags.forEach(tag => {
+          makeTagLinkInCategory(meta.file, category, tag, options);
+        });
+      });
+    }
+    resolve(meta);
+  });
 }
 
 /**
@@ -137,11 +143,13 @@ export function processTagsAndCategories(meta, options) {
  * @param meta a metadata object
  */
 export function processTags(meta, options) {
-  const tags = meta.tags || [];
-  tags.forEach(tag => {
-    makeTagLink(meta.file, tag, options);
+  return new Promise((resolve, reject) => {
+    const tags = meta.tags || [];
+    tags.forEach(tag => {
+      makeTagLink(meta.file, tag, options);
+    });
+    resolve(meta);
   });
-  return meta;
 }
 
 /**
