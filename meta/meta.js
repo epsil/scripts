@@ -34,10 +34,10 @@ export const makeSymLinks = true;
  * Process all metadata files in the given directory.
  * @param [dir] the directory to look in, default `.`
  */
-export function processMetaFiles(dir, options) {
+export function processMetadataFiles(dir, options) {
   const folder = dir || sourceDir;
   console.log(`Processing metadata in ${folder}/ ...\n`);
-  return iterateOverFilesStream(folder, processMetaData, options);
+  return iterateOverFilesStream(folder, processMetadata, options);
 }
 
 /**
@@ -103,11 +103,11 @@ async function iterateOverFilesAsync(dir, fn, options) {
  * Process a metadata object.
  * @param meta a metadata object
  */
-export function processMetaData(file, options) {
+export function processMetadata(file, options) {
   return new Promise((resolve, reject) => {
     fs.readFile(file, 'utf8', (err, data) => {
       const meta = parseMetadata(data.toString().trim() + '\n', file);
-      printMetaData(meta);
+      printMetadata(meta, options);
       processTagsAndCategories(meta, options).then(() => {
         resolve(file);
       });
@@ -343,10 +343,13 @@ export function hasCmd(command, options) {
  * Print a metadata object to the console.
  * @param meta a metadata object
  */
-export function printMetaData(meta) {
+export function printMetadata(meta, options) {
   console.log(referencedFilePath(meta));
-  // console.log(meta);
-  // console.log('');
+  if (options && options.debug) {
+    // test
+    console.log(meta);
+    console.log('');
+  }
 }
 
 /**
@@ -357,7 +360,7 @@ export function printMetaData(meta) {
 export function parseMetadata(str, filePath, options) {
   const meta = parseYaml(str);
   if (meta.file === undefined) {
-    meta.file = getFilenameFromMetaFilename(filePath);
+    meta.file = getFilenameFromMetadataFilename(filePath);
   }
   meta.meta = filePath;
   meta.path = meta.file;
@@ -418,7 +421,7 @@ export function addYamlFences(str) {
  * @param filePath the filename of the metadata file
  * @return the filename of the referenced file
  */
-export function getFilenameFromMetaFilename(filePath) {
+export function getFilenameFromMetadataFilename(filePath) {
   const dir = '..';
   let origName = path.basename(filePath);
   origName = origName.replace(/^\./, '');
