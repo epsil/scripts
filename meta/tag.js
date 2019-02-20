@@ -99,7 +99,7 @@ function editMetadataFile(metaFile, tmp) {
 }
 
 function launchEditor(metaFile, textEditor) {
-  return execAsync(`${textEditor} ${metaFile}`);
+  return execAsync(`${textEditor} "${metaFile}"`);
 }
 
 function createMetadataFile(metaFile, tmp) {
