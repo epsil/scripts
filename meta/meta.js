@@ -26,6 +26,16 @@ export const categoryDir = 'cat';
 export const tagDir = 'tag';
 
 /**
+ * The directory to store metadata files in.
+ */
+export const metaDir = '.meta';
+
+/**
+ * The file extension for metadata files.
+ */
+export const metaExt = '.yml';
+
+/**
  * Whether to make symbolic links or copies.
  */
 export const makeSymLinks = true;
@@ -49,7 +59,7 @@ export function processMetadataFiles(dir, options) {
 function iterateOverFiles(dir, fn, options) {
   const iterator = fn || (x => x);
   return fg
-    .async(['**/.meta/*.yml'], {
+    .async(['**/' + metaDir + '/*' + metaExt], {
       ...options,
       cwd: dir,
       dot: true,
@@ -73,7 +83,7 @@ export function iterateOverFilesStream(dir, fn, options) {
   return new Promise((resolve, reject) => {
     const result = [];
     const iterator = fn || (x => x);
-    const stream = fg.stream(['**/.meta/*.yml'], {
+    const stream = fg.stream(['**/' + metaDir + '/*' + metaExt], {
       cwd: dir,
       dot: true,
       ignore: ['node_modules/**']
@@ -420,6 +430,7 @@ export function addYamlFences(str) {
  * by looking at the metadata file's filename.
  * @param filePath the filename of the metadata file
  * @return the filename of the referenced file
+ * @see getMetadataFilenameFromFilename
  */
 export function getFilenameFromMetadataFilename(filePath) {
   const dir = '..';
@@ -428,6 +439,20 @@ export function getFilenameFromMetadataFilename(filePath) {
   origName = origName.replace(/\.ya?ml$/, '');
   origName = dir + '/' + origName;
   return origName;
+}
+
+/**
+ * Get the filename of the metadata file for a file,
+ * by looking at the file's filename.
+ * @param filePath the filename of the file
+ * @return the filename of the file's metadata file
+ * @see getFilenameFromMetadataFilename
+ */
+export function getMetadataFilenameFromFilename(filePath) {
+  const file = path.basename(filePath);
+  const dir = path.dirname(filePath);
+  const metaFile = '.' + file + '.yml';
+  return path.join(dir, metaDir, metaFile);
 }
 
 /**

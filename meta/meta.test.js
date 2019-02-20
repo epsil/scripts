@@ -3,6 +3,7 @@ import {
   addYamlFences,
   categoryDir,
   getFilenameFromMetadataFilename,
+  getMetadataFilenameFromFilename,
   hasCmd,
   invokeCp,
   invokeLn,
@@ -170,6 +171,17 @@ describe('getFilenameFromMetadataFilename', () => {
 
   it('should translate non-dotfile file names too', () => {
     getFilenameFromMetadataFilename('file.txt.yml').should.eql('../file.txt');
+  });
+});
+
+describe('getMetadataFilenameFromFilename', () => {
+  it('should translate a regular file name to a dotfile YAML file name', () => {
+    getMetadataFilenameFromFilename('file.txt')
+      .replace(/\\/g, '/') // Windows: `\` to `/`
+      .should.eql('.meta/.file.txt.yml');
+    getMetadataFilenameFromFilename('lib/file.txt')
+      .replace(/\\/g, '/') // Windows: `\` to `/`
+      .should.eql('lib/.meta/.file.txt.yml');
   });
 });
 
