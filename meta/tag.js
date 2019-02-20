@@ -54,6 +54,12 @@ function main() {
     return;
   }
 
+  const fileExists = fs.existsSync(file);
+  if (!fileExists) {
+    console.log(`${file} does not exist!`);
+    return;
+  }
+
   let tmp = template;
   if (isAudioFile(file)) {
     tmp = audioTemplate;
