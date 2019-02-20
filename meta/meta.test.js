@@ -2,6 +2,7 @@
 import {
   addYamlFences,
   categoryDir,
+  createGlobPattern,
   getFilenameFromMetadataFilename,
   getMetadataFilenameFromFilename,
   hasCmd,
@@ -11,11 +12,19 @@ import {
   invokeRsync,
   makeCategoryContainer,
   makeTagContainer,
+  metaDir,
+  metaExt,
   parseMetadata,
   parseYaml,
   referencedFilePath,
   tagDir
 } from './meta';
+
+describe('createGlobPattern', () => {
+  it('should create a glob string for matching metadata files', () => {
+    createGlobPattern(metaDir, metaExt).should.eql('**/.meta/*.yml');
+  });
+});
 
 describe('makeCategoryContainer', () => {
   it('should make a category container', () => {

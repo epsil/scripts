@@ -59,7 +59,7 @@ export function processMetadataFiles(dir, options) {
 function iterateOverFiles(dir, fn, options) {
   const iterator = fn || (x => x);
   return fg
-    .async(['**/' + metaDir + '/*' + metaExt], {
+    .async([createGlobPattern()], {
       ...options,
       cwd: dir,
       dot: true,
@@ -83,7 +83,7 @@ export function iterateOverFilesStream(dir, fn, options) {
   return new Promise((resolve, reject) => {
     const result = [];
     const iterator = fn || (x => x);
-    const stream = fg.stream(['**/' + metaDir + '/*' + metaExt], {
+    const stream = fg.stream([createGlobPattern()], {
       cwd: dir,
       dot: true,
       ignore: ['node_modules/**']
@@ -107,6 +107,18 @@ async function iterateOverFilesAsync(dir, fn, options) {
   const files = await iterateOverFiles(dir, null, options);
   const proms = files.map(iterator);
   return Promise.all(proms);
+}
+
+/**
+ * Create a glob string for matching all metadata files in a directory.
+ * @param [mDir] the metadata file directory
+ * @param [mExt] the metadata file extension
+ * @return a globbing pattern
+ */
+export function createGlobPattern(mDir, mExt) {
+  const metaDirStr = mDir || metaDir;
+  const metaExtStr = mExt || metaExt;
+  return '**/' + metaDirStr + '/*' + metaExtStr;
 }
 
 /**
