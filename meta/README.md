@@ -47,9 +47,9 @@ Med en metadatafil kan man lagre *tagger* om en fil. Taggene listes i YAML-egens
 
 En *kategori* har samme syntaks som en tagg, men er ment å gruppere filer på en mer overordnet måte (f.eks. ved å skille mellom ulike filtyper). Kategorier lagres i YAML-egenskapen `categories`.
 
-Man kan representere kombinasjonen av flere tagger med en *taggliste*. En praktisk syntaks for tagglister er å representere dem som en streng hvor taggene er alfabetisk sortert og separert med mellomrom, f.eks.:
+Man kan representere kombinasjonen av flere tagger med en *taggliste*. Tagglister kan representeres som lister i YAML, slik det er vist over, men ofte er en mer praktisk syntaks som en streng hvor taggene er alfabetisk sortert og separert med mellomrom. Eksempler:
 
 -   `bar foo`
 -   `bar foo quux.baz`
 
-Man kan forstå `bar foo` som en forespørsel om filer som er tagget med *både* `bar` og `foo`. Med andre ord: `bar foo` betegner *snittet* av filer som er tagget med `bar` og filer som er tagget med `foo`, og kan leses som "`bar` og `foo`".
+Man kan forstå `bar foo` som en spørring etter filer som er tagget med *både* `bar` og `foo`. Med andre ord: `bar foo` betegner *snittet* av filer som er tagget med `bar` og filer som er tagget med `foo`, og kan leses som "`bar` og `foo`".
