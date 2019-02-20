@@ -8,7 +8,7 @@ const _ = require('lodash');
 
 const execAsync = util.promisify(childProcess.exec);
 
-const editor = 'emacs'; // or vim?
+const editor = 'gvim'; // or emacs?
 
 const template = `tags:
   - `;
