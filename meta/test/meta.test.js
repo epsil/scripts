@@ -18,7 +18,7 @@ import {
   parseYaml,
   referencedFilePath,
   tagDir
-} from './meta';
+} from '../meta';
 
 describe('createGlobPattern', () => {
   it('should create a glob string for matching metadata files', () => {

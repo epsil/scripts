@@ -16,7 +16,7 @@ function main() {
   if (!file) {
     return;
   }
-  console.log('Editing metadata for ' + file + ' ...');
+  console.log(`Editing metadata for ${file} ...`);
   editMetadataFileForFile(file);
 }
 

@@ -7,7 +7,7 @@
     "metalinks": "index.js"
   },
   "scripts": {
-    "clean": "rm -rf cat tag",
+    "clean": "rm -rf cat lib tag .meta && cp -r test/fixtures/lib .",
     "start": "npm run clean && node index.js",
     "uninstall": "rm -rf node_modules",
     "uninstall!": "npm run uninstall && rm -f package-lock.json",
@@ -22,7 +22,7 @@
     "lint": "npm run prettier && npm run eslint",
     "test": "npm run lint && npm run mocha",
     "test!": "npm run format! && npm run test",
-    "mocha": "mocha test.js"
+    "mocha": "mocha test/test.js"
   },
   "keywords": [],
   "author": "",
