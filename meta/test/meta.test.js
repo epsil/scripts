@@ -184,10 +184,13 @@ describe('getFilenameFromMetadataFilename', () => {
 });
 
 describe('getMetadataFilenameFromFilename', () => {
-  it('should translate a regular file name to a dotfile YAML file name', () => {
+  it('should translate a regular file name to a metadata file name', () => {
     getMetadataFilenameFromFilename('file.txt')
       .replace(/\\/g, '/') // Windows: `\` to `/`
       .should.eql('.meta/.file.txt.yml');
+  });
+
+  it('should handle directories correctly', () => {
     getMetadataFilenameFromFilename('lib/file.txt')
       .replace(/\\/g, '/') // Windows: `\` to `/`
       .should.eql('lib/.meta/.file.txt.yml');
