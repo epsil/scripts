@@ -2,10 +2,28 @@
 
 const fs = require('fs');
 const path = require('path');
-const childProcess = require('child_process');
 const util = require('util');
+const childProcess = require('child_process');
 
 const execAsync = util.promisify(childProcess.exec);
+
+const editor = 'emacs';
+const template = `tags:
+  - `;
+
+function main() {
+  const file = process.argv[2];
+  if (!file) {
+    return;
+  }
+  console.log('Editing metadata for ' + file + ' ...');
+  editMetadataFileForFile(file);
+}
+
+function editMetadataFileForFile(file) {
+  const metaFile = getMetadataFilenameFromFilename(file);
+  return editMetadataFile(metaFile);
+}
 
 function getMetadataFilenameFromFilename(filePath) {
   const file = path.basename(filePath);
@@ -15,37 +33,33 @@ function getMetadataFilenameFromFilename(filePath) {
   return path.join(dir, metaDir, metaFile);
 }
 
-function editMetadataFileForFile(file) {
-  const metaFile = getMetadataFilenameFromFilename(file);
-  return editMetadataFile(metaFile);
+function editMetadataFile(metaFile) {
+  if (fs.existsSync(metaFile)) {
+    return launchEditor(metaFile, editor);
+  }
+  return createMetadataFile(metaFile).then(() =>
+    launchEditor(metaFile, editor)
+  );
 }
 
-function editMetadataFile(metaFile) {
-  const editor = 'emacs';
-  if (!fs.existsSync(metaFile)) {
-    return createMetadataFile(metaFile).then(() => launchEditor(metaFile));
-  }
-  return launchEditor(metaFile);
+function launchEditor(metaFile, textEditor) {
+  return execAsync(`${textEditor} ${metaFile}`);
 }
 
 function createMetadataFile(metaFile) {
   const metaDir = path.dirname(metaFile);
-  if (!fs.existsSync(metaDir)) {
-    // create file
-    return execAsync('mkdir ' + metaDir).then(() =>
-      insertMetadataTemplate(metaFile)
-    );
+  if (fs.existsSync(metaDir)) {
+    return createMetadataFileFromTemplate(metaFile, template);
   }
-  return insertMetadataTemplate(metaFile);
+  // create directory
+  return execAsync(`mkdir ${metaDir}`).then(() =>
+    createMetadataFileFromTemplate(metaFile, template)
+  );
 }
 
-function insertMetadataTemplate(metaFile, template) {
-  const templateStr =
-    template ||
-    `tags:
-  - `;
+function createMetadataFileFromTemplate(metaFile, str) {
   return new Promise((resolve, reject) => {
-    fs.writeFile(metaFile, templateStr, function(err) {
+    fs.writeFile(metaFile, str || '', function(err) {
       if (err) {
         reject(err);
       } else {
@@ -53,20 +67,6 @@ function insertMetadataTemplate(metaFile, template) {
       }
     });
   });
-}
-
-function launchEditor(metaFile) {
-  const editor = 'emacs';
-  return execAsync(editor + ' ' + metaFile);
-}
-
-function main() {
-  const file = process.argv[2];
-  if (!file) {
-    return;
-  }
-  console.log('Editing metadata for ' + file + ' ...');
-  editMetadataFileForFile(file);
 }
 
 if (require.main === module) {
