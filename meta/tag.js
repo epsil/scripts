@@ -48,27 +48,9 @@ categories:
   - img`;
 
 function main() {
-  const file = process.argv[2];
-
-  if (!file) {
-    return;
-  }
-
-  const fileExists = fs.existsSync(file);
-  if (!fileExists) {
-    console.log(`${file} does not exist!`);
-    return;
-  }
-
-  let tmp = template;
-  if (isAudioFile(file)) {
-    tmp = audioTemplate;
-  } else if (isImageFile(file)) {
-    tmp = imgTemplate;
-  }
-
-  console.log(`Editing metadata for ${file} ...`);
-  editMetadataFileForFile(file, tmp);
+  const [node, cmd, ...args] = process.argv;
+  const files = args;
+  editMetadataFileForFiles(files);
 }
 
 function isAudioFile(file) {
@@ -79,6 +61,34 @@ function isAudioFile(file) {
 function isImageFile(file) {
   const ext = path.extname(file).toLowerCase();
   return _.includes(imgExtensions, ext);
+}
+
+function editMetadataFileForFiles(files, tmp) {
+  return files.map(file => {
+    if (!file) {
+      return null;
+    }
+
+    const fileExists = fs.existsSync(file);
+    if (!fileExists) {
+      console.log(`${file} does not exist!`);
+      return null;
+    }
+
+    let tmpStr = tmp;
+    if (!tmpStr) {
+      if (isAudioFile(file)) {
+        tmpStr = audioTemplate;
+      } else if (isImageFile(file)) {
+        tmpStr = imgTemplate;
+      } else {
+        tmpStr = template;
+      }
+    }
+
+    console.log(`Editing metadata for ${file} ...`);
+    return editMetadataFileForFile(file, tmpStr);
+  });
 }
 
 function editMetadataFileForFile(file, tmp) {
@@ -115,9 +125,9 @@ function createMetadataFile(metaFile, tmp) {
     return createMetadataFileFromTemplate(metaFile, tmp);
   }
   // create directory
-  return execAsync(`mkdir ${metaDir}`).then(() =>
-    createMetadataFileFromTemplate(metaFile, tmp)
-  );
+  return execAsync(`mkdir ${metaDir}`)
+    .catch(err => null)
+    .then(() => createMetadataFileFromTemplate(metaFile, tmp));
 }
 
 function createMetadataFileFromTemplate(metaFile, str) {
