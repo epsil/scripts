@@ -31,6 +31,11 @@ export const tagDir = 'tag';
 export const metaDir = '.meta';
 
 /**
+ * The dotfile prefix for metadata files.
+ */
+export const metaPre = '.';
+
+/**
  * The file extension for metadata files.
  */
 export const metaExt = '.yml';
@@ -42,7 +47,10 @@ export const makeSymLinks = true;
 
 /**
  * Process all metadata files in the given directory.
- * @param [dir] the directory to look in, default `.`
+ * @param [inputDir] the directory to look for metadata files in
+ * (`.` by default)
+ * @param [outputDir] the directory to create symlinks in
+ * (`categoryDir` by default)
  */
 export function processMetadataFiles(inputDir, outputDir, options) {
   const dir = inputDir || sourceDir;
@@ -199,7 +207,7 @@ export function processTags(meta, options) {
  */
 export async function makeTagLinkInCategory(filePath, category, tag, options) {
   const dir = await makeCategoryDirectory(category, options);
-  return makeTagLink(filePath, tag, { ...options, cwd: dir, tag: '.' });
+  return makeTagLink(filePath, tag, { ...options, cwd: dir, tagDir: '.' });
 }
 
 /**
@@ -230,7 +238,7 @@ export async function makeCategoryDirectory(category, options) {
  * Make a tag directory.
  */
 export async function makeTagDirectory(tag, options) {
-  let dir = options && options.tag;
+  let dir = (options && options.tagDir) || tagDir;
   if (!dir) {
     dir = await makeTagContainer(options);
   }
@@ -473,7 +481,7 @@ export function getFilenameFromMetadataFilename(filePath, options) {
   origName = origName.replace(/\.ya?ml$/, '');
   let origFile = path.join(origDir, origName);
   if (options && options.unix) {
-    origFile = origFile.replace(/\\/g, '/');
+    origFile = origFile.replace(/\\/g, '/'); // test
   }
   return origFile;
 }
@@ -487,11 +495,12 @@ export function getFilenameFromMetadataFilename(filePath, options) {
  */
 export function getMetadataFilenameFromFilename(filePath, options) {
   const origDir = path.dirname(filePath);
+  const metaDirectory = path.join(origDir, metaDir);
   const origName = path.basename(filePath);
-  const metaName = `.${origName}.yml`;
-  let metaFile = path.join(origDir, metaDir, metaName);
+  const metaName = metaPre + origName + metaExt;
+  let metaFile = path.join(metaDirectory, metaName);
   if (options && options.unix) {
-    metaFile = metaFile.replace(/\\/g, '/');
+    metaFile = metaFile.replace(/\\/g, '/'); // test
   }
   return metaFile;
 }
