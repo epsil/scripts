@@ -16,7 +16,6 @@ import {
   metaExt,
   parseMetadata,
   parseYaml,
-  referencedFilePath,
   tagDir
 } from '../meta';
 
@@ -93,12 +92,12 @@ tags:
 `,
       '.meta.file.yml',
       {
-        debug: true
+        debug: true,
+        unix: true
       }
     ).should.eql({
       file: '../meta.file',
       meta: '.meta.file.yml',
-      path: '../meta.file',
       tags: ['foo', 'bar']
     });
   });
@@ -175,35 +174,34 @@ tags:
 
 describe('getFilenameFromMetadataFilename', () => {
   it('should translate a dotfile YAML file name to a regular file name', () => {
-    getFilenameFromMetadataFilename('.file.txt.yml').should.eql('../file.txt');
+    getFilenameFromMetadataFilename('.file.txt.yml', { unix: true }).should.eql(
+      '../file.txt'
+    );
   });
 
   it('should translate non-dotfile file names too', () => {
-    getFilenameFromMetadataFilename('file.txt.yml').should.eql('../file.txt');
+    getFilenameFromMetadataFilename('file.txt.yml', { unix: true }).should.eql(
+      '../file.txt'
+    );
+  });
+
+  it('should handle directories correctly', () => {
+    getFilenameFromMetadataFilename('lib/.meta/.file.txt.yml', {
+      unix: true
+    }).should.eql('lib/file.txt');
   });
 });
 
 describe('getMetadataFilenameFromFilename', () => {
   it('should translate a regular file name to a metadata file name', () => {
-    getMetadataFilenameFromFilename('file.txt')
-      .replace(/\\/g, '/') // Windows: `\` to `/`
-      .should.eql('.meta/.file.txt.yml');
+    getMetadataFilenameFromFilename('file.txt', { unix: true }).should.eql(
+      '.meta/.file.txt.yml'
+    );
   });
 
   it('should handle directories correctly', () => {
-    getMetadataFilenameFromFilename('lib/file.txt')
-      .replace(/\\/g, '/') // Windows: `\` to `/`
-      .should.eql('lib/.meta/.file.txt.yml');
-  });
-});
-
-describe('referencedFilePath', () => {
-  it('should get the file path of the file referenced by a meta object', () => {
-    referencedFilePath({
-      meta: 'lib/.meta/.enfil.txt.yml',
-      path: '../enfil.txt'
-    })
-      .replace(/\\/g, '/') // Windows: `\` to `/`
-      .should.eql('lib/enfil.txt');
+    getMetadataFilenameFromFilename('lib/file.txt', { unix: true }).should.eql(
+      'lib/.meta/.file.txt.yml'
+    );
   });
 });

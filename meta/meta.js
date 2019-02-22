@@ -66,10 +66,19 @@ function iterateOverFiles(dir, fn, options) {
       ignore: ['node_modules/**']
     })
     .then(entries =>
-      entries.map(entry => {
-        const file = path.join(dir, entry);
-        return iterator(file);
-      })
+      entries
+        .map(entry => {
+          const file = path.join(dir, entry);
+          const origFile = getFilenameFromMetadataFilename(file);
+          const origFileExists = fs.existsSync(origFile);
+          if (!origFileExists) {
+            console.log(`${origFile} does not exist!
+  (referenced by ${file})`);
+            return null;
+          }
+          return iterator(file);
+        })
+        .filter(x => x !== null)
     );
 }
 
@@ -90,7 +99,14 @@ export function iterateOverFilesStream(dir, fn, options) {
     });
     stream.on('data', entry => {
       const file = path.join(dir, entry);
-      result.push(iterator(file));
+      const origFile = getFilenameFromMetadataFilename(file);
+      const origFileExists = fs.existsSync(origFile);
+      if (!origFileExists) {
+        console.log(`${origFile} does not exist!
+  (referenced by ${file})`);
+      } else {
+        result.push(iterator(file));
+      }
     });
     stream.once('end', () => resolve(result));
   });
@@ -146,14 +162,14 @@ export function processTagsAndCategories(meta, options) {
     const tags = meta.tags || [];
     const categories = meta.categories;
     if (!categories) {
-      tags.forEach(tag => {
-        makeTagLinkInCategory(meta.file, tagDir, tag, options);
-      });
+      tags.forEach(tag =>
+        makeTagLinkInCategory(meta.file, tagDir, tag, options)
+      );
     } else {
       categories.forEach(category => {
-        tags.forEach(tag => {
-          makeTagLinkInCategory(meta.file, category, tag, options);
-        });
+        tags.forEach(tag =>
+          makeTagLinkInCategory(meta.file, category, tag, options)
+        );
       });
     }
     resolve(meta);
@@ -167,9 +183,7 @@ export function processTagsAndCategories(meta, options) {
 export function processTags(meta, options) {
   return new Promise((resolve, reject) => {
     const tags = meta.tags || [];
-    tags.forEach(tag => {
-      makeTagLink(meta.file, tag, options);
-    });
+    tags.forEach(tag => makeTagLink(meta.file, tag, options));
     resolve(meta);
   });
 }
@@ -366,7 +380,7 @@ export function hasCmd(command, options) {
  * @param meta a metadata object
  */
 export function printMetadata(meta, options) {
-  console.log(referencedFilePath(meta));
+  console.log(meta && meta.file);
   if (options && options.debug) {
     // test
     console.log(meta);
@@ -382,12 +396,11 @@ export function printMetadata(meta, options) {
 export function parseMetadata(str, filePath, options) {
   const meta = parseYaml(str);
   if (meta.file === undefined) {
-    meta.file = getFilenameFromMetadataFilename(filePath);
+    meta.file = getFilenameFromMetadataFilename(filePath, options);
   }
   meta.meta = filePath;
-  meta.path = meta.file;
   if (!(options && options.debug)) {
-    meta.file = referencedAbsoluteFilePath(meta); // test
+    meta.file = path.resolve(meta.file); // test
   }
   return meta;
 }
@@ -444,13 +457,19 @@ export function addYamlFences(str) {
  * @return the filename of the referenced file
  * @see getMetadataFilenameFromFilename
  */
-export function getFilenameFromMetadataFilename(filePath) {
-  const dir = '..';
-  let origName = path.basename(filePath);
+export function getFilenameFromMetadataFilename(filePath, options) {
+  const metaDirectory = path.dirname(filePath);
+  const parentDir = '..';
+  const origDir = path.join(metaDirectory, parentDir);
+  const metaName = path.basename(filePath);
+  let origName = metaName;
   origName = origName.replace(/^\./, '');
   origName = origName.replace(/\.ya?ml$/, '');
-  origName = dir + '/' + origName;
-  return origName;
+  let origFile = path.join(origDir, origName);
+  if (options && options.unix) {
+    origFile = origFile.replace(/\\/g, '/');
+  }
+  return origFile;
 }
 
 /**
@@ -460,29 +479,15 @@ export function getFilenameFromMetadataFilename(filePath) {
  * @return the filename of the file's metadata file
  * @see getFilenameFromMetadataFilename
  */
-export function getMetadataFilenameFromFilename(filePath) {
-  const file = path.basename(filePath);
-  const dir = path.dirname(filePath);
-  const metaFile = '.' + file + '.yml';
-  return path.join(dir, metaDir, metaFile);
-}
-
-/**
- * Get the absolute file path of the file referenced by a meta object.
- * @param meta a metadata object
- * @return an absolute file path
- */
-export function referencedAbsoluteFilePath(meta) {
-  return path.resolve(referencedFilePath(meta));
-}
-
-/**
- * Get the file path of the file referenced by a meta object.
- * @param meta a metadata object
- * @return a file path (relative to the current directory)
- */
-export function referencedFilePath(meta) {
-  return path.join(path.dirname(meta.meta), meta.path);
+export function getMetadataFilenameFromFilename(filePath, options) {
+  const origDir = path.dirname(filePath);
+  const origName = path.basename(filePath);
+  const metaName = `.${origName}.yml`;
+  let metaFile = path.join(origDir, metaDir, metaName);
+  if (options && options.unix) {
+    metaFile = metaFile.replace(/\\/g, '/');
+  }
+  return metaFile;
 }
 
 /**
