@@ -8,7 +8,21 @@ import { processMetadataFiles } from './meta';
  * file, which in turn invokes `main()`.)
  */
 function main() {
-  processMetadataFiles('lib');
+  const [node, cmd, inputDir, outputDir] = process.argv;
+  if (inputDir === '--help' || inputDir === '-h') {
+    help();
+    return;
+  }
+  processMetadataFiles(inputDir, outputDir);
+}
+
+/**
+ * Display help message.
+ */
+function help() {
+  console.log(`Usage:
+
+./index.js [input] [output]`);
 }
 
 // invoke the "main" function

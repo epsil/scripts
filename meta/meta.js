@@ -44,10 +44,13 @@ export const makeSymLinks = true;
  * Process all metadata files in the given directory.
  * @param [dir] the directory to look in, default `.`
  */
-export function processMetadataFiles(dir, options) {
-  const folder = dir || sourceDir;
-  console.log(`Processing metadata in ${folder}/ ...\n`);
-  return iterateOverFilesStream(folder, processMetadata, options);
+export function processMetadataFiles(inputDir, outputDir, options) {
+  const dir = inputDir || sourceDir;
+  console.log(`Processing metadata in ${dir}/ ...\n`);
+  return iterateOverFilesStream(dir, processMetadata, {
+    ...options,
+    categoryDir: outputDir
+  });
 }
 
 /**
@@ -76,7 +79,7 @@ function iterateOverFiles(dir, fn, options) {
   (referenced by ${file})`);
             return null;
           }
-          return iterator(file);
+          return iterator(file, options);
         })
         .filter(x => x !== null)
     );
@@ -105,7 +108,7 @@ export function iterateOverFilesStream(dir, fn, options) {
         console.log(`${origFile} does not exist!
   (referenced by ${file})`);
       } else {
-        result.push(iterator(file));
+        result.push(iterator(file, options));
       }
     });
     stream.once('end', () => resolve(result));
@@ -195,7 +198,7 @@ export function processTags(meta, options) {
  * @param tag the tag to create a link for
  */
 export async function makeTagLinkInCategory(filePath, category, tag, options) {
-  const dir = await makeCategoryDirectory(category);
+  const dir = await makeCategoryDirectory(category, options);
   return makeTagLink(filePath, tag, { ...options, cwd: dir, tag: '.' });
 }
 
@@ -238,14 +241,17 @@ export async function makeTagDirectory(tag, options) {
  * Make a category container.
  */
 export function makeCategoryContainer(options) {
-  return makeDirectory(categoryDir, options);
+  return makeDirectory(
+    (options && options.categoryDir) || categoryDir,
+    options
+  );
 }
 
 /**
  * Make a tag container.
  */
 export function makeTagContainer(options) {
-  return makeDirectory(tagDir, options);
+  return makeDirectory((options && options.tagDir) || tagDir, options);
 }
 
 /**
