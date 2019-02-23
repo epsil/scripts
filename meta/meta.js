@@ -46,6 +46,11 @@ export const metaExt = '.yml';
 export const makeSymLinks = true;
 
 /**
+ * Globbing pattern for directories to ignore.
+ */
+export const ignorePattern = 'node_modules/**';
+
+/**
  * Process all metadata files in the given directory.
  * @param [inputDir] the directory to look for metadata files in
  * (`sourceDir` by default)
@@ -149,7 +154,7 @@ function iterateOverFiles(dir, fn, options) {
       ...options,
       cwd: dir,
       dot: true,
-      ignore: ['node_modules/**']
+      ignore: [ignorePattern]
     })
     .then(entries =>
       entries
@@ -181,7 +186,7 @@ export function iterateOverFilesStream(dir, fn, options) {
     const stream = fg.stream([createGlobPattern()], {
       cwd: dir,
       dot: true,
-      ignore: ['node_modules/**']
+      ignore: [ignorePattern]
     });
     stream.on('data', entry => {
       const file = path.join(dir, entry);
