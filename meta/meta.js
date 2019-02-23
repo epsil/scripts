@@ -53,12 +53,45 @@ export const makeSymLinks = true;
  * (`categoryDir` by default)
  */
 export function processMetadataFiles(inputDir, outputDir, options) {
-  const dir = inputDir || sourceDir;
-  console.log(`Processing metadata in ${dir}/ ...\n`);
-  return iterateOverFilesStream(dir, processMetadata, {
+  const inDir = inputDir || sourceDir;
+  const outDir = outputDir || categoryDir;
+  console.log(`Processing metadata in ${inDir}/ ...\n`);
+  return processMetadataFilesInTmpDir(inDir, outDir, options);
+}
+
+/**
+ * Process metadata files by creating symlinks in a temporary directory
+ * and then merging that into the target directory.
+ * @param [inputDir] the directory to look for metadata files in
+ * @param [outputDir] the directory to create symlinks in
+ */
+export function processMetadataFilesInTmpDir(inputDir, outputDir, options) {
+  return processMetadataFilesAndWriteToTmpDir(inputDir, options).then(
+    mergeTmpDirAndOutputDir(outputDir, options)
+  );
+}
+
+/**
+ * Process metadata files by creating symlinks in a temporary directory.
+ * @param [inputDir] the directory to look for metadata files in
+ */
+export function processMetadataFilesAndWriteToTmpDir(inputDir, options) {
+  return iterateOverFilesStream(inputDir, processMetadata, {
     ...options,
-    categoryDir: outputDir
+    categoryDir: 'tmp'
   });
+}
+
+/**
+ * Merge a temporary directory of symlinks into the target directory.
+ * @param [outputDir] the directory to create symlinks in
+ */
+export function mergeTmpDirAndOutputDir(outputDir, options) {
+  return invokeCmd(`mv "${outputDir}" "trash"`, {
+    errorValue: true
+  })
+    .then(invokeCmd(`mv "tmp" "${outputDir}"`))
+    .then(invokeCmd('rm -rf "trash"'));
 }
 
 /**
