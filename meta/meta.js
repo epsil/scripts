@@ -48,7 +48,7 @@ export const makeSymLinks = true;
 /**
  * Process all metadata files in the given directory.
  * @param [inputDir] the directory to look for metadata files in
- * (`.` by default)
+ * (`sourceDir` by default)
  * @param [outputDir] the directory to create symlinks in
  * (`categoryDir` by default)
  */
@@ -56,7 +56,9 @@ export function processMetadataFiles(inputDir, outputDir, options) {
   const inDir = inputDir || sourceDir;
   const outDir = outputDir || categoryDir;
   console.log(`Processing metadata in ${inDir}/ ...\n`);
-  return processMetadataFilesInTmpDir(inDir, outDir, options);
+  return processMetadataFilesWithTmpDir(inDir, outDir, options).then(() => {
+    console.log('Done.');
+  });
 }
 
 /**
@@ -65,33 +67,73 @@ export function processMetadataFiles(inputDir, outputDir, options) {
  * @param [inputDir] the directory to look for metadata files in
  * @param [outputDir] the directory to create symlinks in
  */
-export function processMetadataFilesInTmpDir(inputDir, outputDir, options) {
-  return processMetadataFilesAndWriteToTmpDir(inputDir, options).then(
-    mergeTmpDirAndOutputDir(outputDir, options)
+export function processMetadataFilesWithTmpDir(inputDir, outputDir, options) {
+  const tmpDir = 'tmp';
+  return processMetadataFilesInDir(inputDir, tmpDir, options).then(result =>
+    mergeTmpDirAndOutputDir(tmpDir, outputDir, options)
   );
 }
 
 /**
- * Process metadata files by creating symlinks in a temporary directory.
+ * Process metadata files by creating symlinks in a target directory.
  * @param [inputDir] the directory to look for metadata files in
+ * @param [outputDir] the directory to create symlinks in
  */
-export function processMetadataFilesAndWriteToTmpDir(inputDir, options) {
+export function processMetadataFilesInDir(inputDir, outputDir, options) {
   return iterateOverFilesStream(inputDir, processMetadata, {
     ...options,
-    categoryDir: 'tmp'
+    categoryDir: outputDir
   });
 }
 
 /**
  * Merge a temporary directory of symlinks into the target directory.
- * @param [outputDir] the directory to create symlinks in
+ * @param [tmpDir] the temporary directory
+ * @param [outputDir] the output directory
  */
-export function mergeTmpDirAndOutputDir(outputDir, options) {
-  return invokeCmd(`mv "${outputDir}" "trash"`, {
+export async function mergeTmpDirAndOutputDir(tmpDir, outputDir, options) {
+  const rsync = await hasRsync();
+  if (rsync) {
+    return mergeTmpDirAndOutputDirWithRsync(tmpDir, outputDir, options);
+  }
+  return mergeTmpDirAndOutputDirWithMv(tmpDir, outputDir, options);
+}
+
+/**
+ * Use `rsync` to merge a temporary directory into the target directory.
+ * @param [tmpDir] the temporary directory
+ * @param [outputDir] the output directory
+ */
+export async function mergeTmpDirAndOutputDirWithRsync(
+  tmpDir,
+  outputDir,
+  options
+) {
+  return makeDirectory(outputDir)
+    .then(
+      invokeCmd(`rsync -avz --delete "${tmpDir}/" "${outputDir}"`, {
+        errorValue: true
+      })
+    )
+    .then(invokeCmd(`rm -rf "${tmpDir}"`));
+}
+
+/**
+ * Use `mv` to merge a temporary directory into the target directory.
+ * @param [tmpDir] the temporary directory
+ * @param [outputDir] the output directory
+ */
+export async function mergeTmpDirAndOutputDirWithMv(
+  tmpDir,
+  outputDir,
+  options
+) {
+  const trashDir = 'trash';
+  return invokeCmd(`mv "${outputDir}" "${trashDir}"`, {
     errorValue: true
   })
-    .then(invokeCmd(`mv "tmp" "${outputDir}"`))
-    .then(invokeCmd('rm -rf "trash"'));
+    .then(invokeCmd(`mv "${tmpDir}" "${outputDir}"`))
+    .then(invokeCmd(`rm -rf "${trashDir}"`));
 }
 
 /**
@@ -152,7 +194,7 @@ export function iterateOverFilesStream(dir, fn, options) {
         result.push(iterator(file, options));
       }
     });
-    stream.once('end', () => resolve(result));
+    stream.once('end', () => resolve(Promise.all(result)));
   });
 }
 
