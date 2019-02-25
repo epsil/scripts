@@ -7,7 +7,7 @@
     "metalinks": "index.js"
   },
   "scripts": {
-    "clean": "rm -rf lib tag .meta && cp -r test/fixtures/lib .",
+    "clean": "rm -rf lib cat tag tmp trash .meta && cp -r test/fixtures/lib .",
     "start": "npm run clean && node index.js",
     "uninstall": "rm -rf node_modules",
     "uninstall!": "npm run uninstall && rm -f package-lock.json",

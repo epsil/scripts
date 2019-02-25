@@ -74,7 +74,7 @@ export function processMetadataFiles(inputDir, outputDir, options) {
  */
 export function processMetadataFilesWithTmpDir(inputDir, outputDir, options) {
   const tmpDir = 'tmp';
-  return processMetadataFilesInDir(inputDir, tmpDir, options).then(result =>
+  return processMetadataFilesInDir(inputDir, tmpDir, options).then(() =>
     mergeTmpDirAndOutputDir(tmpDir, outputDir, options)
   );
 }
@@ -115,12 +115,12 @@ export async function mergeTmpDirAndOutputDirWithRsync(
   options
 ) {
   return makeDirectory(outputDir)
-    .then(
+    .then(() =>
       invokeCmd(`rsync -avz --delete "${tmpDir}/" "${outputDir}"`, {
         errorValue: true
       })
     )
-    .then(invokeCmd(`rm -rf "${tmpDir}"`));
+    .then(() => invokeCmd(`rm -rf "${tmpDir}"`));
 }
 
 /**
@@ -133,12 +133,18 @@ export async function mergeTmpDirAndOutputDirWithMv(
   outputDir,
   options
 ) {
+  if (isWindows()) {
+    console.log(`Windows: cannot move ${tmpDir}/ to ${outputDir}/.`);
+    return null;
+  }
+  const outputDirExists = fs.existsSync(outputDir);
+  if (!outputDirExists) {
+    return invokeCmd(`mv "${tmpDir}" "${outputDir}"`);
+  }
   const trashDir = 'trash';
-  return invokeCmd(`mv "${outputDir}" "${trashDir}"`, {
-    errorValue: true
-  })
-    .then(invokeCmd(`mv "${tmpDir}" "${outputDir}"`))
-    .then(invokeCmd(`rm -rf "${trashDir}"`));
+  return invokeCmd(`mv "${outputDir}" "${trashDir}"`)
+    .then(() => invokeCmd(`mv "${tmpDir}" "${outputDir}"`))
+    .then(() => invokeCmd(`rm -rf "${trashDir}"`));
 }
 
 /**
