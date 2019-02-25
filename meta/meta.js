@@ -335,17 +335,16 @@ export async function makeTagDirectory(tag, options) {
  * Make a category container.
  */
 export function makeCategoryContainer(options) {
-  return makeDirectory(
-    (options && options.categoryDir) || categoryDir,
-    options
-  );
+  const dir = (options && options.categoryDir) || categoryDir;
+  return makeDirectory(dir, options);
 }
 
 /**
  * Make a tag container.
  */
 export function makeTagContainer(options) {
-  return makeDirectory((options && options.tagDir) || tagDir, options);
+  const dir = (options && options.tagDir) || tagDir;
+  return makeDirectory(dir, options);
 }
 
 /**
@@ -353,7 +352,8 @@ export function makeTagContainer(options) {
  * No error is thrown if the directory already exists.
  */
 export function makeDirectory(dir, options) {
-  return invokeMkdir(path.normalize(dir), options);
+  const dirPath = path.normalize(dir);
+  return invokeMkdir(dirPath, options);
 }
 
 /**
@@ -513,10 +513,15 @@ export function parseMetadata(str, filePath, options) {
 export function parseYaml(str) {
   let meta = {};
   try {
+    // parse YAML with gray-matter
     const yaml = addYamlFences(str);
     meta = matter(yaml, { lang: 'yaml' });
+
+    // add properties from gray-matter's `data` property
     const data = _.assign({}, meta.data);
     delete meta.data;
+
+    // remove extraneous gray-matter properties
     meta = _.assign({}, data, meta);
     if (meta.content === '') {
       delete meta.content;
@@ -530,6 +535,8 @@ export function parseYaml(str) {
   } catch (err) {
     return {};
   }
+
+  // return metadata object
   return meta;
 }
 
