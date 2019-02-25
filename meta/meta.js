@@ -31,6 +31,11 @@ export const tagDir = 'tag';
 export const metaDir = '.meta';
 
 /**
+ * Temporary directory to generate symlinks in.
+ */
+export const tmpDir = 'tmp';
+
+/**
  * The dotfile prefix for metadata files.
  */
 export const metaPre = '.';
@@ -61,9 +66,11 @@ export function processMetadataFiles(inputDir, outputDir, options) {
   const inDir = inputDir || sourceDir;
   const outDir = outputDir || categoryDir;
   console.log(`Processing metadata in ${inDir}/ ...\n`);
-  return processMetadataFilesWithTmpDir(inDir, outDir, options).then(() => {
-    console.log('Done.');
-  });
+  return processMetadataFilesWithTmpDir(inDir, outDir, tmpDir, options).then(
+    () => {
+      console.log('Done.');
+    }
+  );
 }
 
 /**
@@ -71,11 +78,17 @@ export function processMetadataFiles(inputDir, outputDir, options) {
  * and then merging that into the target directory.
  * @param [inputDir] the directory to look for metadata files in
  * @param [outputDir] the directory to create symlinks in
+ * @param [tempDir] the temporary directory to create symlinks in
  */
-export function processMetadataFilesWithTmpDir(inputDir, outputDir, options) {
-  const tmpDir = 'tmp';
-  return processMetadataFilesInDir(inputDir, tmpDir, options).then(() =>
-    mergeTmpDirAndOutputDir(tmpDir, outputDir, options)
+export async function processMetadataFilesWithTmpDir(
+  inputDir,
+  outputDir,
+  tempDir,
+  options
+) {
+  const tempDirectory = await makeTemporaryDirectory(tempDir || tmpDir);
+  return processMetadataFilesInDir(inputDir, tempDirectory, options).then(() =>
+    mergeTmpDirAndOutputDir(tempDirectory, outputDir, options)
   );
 }
 
@@ -93,57 +106,57 @@ export function processMetadataFilesInDir(inputDir, outputDir, options) {
 
 /**
  * Merge a temporary directory of symlinks into the target directory.
- * @param [tmpDir] the temporary directory
+ * @param [tempDir] the temporary directory
  * @param [outputDir] the output directory
  */
-export async function mergeTmpDirAndOutputDir(tmpDir, outputDir, options) {
+export async function mergeTmpDirAndOutputDir(tempDir, outputDir, options) {
   const rsync = await hasRsync();
   if (rsync) {
-    return mergeTmpDirAndOutputDirWithRsync(tmpDir, outputDir, options);
+    return mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options);
   }
-  return mergeTmpDirAndOutputDirWithMv(tmpDir, outputDir, options);
+  return mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options);
 }
 
 /**
  * Use `rsync` to merge a temporary directory into the target directory.
- * @param [tmpDir] the temporary directory
+ * @param [tempDir] the temporary directory
  * @param [outputDir] the output directory
  */
 export async function mergeTmpDirAndOutputDirWithRsync(
-  tmpDir,
+  tempDir,
   outputDir,
   options
 ) {
   return makeDirectory(outputDir)
     .then(() =>
-      invokeCmd(`rsync -avz --delete "${tmpDir}/" "${outputDir}"`, {
+      invokeCmd(`rsync -avz --delete "${tempDir}/" "${outputDir}"`, {
         errorValue: true
       })
     )
-    .then(() => invokeCmd(`rm -rf "${tmpDir}"`));
+    .then(() => invokeCmd(`rm -rf "${tempDir}"`));
 }
 
 /**
  * Use `mv` to merge a temporary directory into the target directory.
- * @param [tmpDir] the temporary directory
+ * @param [tempDir] the temporary directory
  * @param [outputDir] the output directory
  */
 export async function mergeTmpDirAndOutputDirWithMv(
-  tmpDir,
+  tempDir,
   outputDir,
   options
 ) {
   if (isWindows()) {
-    console.log(`Windows: cannot move ${tmpDir}/ to ${outputDir}/.`);
+    console.log(`Windows: cannot move ${tempDir}/ to ${outputDir}/.`);
     return null;
   }
   const outputDirExists = fs.existsSync(outputDir);
   if (!outputDirExists) {
-    return invokeCmd(`mv "${tmpDir}" "${outputDir}"`);
+    return invokeCmd(`mv "${tempDir}" "${outputDir}"`);
   }
-  const trashDir = 'trash';
+  const trashDir = tempDir + '2'; // 'tmp2'
   return invokeCmd(`mv "${outputDir}" "${trashDir}"`)
-    .then(() => invokeCmd(`mv "${tmpDir}" "${outputDir}"`))
+    .then(() => invokeCmd(`mv "${tempDir}" "${outputDir}"`))
     .then(() => invokeCmd(`rm -rf "${trashDir}"`));
 }
 
@@ -345,6 +358,14 @@ export function makeCategoryContainer(options) {
 export function makeTagContainer(options) {
   const dir = (options && options.tagDir) || tagDir;
   return makeDirectory(dir, options);
+}
+
+/**
+ * Make a temporary empty directory.
+ * @param tempDir the directory to create
+ */
+export function makeTemporaryDirectory(tempDir) {
+  return invokeCmd(`rm -rf ${tempDir}`).then(() => makeDirectory(tempDir));
 }
 
 /**
