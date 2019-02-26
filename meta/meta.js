@@ -162,7 +162,7 @@ export async function mergeTmpDirAndOutputDirWithMv(
 
 /**
  * Iterate over all metadata files in the given directory.
- * @param fn an iterator function, receiving a metadata object for each file
+ * @param fn an iterator function, receiving a file path for each metadata file
  * @param dir the directory to look in
  * @return an array of return values
  */
@@ -194,7 +194,7 @@ function iterateOverFiles(fn, dir, options) {
 
 /**
  * Iterate over all metadata files in the given directory, as a stream.
- * @param fn an iterator function, receiving a metadata object for each file
+ * @param fn an iterator function, receiving a file path for each metadata file
  * @param dir the directory to look in
  * @return an array of return values
  */
@@ -224,14 +224,14 @@ export function iterateOverFilesStream(fn, dir, options) {
 
 /**
  * Iterate over all metadata files in the given directory, in parallel.
- * @param fn an iterator function, receiving a metadata object for each file
+ * @param fn an iterator function, receiving a file path for each metadata file
  * @param dir the directory to look in
  * @return an array of return values
  */
 async function iterateOverFilesAsync(fn, dir, options) {
   const iterator = fn || (x => x);
   const files = await iterateOverFiles(null, dir, options);
-  const proms = files.map(iterator);
+  const proms = files.map(file => iterator(file, options));
   return Promise.all(proms);
 }
 
@@ -272,8 +272,9 @@ export function processTagsAndCategories(meta, options) {
     const tags = meta.tags || [];
     const categories = meta.categories;
     if (!categories) {
+      const category = tagDir;
       tags.forEach(tag =>
-        makeTagLinkInCategory(meta.file, tagDir, tag, options)
+        makeTagLinkInCategory(meta.file, category, tag, options)
       );
     } else {
       categories.forEach(category => {

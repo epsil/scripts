@@ -10,7 +10,21 @@ const execAsync = util.promisify(childProcess.exec);
 
 const editor = 'gvim'; // or emacs?
 
-const template = `tags:
+const audioTemplate =
+  `tags:
+  - ` + // whitespace
+  `
+categories:
+  - audio`;
+
+const imgTemplate =
+  `tags:
+  - ` + // whitespace
+  `
+categories:
+  - img`;
+
+const defTemplate = `tags:
   - `;
 
 const audioExtensions = [
@@ -23,13 +37,6 @@ const audioExtensions = [
   '.ape'
 ];
 
-const audioTemplate =
-  `tags:
-  - ` + // whitespace
-  `
-categories:
-  - audio`;
-
 const imgExtensions = [
   '.jpg',
   '.jpeg',
@@ -39,13 +46,6 @@ const imgExtensions = [
   '.heif',
   '.heic'
 ];
-
-const imgTemplate =
-  `tags:
-  - ` + // whitespace
-  `
-categories:
-  - img`;
 
 function main() {
   const [node, cmd, ...args] = process.argv;
@@ -75,20 +75,20 @@ function editMetadataFileForFiles(files, tmp) {
       return null;
     }
 
-    let tmpStr = tmp;
-    if (!tmpStr) {
-      if (isAudioFile(file)) {
-        tmpStr = audioTemplate;
-      } else if (isImageFile(file)) {
-        tmpStr = imgTemplate;
-      } else {
-        tmpStr = template;
-      }
-    }
-
     console.log(`Editing metadata for ${file} ...`);
-    return editMetadataFileForFile(file, tmpStr);
+    const template = tmp || getTemplateForFile(file);
+    return editMetadataFileForFile(file, template);
   });
+}
+
+function getTemplateForFile(file) {
+  if (isAudioFile(file)) {
+    return audioTemplate;
+  }
+  if (isImageFile(file)) {
+    return imgTemplate;
+  }
+  return defTemplate;
 }
 
 function editMetadataFileForFile(file, tmp) {
