@@ -98,7 +98,7 @@ export async function processMetadataFilesWithTmpDir(
  * @param [outputDir] the directory to create symlinks in
  */
 export function processMetadataFilesInDir(inputDir, outputDir, options) {
-  return iterateOverFilesStream(inputDir, processMetadata, {
+  return iterateOverFilesStream(processMetadata, inputDir, {
     ...options,
     categoryDir: outputDir
   });
@@ -162,11 +162,11 @@ export async function mergeTmpDirAndOutputDirWithMv(
 
 /**
  * Iterate over all metadata files in the given directory.
- * @param dir the directory to look in
  * @param fn an iterator function, receiving a metadata object for each file
+ * @param dir the directory to look in
  * @return an array of return values
  */
-function iterateOverFiles(dir, fn, options) {
+function iterateOverFiles(fn, dir, options) {
   const iterator = fn || (x => x);
   return fg
     .async([createGlobPattern()], {
@@ -194,11 +194,11 @@ function iterateOverFiles(dir, fn, options) {
 
 /**
  * Iterate over all metadata files in the given directory, as a stream.
- * @param dir the directory to look in
  * @param fn an iterator function, receiving a metadata object for each file
+ * @param dir the directory to look in
  * @return an array of return values
  */
-export function iterateOverFilesStream(dir, fn, options) {
+export function iterateOverFilesStream(fn, dir, options) {
   return new Promise((resolve, reject) => {
     const result = [];
     const iterator = fn || (x => x);
@@ -224,13 +224,13 @@ export function iterateOverFilesStream(dir, fn, options) {
 
 /**
  * Iterate over all metadata files in the given directory, in parallel.
- * @param dir the directory to look in
  * @param fn an iterator function, receiving a metadata object for each file
+ * @param dir the directory to look in
  * @return an array of return values
  */
-async function iterateOverFilesAsync(dir, fn, options) {
+async function iterateOverFilesAsync(fn, dir, options) {
   const iterator = fn || (x => x);
-  const files = await iterateOverFiles(dir, null, options);
+  const files = await iterateOverFiles(null, dir, options);
   const proms = files.map(iterator);
   return Promise.all(proms);
 }
