@@ -21,7 +21,7 @@
     "format!": "npm run lint && npm run format",
     "lint": "npm run prettier && npm run eslint",
     "test": "npm run lint && npm run mocha",
-    "test!": "npm run format! && npm run test",
+    "test!": "npm run test && npm start",
     "mocha": "mocha test/test.js"
   },
   "keywords": [],

@@ -392,12 +392,35 @@ export function makeLink(source, destination, options) {
  * @param source the source file
  * @param destination the destination file
  */
-export async function makeCopy(source, destination, options) {
-  const rsync = await hasRsync();
-  if (rsync) {
-    return invokeRsync(source, destination, options);
-  }
-  return invokeCp(source, destination, options);
+export function makeCopy(source, destination, options) {
+  return new Promise((resolve, reject) => {
+    let cwd = (options && options.cwd) || '.';
+    cwd = path.resolve(cwd);
+    let sourcePath = source;
+    if (path.isAbsolute(sourcePath)) {
+      sourcePath = path.relative(cwd, sourcePath);
+    }
+    sourcePath = path.join(cwd, sourcePath);
+    let destinationPath = destination;
+    if (path.isAbsolute(destinationPath)) {
+      destinationPath = path.relative(cwd, destinationPath);
+    }
+    destinationPath = path.join(cwd, destinationPath);
+    const isDirectory = fs.lstatSync(destinationPath).isDirectory();
+    if (isDirectory) {
+      // fs.copyFile() cannot copy to directory paths,
+      // the file name must be specified explicitly
+      destinationPath = path.join(destinationPath, path.basename(sourcePath));
+    }
+    fs.copyFile(sourcePath, destinationPath, err => {
+      if (err) {
+        console.log(err);
+        reject(err);
+      } else {
+        resolve(destination);
+      }
+    });
+  });
 }
 
 /**
@@ -420,18 +443,6 @@ export function invokeLn(source, destination, options) {
  */
 export function invokeRsync(source, destination, options) {
   return invokeCmd(`rsync -avz "${source}" "${destination}"`, {
-    ...options,
-    successValue: destination
-  });
-}
-
-/**
- * Use `cp` to make a copy of a file.
- * @param source the source file
- * @param destination the destination file
- */
-export function invokeCp(source, destination, options) {
-  return invokeCmd(`cp "${source}" "${destination}"`, {
     ...options,
     successValue: destination
   });

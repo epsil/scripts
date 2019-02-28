@@ -6,7 +6,6 @@ import {
   getFilenameFromMetadataFilename,
   getMetadataFilenameFromFilename,
   hasCmd,
-  invokeCp,
   invokeLn,
   invokeMkdir,
   invokeRsync,
@@ -54,14 +53,6 @@ describe('invokeRsync', () => {
     invokeRsync('foo', 'bar', {
       debug: true
     }).should.eql('rsync -avz "foo" "bar"');
-  });
-});
-
-describe('invokeCp', () => {
-  it('should invoke cp', () => {
-    invokeCp('foo', 'bar', {
-      debug: true
-    }).should.eql('cp "foo" "bar"');
   });
 });
 
