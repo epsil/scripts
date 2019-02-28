@@ -374,8 +374,23 @@ export function makeTemporaryDirectory(tempDir) {
  * No error is thrown if the directory already exists.
  */
 export function makeDirectory(dir, options) {
-  const dirPath = path.normalize(dir);
-  return invokeMkdir(dirPath, options);
+  return new Promise((resolve, reject) => {
+    let cwd = (options && options.cwd) || '.';
+    cwd = path.resolve(cwd);
+    let dirPath = dir;
+    if (path.isAbsolute(dirPath)) {
+      dirPath = path.relative(cwd, dirPath);
+    }
+    dirPath = path.join(cwd, dirPath);
+    fs.mkdir(dirPath, { recursive: true }, err => {
+      if (err) {
+        console.log(err);
+        reject(err);
+      } else {
+        resolve(dir);
+      }
+    });
+  });
 }
 
 /**
@@ -445,19 +460,6 @@ export function invokeRsync(source, destination, options) {
   return invokeCmd(`rsync -avz "${source}" "${destination}"`, {
     ...options,
     successValue: destination
-  });
-}
-
-/**
- * Use `mkdir` to make a directory in the current directory.
- * No error is thrown if the directory already exists.
- * @param dir the directory to make
- */
-export function invokeMkdir(dir, options) {
-  return invokeCmd(`mkdir "${dir}"`, {
-    ...options,
-    successValue: dir,
-    errorValue: dir
   });
 }
 

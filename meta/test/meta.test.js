@@ -7,7 +7,6 @@ import {
   getMetadataFilenameFromFilename,
   hasCmd,
   invokeLn,
-  invokeMkdir,
   invokeRsync,
   makeCategoryContainer,
   makeTagContainer,
@@ -25,18 +24,16 @@ describe('createGlobPattern', () => {
 });
 
 describe('makeCategoryContainer', () => {
-  it('should make a category container', () => {
-    makeCategoryContainer({
-      debug: true
-    }).should.eql(`mkdir "${categoryDir}"`);
+  it('should make a category container', async () => {
+    const dir = await makeCategoryContainer();
+    dir.should.eql(categoryDir);
   });
 });
 
 describe('makeTagContainer', () => {
-  it('should make a tag container', () => {
-    makeTagContainer({
-      debug: true
-    }).should.eql(`mkdir "${tagDir}"`);
+  it('should make a tag container', async () => {
+    const dir = await makeTagContainer();
+    dir.should.eql(tagDir);
   });
 });
 
@@ -53,14 +50,6 @@ describe('invokeRsync', () => {
     invokeRsync('foo', 'bar', {
       debug: true
     }).should.eql('rsync -avz "foo" "bar"');
-  });
-});
-
-describe('invokeMkdir', () => {
-  it('should invoke mkdir', () => {
-    invokeMkdir('foo', {
-      debug: true
-    }).should.eql('mkdir "foo"');
   });
 });
 
