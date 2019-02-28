@@ -274,7 +274,7 @@ export function processTagsAndCategories(meta, options) {
     const tags = meta.tags || [];
     const categories = meta.categories;
     if (!categories) {
-      const category = tagDir;
+      const category = tagDir; // 'tag'
       tags.forEach(tag =>
         makeTagLinkInCategory(meta.file, category, tag, options)
       );
@@ -634,8 +634,10 @@ export function getFilenameFromMetadataFilename(filePath, options) {
   const origDir = path.join(metaDirectory, parentDir);
   const metaName = path.basename(filePath);
   let origName = metaName;
-  origName = origName.replace(/^\./, '');
-  origName = origName.replace(/\.ya?ml$/, '');
+  const preRegExp = new RegExp('^' + _.escapeRegExp(metaPre));
+  const extRegExp = new RegExp(_.escapeRegExp(metaExt) + '$');
+  origName = origName.replace(preRegExp, '');
+  origName = origName.replace(extRegExp, '');
   let origFile = path.join(origDir, origName);
   if (options && options.unix) {
     origFile = origFile.replace(/\\/g, '/'); // test
