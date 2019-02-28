@@ -385,8 +385,8 @@ export function makeDirectory(dir, options) {
     dirPath = path.join(cwd, dirPath);
     fs.mkdir(dirPath, { recursive: true }, err => {
       if (err) {
-        console.log(err);
-        reject(err);
+        // ignore "directory already exists" errors
+        resolve(dir);
       } else {
         resolve(dir);
       }
