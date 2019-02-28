@@ -56,9 +56,9 @@ describe('makeDirectory', () => {
     const dir = 'foo';
     try {
       const result = await makeDirectory(dir);
-      result.should.eql(dir);
       const directoryExists = fs.existsSync(dir);
       const isDirectory = fs.lstatSync(dir).isDirectory();
+      result.should.eql(dir);
       directoryExists.should.eql(true);
       isDirectory.should.eql(true);
     } finally {

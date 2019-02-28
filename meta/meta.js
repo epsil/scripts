@@ -376,16 +376,11 @@ export function makeTemporaryDirectory(tempDir) {
  */
 export function makeDirectory(dir, options) {
   return new Promise((resolve, reject) => {
-    let cwd = (options && options.cwd) || '.';
-    cwd = path.resolve(cwd);
-    let dirPath = dir;
-    if (path.isAbsolute(dirPath)) {
-      dirPath = path.relative(cwd, dirPath);
-    }
-    dirPath = path.join(cwd, dirPath);
+    const cwd = (options && options.cwd) || '.';
+    const dirPath = joinPaths(cwd, dir);
     fs.mkdir(dirPath, { recursive: true }, err => {
       if (err) {
-        // ignore "directory already exists" errors
+        // ignore errors
         resolve(dir);
       } else {
         resolve(dir);
@@ -401,26 +396,17 @@ export function makeDirectory(dir, options) {
  */
 export function makeLink(source, destination, options) {
   return new Promise((resolve, reject) => {
-    let cwd = (options && options.cwd) || '.';
-    cwd = path.resolve(cwd);
-    let sourcePath = source;
-    if (path.isAbsolute(sourcePath)) {
-      sourcePath = path.relative(cwd, sourcePath);
-    }
-    sourcePath = path.join(cwd, sourcePath);
-    let destinationPath = destination;
-    if (path.isAbsolute(destinationPath)) {
-      destinationPath = path.relative(cwd, destinationPath);
-    }
-    destinationPath = path.join(cwd, destinationPath);
+    const cwd = (options && options.cwd) || '.';
+    const sourcePath = joinPaths(cwd, source);
+    let destinationPath = joinPaths(cwd, destination);
     const isDirectory = fs.lstatSync(destinationPath).isDirectory();
     if (isDirectory) {
-      destinationPath = path.join(destinationPath, path.basename(sourcePath));
+      const fileName = path.basename(sourcePath);
+      destinationPath = path.join(destinationPath, fileName);
     }
     fs.symlink(sourcePath, destinationPath, err => {
       if (err) {
-        // console.log(err);
-        // reject(err);
+        // ignore errors
         resolve(destination);
       } else {
         resolve(destination);
@@ -436,28 +422,20 @@ export function makeLink(source, destination, options) {
  */
 export function makeCopy(source, destination, options) {
   return new Promise((resolve, reject) => {
-    let cwd = (options && options.cwd) || '.';
-    cwd = path.resolve(cwd);
-    let sourcePath = source;
-    if (path.isAbsolute(sourcePath)) {
-      sourcePath = path.relative(cwd, sourcePath);
-    }
-    sourcePath = path.join(cwd, sourcePath);
-    let destinationPath = destination;
-    if (path.isAbsolute(destinationPath)) {
-      destinationPath = path.relative(cwd, destinationPath);
-    }
-    destinationPath = path.join(cwd, destinationPath);
+    const cwd = (options && options.cwd) || '.';
+    const sourcePath = joinPaths(cwd, source);
+    let destinationPath = joinPaths(cwd, destination);
     const isDirectory = fs.lstatSync(destinationPath).isDirectory();
     if (isDirectory) {
-      // fs.copyFile() cannot copy to directory paths,
+      // fs.copyFile() cannot copy to directory paths;
       // the file name must be specified explicitly
-      destinationPath = path.join(destinationPath, path.basename(sourcePath));
+      const fileName = path.basename(sourcePath);
+      destinationPath = path.join(destinationPath, fileName);
     }
     fs.copyFile(sourcePath, destinationPath, err => {
       if (err) {
-        console.log(err);
-        reject(err);
+        // ignore errors
+        resolve(destination);
       } else {
         resolve(destination);
       }
@@ -647,6 +625,24 @@ export function getMetadataFilenameFromFilename(filePath, options) {
     metaFile = metaFile.replace(/\\/g, '/'); // test
   }
   return metaFile;
+}
+
+/**
+ * Join a directory path and a file path.
+ * This is essentially a wrapper around `path.join()`,
+ * but with some added safeguards in order to work
+ * better on Windows.
+ * @param dir the current working directory
+ * @param file a file path
+ * @return a combined file path
+ */
+export function joinPaths(dir, file) {
+  const directory = path.resolve(dir);
+  let filePath = file;
+  if (path.isAbsolute(filePath)) {
+    filePath = path.relative(directory, filePath);
+  }
+  return path.join(directory, filePath);
 }
 
 /**
