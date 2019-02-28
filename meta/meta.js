@@ -400,38 +400,34 @@ export function makeDirectory(dir, options) {
  * @param destination the location of the link
  */
 export function makeLink(source, destination, options) {
-  return invokeLn(source, destination, options);
+  return new Promise((resolve, reject) => {
+    let cwd = (options && options.cwd) || '.';
+    cwd = path.resolve(cwd);
+    let sourcePath = source;
+    if (path.isAbsolute(sourcePath)) {
+      sourcePath = path.relative(cwd, sourcePath);
+    }
+    sourcePath = path.join(cwd, sourcePath);
+    let destinationPath = destination;
+    if (path.isAbsolute(destinationPath)) {
+      destinationPath = path.relative(cwd, destinationPath);
+    }
+    destinationPath = path.join(cwd, destinationPath);
+    const isDirectory = fs.lstatSync(destinationPath).isDirectory();
+    if (isDirectory) {
+      destinationPath = path.join(destinationPath, path.basename(sourcePath));
+    }
+    fs.symlink(sourcePath, destinationPath, err => {
+      if (err) {
+        // console.log(err);
+        // reject(err);
+        resolve(destination);
+      } else {
+        resolve(destination);
+      }
+    });
+  });
 }
-
-// export function makeLink(source, destination, options) {
-//   return new Promise((resolve, reject) => {
-//     let cwd = (options && options.cwd) || '.';
-//     cwd = path.resolve(cwd);
-//     let sourcePath = source;
-//     if (path.isAbsolute(sourcePath)) {
-//       sourcePath = path.relative(cwd, sourcePath);
-//     }
-//     sourcePath = path.join(cwd, sourcePath);
-//     let destinationPath = destination;
-//     if (path.isAbsolute(destinationPath)) {
-//       destinationPath = path.relative(cwd, destinationPath);
-//     }
-//     destinationPath = path.join(cwd, destinationPath);
-//     const isDirectory = fs.lstatSync(destinationPath).isDirectory();
-//     if (isDirectory) {
-//       destinationPath = path.join(destinationPath, path.basename(sourcePath));
-//     }
-//     fs.symlink(sourcePath, destinationPath, err => {
-//       if (err) {
-//         // console.log(err);
-//         // reject(err);
-//         resolve(destination);
-//       } else {
-//         resolve(destination);
-//       }
-//     });
-//   });
-// }
 
 /**
  * Make a copy of a file.
@@ -466,19 +462,6 @@ export function makeCopy(source, destination, options) {
         resolve(destination);
       }
     });
-  });
-}
-
-/**
- * Use `ln` to make a symbolic link to a file.
- * @param source the file to link to
- * @param destination the location of the link
- */
-export function invokeLn(source, destination, options) {
-  return invokeCmd(`ln -s "${source}" "${destination}"`, {
-    ...options,
-    successValue: destination,
-    errorValue: true
   });
 }
 

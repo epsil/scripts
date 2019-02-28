@@ -8,7 +8,6 @@ import {
   getFilenameFromMetadataFilename,
   getMetadataFilenameFromFilename,
   hasCmd,
-  invokeLn,
   invokeRsync,
   makeCategoryContainer,
   makeDirectory,
@@ -65,14 +64,6 @@ describe('makeDirectory', () => {
     } finally {
       rimraf.sync(dir);
     }
-  });
-});
-
-describe('invokeLn', () => {
-  it('should invoke ln', () => {
-    invokeLn('foo', 'bar', {
-      debug: true
-    }).should.eql('ln -s "foo" "bar"');
   });
 });
 
