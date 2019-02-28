@@ -3,6 +3,7 @@ import fg from 'fast-glob';
 import matter from 'gray-matter';
 import os from 'os';
 import path from 'path';
+import rimraf from 'rimraf';
 import util from 'util';
 import _ from 'lodash';
 import { exec } from 'child_process';
@@ -135,7 +136,7 @@ export async function mergeTmpDirAndOutputDirWithRsync(
         errorValue: true
       })
     )
-    .then(() => invokeCmd(`rm -rf "${tempDir}"`));
+    .then(() => rimraf.sync(tempDir));
 }
 
 /**
@@ -159,7 +160,7 @@ export async function mergeTmpDirAndOutputDirWithMv(
   const trashDir = tempDir + '2'; // 'tmp2'
   return invokeCmd(`mv "${outputDir}" "${trashDir}"`)
     .then(() => invokeCmd(`mv "${tempDir}" "${outputDir}"`))
-    .then(() => invokeCmd(`rm -rf "${trashDir}"`));
+    .then(() => rimraf.sync(trashDir));
 }
 
 /**
@@ -365,7 +366,8 @@ export function makeTagContainer(options) {
  * @param tempDir the directory to create
  */
 export function makeTemporaryDirectory(tempDir) {
-  return invokeCmd(`rm -rf ${tempDir}`).then(() => makeDirectory(tempDir));
+  rimraf.sync(tempDir);
+  return makeDirectory(tempDir);
 }
 
 /**

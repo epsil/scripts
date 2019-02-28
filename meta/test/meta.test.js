@@ -1,4 +1,6 @@
 /* global describe, it */
+import fs from 'fs';
+import rimraf from 'rimraf';
 import {
   addYamlFences,
   categoryDir,
@@ -9,6 +11,7 @@ import {
   invokeLn,
   invokeRsync,
   makeCategoryContainer,
+  makeDirectory,
   makeTagContainer,
   metaDir,
   metaExt,
@@ -16,6 +19,8 @@ import {
   parseYaml,
   tagDir
 } from '../meta';
+
+process.chdir('test'); // working directory
 
 describe('createGlobPattern', () => {
   it('should create a glob string for matching metadata files', () => {
@@ -25,15 +30,41 @@ describe('createGlobPattern', () => {
 
 describe('makeCategoryContainer', () => {
   it('should make a category container', async () => {
-    const dir = await makeCategoryContainer();
-    dir.should.eql(categoryDir);
+    let dir;
+    try {
+      dir = await makeCategoryContainer();
+      dir.should.eql(categoryDir);
+    } finally {
+      rimraf.sync(dir);
+    }
   });
 });
 
 describe('makeTagContainer', () => {
   it('should make a tag container', async () => {
-    const dir = await makeTagContainer();
-    dir.should.eql(tagDir);
+    let dir;
+    try {
+      dir = await makeTagContainer();
+      dir.should.eql(tagDir);
+    } finally {
+      rimraf.sync(dir);
+    }
+  });
+});
+
+describe('makeDirectory', () => {
+  it('should make a directory', async () => {
+    const dir = 'foo';
+    try {
+      const result = await makeDirectory(dir);
+      result.should.eql(dir);
+      const directoryExists = fs.existsSync(dir);
+      const isDirectory = fs.lstatSync(dir).isDirectory();
+      directoryExists.should.eql(true);
+      isDirectory.should.eql(true);
+    } finally {
+      rimraf.sync(dir);
+    }
   });
 });
 

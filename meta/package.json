@@ -39,6 +39,7 @@
     "lodash": "^4.17.11",
     "os": "^0.1.1",
     "path": "^0.12.7",
+    "rimraf": "^2.6.3",
     "util": "^0.11.1"
   },
   "devDependencies": {
