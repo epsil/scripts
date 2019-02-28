@@ -62,15 +62,17 @@ export const ignorePattern = 'node_modules/**';
  * @param [outputDir] the directory to create symlinks in
  * (`categoryDir` by default)
  */
-export function processMetadataFiles(inputDir, outputDir, options) {
+export async function processMetadataFiles(inputDir, outputDir, options) {
   const inDir = inputDir || sourceDir;
   const outDir = outputDir || categoryDir;
+  const ln = await hasLn();
   console.log(`Processing metadata in ${inDir}/ ...\n`);
-  return processMetadataFilesWithTmpDir(inDir, outDir, tmpDir, options).then(
-    () => {
-      console.log('Done.');
-    }
-  );
+  return processMetadataFilesWithTmpDir(inDir, outDir, tmpDir, {
+    makeSymLinks: makeSymLinks && ln,
+    ...options
+  }).then(() => {
+    console.log('Done.');
+  });
 }
 
 /**
@@ -317,11 +319,8 @@ export async function makeTagLinkInCategory(filePath, category, tag, options) {
  */
 export async function makeTagLink(filePath, tag, options) {
   const dir = await makeTagDirectory(tag, options);
-  if (makeSymLinks) {
-    const ln = await hasLn();
-    if (ln) {
-      return makeLink(filePath, dir, options);
-    }
+  if (options && options.makeSymLinks) {
+    return makeLink(filePath, dir, options);
   }
   return makeCopy(filePath, dir, options);
 }
@@ -401,6 +400,36 @@ export function makeDirectory(dir, options) {
 export function makeLink(source, destination, options) {
   return invokeLn(source, destination, options);
 }
+
+// export function makeLink(source, destination, options) {
+//   return new Promise((resolve, reject) => {
+//     let cwd = (options && options.cwd) || '.';
+//     cwd = path.resolve(cwd);
+//     let sourcePath = source;
+//     if (path.isAbsolute(sourcePath)) {
+//       sourcePath = path.relative(cwd, sourcePath);
+//     }
+//     sourcePath = path.join(cwd, sourcePath);
+//     let destinationPath = destination;
+//     if (path.isAbsolute(destinationPath)) {
+//       destinationPath = path.relative(cwd, destinationPath);
+//     }
+//     destinationPath = path.join(cwd, destinationPath);
+//     const isDirectory = fs.lstatSync(destinationPath).isDirectory();
+//     if (isDirectory) {
+//       destinationPath = path.join(destinationPath, path.basename(sourcePath));
+//     }
+//     fs.symlink(sourcePath, destinationPath, err => {
+//       if (err) {
+//         // console.log(err);
+//         // reject(err);
+//         resolve(destination);
+//       } else {
+//         resolve(destination);
+//       }
+//     });
+//   });
+// }
 
 /**
  * Make a copy of a file.
