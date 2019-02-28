@@ -582,11 +582,11 @@ export function parseYaml(str) {
     meta = matter(yaml, { lang: 'yaml' });
 
     // add properties from gray-matter's `data` property
-    const data = _.assign({}, meta.data);
+    const data = Object.assign({}, meta.data);
     delete meta.data;
 
     // remove extraneous gray-matter properties
-    meta = _.assign({}, data, meta);
+    meta = Object.assign({}, data, meta);
     if (meta.content === '') {
       delete meta.content;
     }
