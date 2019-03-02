@@ -92,7 +92,8 @@ function getTemplateForFile(file) {
 }
 
 function editMetadataFileForFile(file, tmp) {
-  const metaFile = getMetadataFilenameFromFilename(file);
+  const realFile = fs.realpathSync(file);
+  const metaFile = getMetadataFilenameFromFilename(realFile);
   return editMetadataFile(metaFile, tmp);
 }
 
