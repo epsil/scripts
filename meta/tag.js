@@ -47,6 +47,12 @@ const imgExtensions = [
   '.heic'
 ];
 
+const metaDir = '.meta';
+
+const metaPre = '.';
+
+const metaExt = '.yml';
+
 function main() {
   const [node, cmd, ...args] = process.argv;
   const files = args;
@@ -97,12 +103,34 @@ function editMetadataFileForFile(file, tmp) {
   return editMetadataFile(metaFile, tmp);
 }
 
-function getMetadataFilenameFromFilename(filePath) {
-  const file = path.basename(filePath);
-  const dir = path.dirname(filePath);
-  const metaFile = '.' + file + '.yml';
-  const metaDir = '.meta';
-  return path.join(dir, metaDir, metaFile);
+function getMetadataFilenameFromFilename(filePath, options) {
+  if (isMetadataFile(filePath)) {
+    return filePath;
+  }
+  const origDir = path.dirname(filePath);
+  const metaDirectory = path.join(origDir, metaDir);
+  const origName = path.basename(filePath);
+  const metaName = metaPre + origName + metaExt;
+  let metaFile = path.join(metaDirectory, metaName);
+  if (options && options.unix) {
+    metaFile = metaFile.replace(/\\/g, '/'); // test
+  }
+  return metaFile;
+}
+
+function isMetadataFile(file) {
+  const fileName = path.basename(file);
+  return (
+    fileName.match(metadataPreRegExp()) && fileName.match(metadataPostRegExp())
+  );
+}
+
+function metadataPreRegExp() {
+  return new RegExp('^' + _.escapeRegExp(metaPre));
+}
+
+function metadataPostRegExp() {
+  return new RegExp(_.escapeRegExp(metaExt) + '$');
 }
 
 function editMetadataFile(metaFile, tmp) {
@@ -120,13 +148,13 @@ function launchEditor(metaFile, textEditor) {
 }
 
 function createMetadataFile(metaFile, tmp) {
-  const metaDir = path.dirname(metaFile);
-  const dirAlreadyExists = fs.existsSync(metaDir);
+  const dir = path.dirname(metaFile);
+  const dirAlreadyExists = fs.existsSync(dir);
   if (dirAlreadyExists) {
     return createMetadataFileFromTemplate(metaFile, tmp);
   }
   // create directory
-  return execAsync(`mkdir ${metaDir}`)
+  return execAsync(`mkdir ${dir}`)
     .catch(err => null)
     .then(() => createMetadataFileFromTemplate(metaFile, tmp));
 }
