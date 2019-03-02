@@ -257,11 +257,16 @@ export function createGlobPattern(mDir, mExt) {
 export function processMetadata(file, options) {
   return new Promise((resolve, reject) => {
     fs.readFile(file, 'utf8', (err, data) => {
-      const meta = parseMetadata(data.toString().trim() + '\n', file);
-      printMetadata(meta, options);
-      processTagsAndCategories(meta, options).then(() => {
-        resolve(file);
-      });
+      if (err) {
+        console.log(err);
+        reject(err);
+      } else {
+        const meta = parseMetadata(data.toString().trim() + '\n', file);
+        printMetadata(meta, options);
+        processTagsAndCategories(meta, options).then(() => {
+          resolve(file);
+        });
+      }
     });
   });
 }
@@ -380,8 +385,12 @@ export function makeDirectory(dir, options) {
     const dirPath = joinPaths(cwd, dir);
     fs.mkdir(dirPath, { recursive: true }, err => {
       if (err) {
-        // ignore errors
-        resolve(dir);
+        const dirAlreadyExists = err.code === 'EEXIST';
+        if (dirAlreadyExists) {
+          resolve(dir);
+        } else {
+          reject(dir);
+        }
       } else {
         resolve(dir);
       }
@@ -406,8 +415,12 @@ export function makeLink(source, destination, options) {
     }
     fs.symlink(sourcePath, destinationPath, err => {
       if (err) {
-        // ignore errors
-        resolve(destination);
+        const linkAreadyExists = err.code === 'EEXIST';
+        if (linkAreadyExists) {
+          resolve(destination);
+        } else {
+          reject(destination);
+        }
       } else {
         resolve(destination);
       }
@@ -435,6 +448,7 @@ export function makeCopy(source, destination, options) {
     fs.copyFile(sourcePath, destinationPath, err => {
       if (err) {
         // ignore errors
+        console.log(err);
         resolve(destination);
       } else {
         resolve(destination);
@@ -560,6 +574,7 @@ export function parseYaml(str) {
       delete meta.isEmpty;
     }
   } catch (err) {
+    console.log(err);
     return {};
   }
 
