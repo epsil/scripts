@@ -11,20 +11,23 @@ const execAsync = util.promisify(childProcess.exec);
 const editor = 'gvim'; // or emacs?
 
 const audioTemplate =
-  `tags:
+  `---
+tags:
   - ` + // whitespace
   `
 categories:
   - audio`;
 
 const imgTemplate =
-  `tags:
+  `---
+tags:
   - ` + // whitespace
   `
 categories:
   - img`;
 
-const defTemplate = `tags:
+const defTemplate = `---
+tags:
   - `;
 
 const audioExtensions = [

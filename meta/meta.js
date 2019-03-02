@@ -596,12 +596,14 @@ export function addYamlFences(str) {
   let yaml = str.trim();
   if (!yaml.match(/^---/)) {
     yaml = '---\n' + yaml;
-    if (!yaml.match(/---$/)) {
-      yaml += '\n---\n';
-    }
-    return yaml;
   }
-  return str;
+  if (!yaml.match(/---$/)) {
+    yaml += '\n---\n';
+  }
+  if (!yaml.match(/\n$/)) {
+    yaml += '\n';
+  }
+  return yaml;
 }
 
 /**

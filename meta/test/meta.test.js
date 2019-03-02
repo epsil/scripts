@@ -149,6 +149,16 @@ tags:
 
 describe('addYamlFences', () => {
   it('should add fences to a YAML string missing them', () => {
+    addYamlFences(`---
+tags:
+  - foo
+  - bar`).should.eql(`---
+tags:
+  - foo
+  - bar
+---
+`);
+
     addYamlFences(`tags:
   - foo
   - bar`).should.eql(`---
