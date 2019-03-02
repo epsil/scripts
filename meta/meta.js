@@ -27,6 +27,11 @@ export const categoryDir = 'cat';
 export const tagDir = 'tag';
 
 /**
+ * The default category.
+ */
+export const defaultCategory = '_';
+
+/**
  * The directory to store metadata files in.
  */
 export const metaDir = '.meta';
@@ -280,7 +285,7 @@ export function processTagsAndCategories(meta, options) {
     const tags = meta.tags || [];
     const categories = meta.categories;
     if (!categories) {
-      const category = tagDir; // 'tag'
+      const category = defaultCategory;
       tags.forEach(tag =>
         makeTagLinkInCategory(meta.file, category, tag, options)
       );
