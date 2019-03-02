@@ -612,15 +612,16 @@ export function addYamlFences(str) {
  * @see getMetadataFilenameFromFilename
  */
 export function getFilenameFromMetadataFilename(filePath, options) {
+  if (!isMetadataFile(filePath)) {
+    return filePath;
+  }
   const metaDirectory = path.dirname(filePath);
   const parentDir = '..';
   const origDir = path.join(metaDirectory, parentDir);
   const metaName = path.basename(filePath);
-  let origName = metaName;
-  const preRegExp = new RegExp('^' + _.escapeRegExp(metaPre));
-  const extRegExp = new RegExp(_.escapeRegExp(metaExt) + '$');
-  origName = origName.replace(preRegExp, '');
-  origName = origName.replace(extRegExp, '');
+  const origName = metaName
+    .replace(metadataPreRegExp(), '')
+    .replace(metadataPostRegExp(), '');
   let origFile = path.join(origDir, origName);
   if (options && options.unix) {
     origFile = origFile.replace(/\\/g, '/'); // test
@@ -636,6 +637,9 @@ export function getFilenameFromMetadataFilename(filePath, options) {
  * @see getFilenameFromMetadataFilename
  */
 export function getMetadataFilenameFromFilename(filePath, options) {
+  if (isMetadataFile(filePath)) {
+    return filePath;
+  }
   const origDir = path.dirname(filePath);
   const metaDirectory = path.join(origDir, metaDir);
   const origName = path.basename(filePath);
@@ -645,6 +649,32 @@ export function getMetadataFilenameFromFilename(filePath, options) {
     metaFile = metaFile.replace(/\\/g, '/'); // test
   }
   return metaFile;
+}
+
+/**
+ * Whether a file is a metadata file.
+ * @param file a file name
+ * @return `true` if `file` is a metadata file, `false` otherwise
+ */
+export function isMetadataFile(file) {
+  const fileName = path.basename(file);
+  return (
+    fileName.match(metadataPreRegExp()) && fileName.match(metadataPostRegExp())
+  );
+}
+
+/**
+ * Regexp for matching the `metaPre` part of a metadata filename.
+ */
+export function metadataPreRegExp() {
+  return new RegExp('^' + _.escapeRegExp(metaPre));
+}
+
+/**
+ * Regexp for matching the `metaExt` part of a metadata filename.
+ */
+export function metadataPostRegExp() {
+  return new RegExp(_.escapeRegExp(metaExt) + '$');
 }
 
 /**

@@ -181,9 +181,17 @@ describe('getFilenameFromMetadataFilename', () => {
     );
   });
 
-  it('should translate non-dotfile file names too', () => {
+  it('should not translate non-metadata file names', () => {
+    getFilenameFromMetadataFilename('file.txt', { unix: true }).should.eql(
+      'file.txt'
+    );
+
     getFilenameFromMetadataFilename('file.txt.yml', { unix: true }).should.eql(
-      '../file.txt'
+      'file.txt.yml'
+    );
+
+    getFilenameFromMetadataFilename('.file', { unix: true }).should.eql(
+      '.file'
     );
   });
 
