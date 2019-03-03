@@ -1,10 +1,10 @@
 import fs from 'fs';
 import fg from 'fast-glob';
-import matter from 'gray-matter';
 import os from 'os';
 import path from 'path';
 import rimraf from 'rimraf';
 import util from 'util';
+import yaml from 'js-yaml';
 import _ from 'lodash';
 import { exec } from 'child_process';
 
@@ -60,6 +60,11 @@ export const makeSymLinks = true;
  * Globbing pattern for directories to ignore.
  */
 export const ignorePattern = 'node_modules/**';
+
+/**
+ * Whether to normalize YAML files.
+ */
+export const normalize = false;
 
 /**
  * Process all metadata files in the given directory.
@@ -187,6 +192,9 @@ function iterateOverFiles(fn, dir, options) {
       entries
         .map(entry => {
           const file = path.join(dir, entry);
+          if (normalize) {
+            normalizeYamlFile(file);
+          }
           const origFile = getFilenameFromMetadataFilename(file);
           const origFileExists = fs.existsSync(origFile);
           if (!origFileExists) {
@@ -217,6 +225,9 @@ export function iterateOverFilesStream(fn, dir, options) {
     });
     stream.on('data', entry => {
       const file = path.join(dir, entry);
+      if (normalize) {
+        normalizeYamlFile(file);
+      }
       const origFile = getFilenameFromMetadataFilename(file);
       const origFileExists = fs.existsSync(origFile);
       if (!origFileExists) {
@@ -557,53 +568,33 @@ export function parseMetadata(str, filePath, options) {
  * @return a metadata object, containing the YAML properties
  */
 export function parseYaml(str) {
+  const yml = str.trim().replace(/---$/, '');
   let meta = {};
   try {
-    // parse YAML with gray-matter
-    const yaml = addYamlFences(str);
-    meta = matter(yaml, { lang: 'yaml' });
-
-    // add properties from gray-matter's `data` property
-    const data = Object.assign({}, meta.data);
-    delete meta.data;
-
-    // remove extraneous gray-matter properties
-    meta = Object.assign({}, data, meta);
-    if (meta.content === '') {
-      delete meta.content;
-    }
-    if (meta.excerpt === '') {
-      delete meta.excerpt;
-    }
-    if (!meta.isEmpty) {
-      delete meta.isEmpty;
-    }
+    meta = yaml.safeLoad(yml);
   } catch (err) {
     console.log(err);
     return {};
   }
-
-  // return metadata object
   return meta;
 }
 
 /**
- * Add `---` fences to a YAML string if they are missing.
- * @param str a YAML string
- * @return a fenced YAML string
+ * Normalize a YAML file.
  */
-export function addYamlFences(str) {
-  let yaml = str.trim();
-  if (!yaml.match(/^---/)) {
-    yaml = '---\n' + yaml;
+export function normalizeYamlFile(file) {
+  let yml = fs.readFileSync(file) + '';
+  const meta = parseYaml(yml);
+  if (meta.tags) {
+    meta.tags = meta.tags.sort();
   }
-  if (!yaml.match(/---$/)) {
-    yaml += '\n---\n';
+  if (meta.categories) {
+    meta.categories = meta.categories.sort();
   }
-  if (!yaml.match(/\n$/)) {
-    yaml += '\n';
-  }
-  return yaml;
+  yml = yaml.safeDump(meta);
+  yml = '---\n' + yml.trim();
+  fs.writeFileSync(file, yml);
+  console.log('Normalized ' + file);
 }
 
 /**

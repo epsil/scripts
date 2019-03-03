@@ -7,4 +7,5 @@ package-lock.json
 *.#*
 lib/
 tag/
+cat/
 .meta/

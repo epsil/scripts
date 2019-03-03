@@ -2,7 +2,6 @@
 import fs from 'fs';
 import rimraf from 'rimraf';
 import {
-  addYamlFences,
   categoryDir,
   createGlobPattern,
   getFilenameFromMetadataFilename,
@@ -144,43 +143,6 @@ tags:
   - bar`).should.eql({
       tags: ['foo', 'bar']
     });
-  });
-});
-
-describe('addYamlFences', () => {
-  it('should add fences to a YAML string missing them', () => {
-    addYamlFences(`---
-tags:
-  - foo
-  - bar`).should.eql(`---
-tags:
-  - foo
-  - bar
----
-`);
-
-    addYamlFences(`tags:
-  - foo
-  - bar`).should.eql(`---
-tags:
-  - foo
-  - bar
----
-`);
-  });
-
-  it('should not add fences to a YAML string that already has them', () => {
-    addYamlFences(`---
-tags:
-  - foo
-  - bar
----
-`).should.eql(`---
-tags:
-  - foo
-  - bar
----
-`);
   });
 });
 
