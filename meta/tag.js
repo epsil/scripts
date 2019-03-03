@@ -157,7 +157,7 @@ function createMetadataFile(metaFile, tmp) {
     return createMetadataFileFromTemplate(metaFile, tmp);
   }
   // create directory
-  return execAsync(`mkdir ${dir}`)
+  return execAsync(`mkdir "${dir}"`)
     .catch(err => null)
     .then(() => createMetadataFileFromTemplate(metaFile, tmp));
 }
