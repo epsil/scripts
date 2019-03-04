@@ -50,6 +50,8 @@ const imgExtensions = [
   '.heic'
 ];
 
+const yamlExtensions = ['.yml', '.yaml'];
+
 const metaDir = '.meta';
 
 const metaPre = '.';
@@ -72,22 +74,36 @@ function isImageFile(file) {
   return _.includes(imgExtensions, ext);
 }
 
+function isYamlFile(file) {
+  const ext = path.extname(file).toLowerCase();
+  return _.includes(yamlExtensions, ext);
+}
+
+function isMetadataFile(file) {
+  const fileName = path.basename(file);
+  return (
+    fileName.match(metadataPreRegExp()) && fileName.match(metadataPostRegExp())
+  );
+}
+
 function editMetadataFileForFiles(files, tmp) {
-  return files.map(file => {
-    if (!file) {
-      return null;
-    }
+  return files.map(file => editMetadataFileForFile(file, tmp));
+}
 
-    const fileExists = fs.existsSync(file);
-    if (!fileExists) {
-      console.log(`${file} does not exist!`);
-      return null;
-    }
+function editMetadataFileForFile(file, tmp) {
+  if (!file) {
+    return null;
+  }
 
-    console.log(`Editing metadata for ${file} ...`);
-    const template = tmp || getTemplateForFile(file);
-    return editMetadataFileForFile(file, template);
-  });
+  const fileExists = fs.existsSync(file);
+  if (!fileExists) {
+    console.log(`${file} does not exist!`);
+    return null;
+  }
+
+  console.log(`Editing metadata for ${file} ...`);
+  const template = tmp || getTemplateForFile(file);
+  return launchEditorForFile(file, template);
 }
 
 function getTemplateForFile(file) {
@@ -100,7 +116,10 @@ function getTemplateForFile(file) {
   return defTemplate;
 }
 
-function editMetadataFileForFile(file, tmp) {
+function launchEditorForFile(file, tmp) {
+  if (isYamlFile(file)) {
+    return launchEditor(file, editor);
+  }
   const realFile = fs.realpathSync(file);
   const metaFile = getMetadataFilenameFromFilename(realFile);
   return editMetadataFile(metaFile, tmp);
@@ -119,13 +138,6 @@ function getMetadataFilenameFromFilename(filePath, options) {
     metaFile = metaFile.replace(/\\/g, '/'); // test
   }
   return metaFile;
-}
-
-function isMetadataFile(file) {
-  const fileName = path.basename(file);
-  return (
-    fileName.match(metadataPreRegExp()) && fileName.match(metadataPostRegExp())
-  );
 }
 
 function metadataPreRegExp() {
@@ -157,9 +169,9 @@ function createMetadataFile(metaFile, tmp) {
     return createMetadataFileFromTemplate(metaFile, tmp);
   }
   // create directory
-  return execAsync(`mkdir "${dir}"`)
-    .catch(err => null)
-    .then(() => createMetadataFileFromTemplate(metaFile, tmp));
+  return makeDirectory(dir).then(() =>
+    createMetadataFileFromTemplate(metaFile, tmp)
+  );
 }
 
 function createMetadataFileFromTemplate(metaFile, str) {
@@ -172,6 +184,34 @@ function createMetadataFileFromTemplate(metaFile, str) {
       }
     });
   });
+}
+
+function makeDirectory(dir, options) {
+  return new Promise((resolve, reject) => {
+    const cwd = (options && options.cwd) || '.';
+    const dirPath = joinPaths(cwd, dir);
+    fs.mkdir(dirPath, { recursive: true }, err => {
+      if (err) {
+        const dirAlreadyExists = err.code === 'EEXIST';
+        if (dirAlreadyExists) {
+          resolve(dir);
+        } else {
+          reject(dir);
+        }
+      } else {
+        resolve(dir);
+      }
+    });
+  });
+}
+
+function joinPaths(dir, file) {
+  const directory = path.resolve(dir);
+  let filePath = file;
+  if (path.isAbsolute(filePath)) {
+    filePath = path.relative(directory, filePath);
+  }
+  return path.join(directory, filePath);
 }
 
 if (require.main === module) {
