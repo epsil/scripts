@@ -146,7 +146,7 @@ export async function mergeTmpDirAndOutputDirWithRsync(
         errorValue: true
       })
     )
-    .then(() => rimraf.sync(tempDir));
+    .then(() => deleteDirectory(tempDir));
 }
 
 /**
@@ -170,7 +170,7 @@ export async function mergeTmpDirAndOutputDirWithMv(
   const trashDir = tempDir + '2'; // 'tmp2'
   return invokeCmd(`mv "${outputDir}" "${trashDir}"`)
     .then(() => invokeCmd(`mv "${tempDir}" "${outputDir}"`))
-    .then(() => rimraf.sync(trashDir));
+    .then(() => deleteDirectory(trashDir));
 }
 
 /**
@@ -387,7 +387,7 @@ export function makeTagContainer(options) {
  * @param tempDir the directory to create
  */
 export function makeTemporaryDirectory(tempDir) {
-  rimraf.sync(tempDir);
+  deleteDirectory(tempDir);
   return makeDirectory(tempDir);
 }
 
@@ -471,6 +471,15 @@ export function makeCopy(source, destination, options) {
       }
     });
   });
+}
+
+/**
+ * Recursively delete a directory and its contents.
+ * Works similarly to `rm -rf`.
+ * @param dir a directory
+ */
+export function deleteDirectory(dir) {
+  rimraf.sync(dir);
 }
 
 /**

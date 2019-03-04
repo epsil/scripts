@@ -6,10 +6,17 @@ const util = require('util');
 const childProcess = require('child_process');
 const _ = require('lodash');
 
+// http://stackoverflow.com/questions/20643470/execute-a-command-line-binary-with-node-js#20643568
 const execAsync = util.promisify(childProcess.exec);
 
+/**
+ * Text editor for editing metadata files.
+ */
 const editor = 'gvim'; // or emacs?
 
+/**
+ * Template string for audio metadata.
+ */
 const audioTemplate =
   `---
 tags:
@@ -18,6 +25,9 @@ tags:
 categories:
   - audio`;
 
+/**
+ * Template string for image metadata.
+ */
 const imgTemplate =
   `---
 tags:
@@ -26,10 +36,16 @@ tags:
 categories:
   - img`;
 
+/**
+ * Template string for general metadata.
+ */
 const defTemplate = `---
 tags:
   - `;
 
+/**
+ * File extensions for audio files.
+ */
 const audioExtensions = [
   '.wav',
   '.mp3',
@@ -40,6 +56,9 @@ const audioExtensions = [
   '.ape'
 ];
 
+/**
+ * File extensions for image files.
+ */
 const imgExtensions = [
   '.jpg',
   '.jpeg',
@@ -50,35 +69,70 @@ const imgExtensions = [
   '.heic'
 ];
 
+/**
+ * File extensions for YAML files.
+ */
 const yamlExtensions = ['.yml', '.yaml'];
 
+/**
+ * The directory to store metadata files in.
+ */
 const metaDir = '.meta';
 
+/**
+ * The dotfile prefix for metadata files.
+ */
 const metaPre = '.';
 
+/**
+ * The file extension for metadata files.
+ */
 const metaExt = '.yml';
 
+/**
+ * "Main" function.
+ */
 function main() {
   const [node, cmd, ...args] = process.argv;
   const files = args;
   editMetadataFileForFiles(files);
 }
 
+/**
+ * Whether a file is an audio file.
+ * @param file a file
+ * @return `true` if `file` is an audio file, `false` otherwise
+ */
 function isAudioFile(file) {
   const ext = path.extname(file).toLowerCase();
   return _.includes(audioExtensions, ext);
 }
 
+/**
+ * Whether a file is an image file.
+ * @param file a file
+ * @return `true` if `file` is an image file, `false` otherwise
+ */
 function isImageFile(file) {
   const ext = path.extname(file).toLowerCase();
   return _.includes(imgExtensions, ext);
 }
 
+/**
+ * Whether a file is a YAML file.
+ * @param file a file
+ * @return `true` if `file` is a YAML file, `false` otherwise
+ */
 function isYamlFile(file) {
   const ext = path.extname(file).toLowerCase();
   return _.includes(yamlExtensions, ext);
 }
 
+/**
+ * Whether a file is a metadata file.
+ * @param file a file
+ * @return `true` if `file` is a metadata file, `false` otherwise
+ */
 function isMetadataFile(file) {
   const fileName = path.basename(file);
   return (
@@ -86,10 +140,20 @@ function isMetadataFile(file) {
   );
 }
 
+/**
+ * Edit metadata for multiple files.
+ * @param files an array of file names
+ * @param [tmp] a template string
+ */
 function editMetadataFileForFiles(files, tmp) {
   return files.map(file => editMetadataFileForFile(file, tmp));
 }
 
+/**
+ * Edit metadata for a single file.
+ * @param file a file name
+ * @param [tmp] a template string
+ */
 function editMetadataFileForFile(file, tmp) {
   if (!file) {
     return null;
@@ -103,9 +167,14 @@ function editMetadataFileForFile(file, tmp) {
 
   console.log(`Editing metadata for ${file} ...`);
   const template = tmp || getTemplateForFile(file);
-  return launchEditorForFile(file, template);
+  return editMetadataForFileWithEditor(file, template);
 }
 
+/**
+ * Determine the best template string to use for a file.
+ * @param file a file name
+ * @return a template string
+ */
 function getTemplateForFile(file) {
   if (isAudioFile(file)) {
     return audioTemplate;
@@ -116,7 +185,12 @@ function getTemplateForFile(file) {
   return defTemplate;
 }
 
-function launchEditorForFile(file, tmp) {
+/**
+ * Launch a text editor to edit the metadata for a file.
+ * @param file a file name
+ * @param [tmp] a template string
+ */
+function editMetadataForFileWithEditor(file, tmp) {
   if (isYamlFile(file)) {
     return launchEditor(file, editor);
   }
@@ -125,6 +199,13 @@ function launchEditorForFile(file, tmp) {
   return editMetadataFile(metaFile, tmp);
 }
 
+/**
+ * Get the filename of the metadata file for a file,
+ * by looking at the file's filename.
+ * @param filePath the filename of the file
+ * @return the filename of the file's metadata file
+ * @see getFilenameFromMetadataFilename
+ */
 function getMetadataFilenameFromFilename(filePath, options) {
   if (isMetadataFile(filePath)) {
     return filePath;
@@ -140,14 +221,25 @@ function getMetadataFilenameFromFilename(filePath, options) {
   return metaFile;
 }
 
+/**
+ * Regexp for matching the `metaPre` part of a metadata filename.
+ */
 function metadataPreRegExp() {
   return new RegExp('^' + _.escapeRegExp(metaPre));
 }
 
+/**
+ * Regexp for matching the `metaExt` part of a metadata filename.
+ */
 function metadataPostRegExp() {
   return new RegExp(_.escapeRegExp(metaExt) + '$');
 }
 
+/**
+ * Launch a text editor to edit a metadata file.
+ * @param metaFile a metadata file name
+ * @param [tmp] a template string
+ */
 function editMetadataFile(metaFile, tmp) {
   const fileAlreadyExist = fs.existsSync(metaFile);
   if (fileAlreadyExist) {
@@ -158,22 +250,32 @@ function editMetadataFile(metaFile, tmp) {
   );
 }
 
-function launchEditor(metaFile, textEditor) {
-  return execAsync(`${textEditor} "${metaFile}"`);
+/**
+ * Launch a text editor to edit a file.
+ * @param file a file name
+ * @param textEditor the editor to use
+ */
+function launchEditor(file, textEditor) {
+  return execAsync(`${textEditor} "${file}"`);
 }
 
+/**
+ * Create a new metadata file from a template string.
+ * @param metaFile a metadata file name
+ * @param [tmp] a template string
+ */
 function createMetadataFile(metaFile, tmp) {
   const dir = path.dirname(metaFile);
-  const dirAlreadyExists = fs.existsSync(dir);
-  if (dirAlreadyExists) {
-    return createMetadataFileFromTemplate(metaFile, tmp);
-  }
-  // create directory
   return makeDirectory(dir).then(() =>
     createMetadataFileFromTemplate(metaFile, tmp)
   );
 }
 
+/**
+ * Create a new metadata file.
+ * @param metaFile a metadata file name
+ * @param [str] the contents of the metadata file
+ */
 function createMetadataFileFromTemplate(metaFile, str) {
   return new Promise((resolve, reject) => {
     fs.writeFile(metaFile, str || '', function(err) {
@@ -186,6 +288,10 @@ function createMetadataFileFromTemplate(metaFile, str) {
   });
 }
 
+/**
+ * Make a directory in the current directory.
+ * No error is thrown if the directory already exists.
+ */
 function makeDirectory(dir, options) {
   return new Promise((resolve, reject) => {
     const cwd = (options && options.cwd) || '.';
@@ -205,6 +311,15 @@ function makeDirectory(dir, options) {
   });
 }
 
+/**
+ * Join a directory path and a file path.
+ * This is essentially a wrapper around `path.join()`,
+ * but with some added safeguards in order to work
+ * better on Windows.
+ * @param dir the current working directory
+ * @param file a file path
+ * @return a combined file path
+ */
 function joinPaths(dir, file) {
   const directory = path.resolve(dir);
   let filePath = file;
@@ -214,6 +329,7 @@ function joinPaths(dir, file) {
   return path.join(directory, filePath);
 }
 
+// invoke the "main" function
 if (require.main === module) {
   main();
 }
