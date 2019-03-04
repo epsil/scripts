@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Service
+Icon=smiley-shape
+X-KDE-ServiceTypes=KonqPopupMenu/Plugin
+MimeType=all/allfiles;
+Actions=helloWorld;
+Encoding=UTF-8
+
+[Desktop Action helloWorld]
+Name=MetaTag
+Icon=smiley-shape
+Exec=t "%f"
