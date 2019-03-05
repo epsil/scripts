@@ -140,9 +140,13 @@ export async function mergeTmpDirAndOutputDirWithRsync(
   outputDir,
   options
 ) {
+  const temporaryDir = tempDir + '/';
   return makeDirectory(outputDir)
     .then(() =>
-      invokeRsync(tempDir, outputDir, { errorValue: true, delete: true })
+      invokeRsync(temporaryDir, outputDir, {
+        errorValue: true,
+        delete: true
+      })
     )
     .then(() => deleteDirectory(tempDir));
 }
