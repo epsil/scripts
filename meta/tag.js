@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
+const childProcess = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
-const childProcess = require('child_process');
+const yaml = require('js-yaml');
 const _ = require('lodash');
 
 // http://stackoverflow.com/questions/20643470/execute-a-command-line-binary-with-node-js#20643568
@@ -243,6 +244,7 @@ function metadataPostRegExp() {
 function editMetadataFile(metaFile, tmp) {
   const fileAlreadyExist = fs.existsSync(metaFile);
   if (fileAlreadyExist) {
+    normalizeYamlFile(metaFile);
     return launchEditor(metaFile, editor);
   }
   return createMetadataFile(metaFile, tmp).then(() =>
@@ -327,6 +329,41 @@ function joinPaths(dir, file) {
     filePath = path.relative(directory, filePath);
   }
   return path.join(directory, filePath);
+}
+
+/**
+ * Normalize a YAML file.
+ */
+function normalizeYamlFile(file) {
+  let yml = fs.readFileSync(file) + '';
+  const meta = parseYaml(yml);
+  if (meta.tags) {
+    meta.tags = meta.tags.sort();
+  }
+  if (meta.categories) {
+    meta.categories = meta.categories.sort();
+  }
+  yml = yaml.safeDump(meta);
+  yml = '---\n' + yml.trim();
+  fs.writeFileSync(file, yml);
+  // console.log('Normalized ' + file);
+}
+
+/**
+ * Parse a YAML string.
+ * @param str a YAML string (may be fenced by `---`)
+ * @return a metadata object, containing the YAML properties
+ */
+function parseYaml(str) {
+  const yml = str.trim().replace(/---$/, '');
+  let meta = {};
+  try {
+    meta = yaml.safeLoad(yml);
+  } catch (err) {
+    console.log(err);
+    return {};
+  }
+  return meta;
 }
 
 // invoke the "main" function
