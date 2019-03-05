@@ -142,9 +142,7 @@ export async function mergeTmpDirAndOutputDirWithRsync(
 ) {
   return makeDirectory(outputDir)
     .then(() =>
-      invokeCmd(`rsync -avz --delete "${tempDir}/" "${outputDir}"`, {
-        errorValue: true
-      })
+      invokeRsync(tempDir, outputDir, { errorValue: true, delete: true })
     )
     .then(() => deleteDirectory(tempDir));
 }
@@ -184,9 +182,9 @@ function iterateOverFiles(fn, dir, options) {
   return fg
     .async([createGlobPattern()], {
       ...options,
-      cwd: dir,
       dot: true,
-      ignore: [ignorePattern]
+      ignore: [ignorePattern],
+      cwd: dir
     })
     .then(entries =>
       entries
@@ -219,9 +217,9 @@ export function iterateOverFilesStream(fn, dir, options) {
     const result = [];
     const iterator = fn || (x => x);
     const stream = fg.stream([createGlobPattern()], {
-      cwd: dir,
       dot: true,
-      ignore: [ignorePattern]
+      ignore: [ignorePattern],
+      cwd: dir
     });
     stream.on('data', entry => {
       const file = path.join(dir, entry);
@@ -256,6 +254,8 @@ async function iterateOverFilesAsync(fn, dir, options) {
 
 /**
  * Create a glob string for matching all metadata files in a directory.
+ * Note that the pattern treats dots (`.`) as normal characters,
+ * so it is necessary to set `dot: true` in the globbing options.
  * @param [mDir] the metadata file directory
  * @param [mExt] the metadata file extension
  * @return a globbing pattern
@@ -277,7 +277,8 @@ export function processMetadata(file, options) {
         console.log(err);
         reject(err);
       } else {
-        const meta = parseMetadata(data.toString().trim() + '\n', file);
+        const yml = data.toString().trim() + '\n';
+        const meta = parseMetadata(yml, file);
         printMetadata(meta, options);
         processTagsAndCategories(meta, options).then(() => {
           resolve(file);
@@ -426,6 +427,8 @@ export function makeLink(source, destination, options) {
     let destinationPath = joinPaths(cwd, destination);
     const isDirectory = fs.lstatSync(destinationPath).isDirectory();
     if (isDirectory) {
+      // `fs.symlink()` cannot link in a directory like `ln`;
+      // the link name must be specified explicitly
       const fileName = path.basename(sourcePath);
       destinationPath = path.join(destinationPath, fileName);
     }
@@ -456,7 +459,7 @@ export function makeCopy(source, destination, options) {
     let destinationPath = joinPaths(cwd, destination);
     const isDirectory = fs.lstatSync(destinationPath).isDirectory();
     if (isDirectory) {
-      // fs.copyFile() cannot copy to directory paths;
+      // `fs.copyFile()` cannot copy to a directory like `cp`;
       // the file name must be specified explicitly
       const fileName = path.basename(sourcePath);
       destinationPath = path.join(destinationPath, fileName);
@@ -483,12 +486,14 @@ export function deleteDirectory(dir) {
 }
 
 /**
- * Use `rsync` to make a copy of a file.
- * @param source the source file
- * @param destination the destination file
+ * Use `rsync` to copy a file or a directory.
+ * @param source the source path
+ * @param destination the destination path
+ * @see hasRsync
  */
 export function invokeRsync(source, destination, options) {
-  return invokeCmd(`rsync -avz "${source}" "${destination}"`, {
+  const params = options && options.delete ? '-avz --delete' : '-avz';
+  return invokeCmd(`rsync ${params} "${source}" "${destination}"`, {
     ...options,
     successValue: destination
   });
@@ -515,6 +520,7 @@ export function invokeCmd(cmd, options) {
 /**
  * Whether `rsync` is available on the system.
  * @return `true` if `rsync` is available, `false` otherwise
+ * @see invokeRsync
  */
 export function hasRsync(options) {
   return hasCmd('rsync', options);

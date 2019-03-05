@@ -171,7 +171,7 @@ function editMetadataFileForFile(file, tmp) {
 }
 
 /**
- * Determine the best template string to use for a file.
+ * Return the most fitting template string for a file.
  * @param file a file name
  * @return a template string
  */
