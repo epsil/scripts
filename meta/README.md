@@ -3,6 +3,27 @@
 
 **`meta.js`** er et JavaScript-skript (kjøres med Node) som genererer symbolske lenker basert på metadata i YAML. Det kan brukes som et verktøy for tagging.
 
+Installasjon
+------------
+
+Avhengigheter:
+
+    npm install
+
+Kommandolinje:
+
+    sudo ln -s meta.js /usr/local/bin/metatag
+    sudo ln -s tag.js /usr/local/bin/tag
+    sudo ln -s tag.js /usr/local/bin/t
+
+Snarvei:
+
+    cp MetaTag.desktop ~/.local/share/applications
+
+Tjeneste:
+
+    cp MetaTagService.desktop ~/.local/share/kservices5/ServiceMenus
+
 Spesifikasjon
 -------------
 
@@ -30,14 +51,15 @@ Mappen `.meta` er alltid en undermappe av mappen som originalfilen ligger i. Det
 Metadatafiler inneholder YAML, som er ren tekst. For eksempel:
 
 ```yaml
+---
 tags:
-  - foo
   - bar
+  - foo
 categories:
   - quux
 ```
 
-YAML-en kan være omsluttet av `---` og `---`, eller utelate dem, som i eksemplet. Dette er valgfritt.
+YAML-en bør være prefikset med `---`, som vist.
 
 Med en metadatafil kan man lagre *tagger* om en fil. Taggene listes i YAML-egenskapen `tags`. Navnet på en tagg består av de alfanumeriske tegnene `a-z` og `0-9`. Navnet kan også inneholde punktum, `.`, men det kan ikke være første tegn. Eksempler:
 
@@ -47,9 +69,23 @@ Med en metadatafil kan man lagre *tagger* om en fil. Taggene listes i YAML-egens
 
 En *kategori* har samme syntaks som en tagg, men er ment å gruppere filer på en mer overordnet måte (f.eks. ved å skille mellom ulike filtyper). Kategorier lagres i YAML-egenskapen `categories`.
 
-Man kan representere kombinasjonen av flere tagger med en *taggliste*. Tagglister kan representeres som lister i YAML, slik det er vist over, men ofte er en mer praktisk syntaks som en streng hvor taggene er alfabetisk sortert og separert med mellomrom. Eksempler:
+Man kan representere kombinasjonen av flere tagger med en *taggliste*. Tagglister kan representeres som lister i YAML, slik det er vist i YAML-eksemplet over, men det er ofte praktisk å benytte en egen syntaks hvor taggene er alfabetisk sortert og separert med mellomrom. Eksempler:
 
+-   `foo`
 -   `bar foo`
 -   `bar foo quux.baz`
 
-Man kan forstå `bar foo` som en spørring etter filer som er tagget med *både* `bar` og `foo`. Med andre ord: `bar foo` betegner *snittet* av filer som er tagget med `bar` og filer som er tagget med `foo`, og kan leses som "`bar` og `foo`".
+Dette kan også forstås som en syntaks for *taggspørringer*. Her er `bar foo` en spørring etter filer som er tagget med *både* `bar` og `foo`. Den betegner altså *snittet* (&cap;) av filer som er tagget med `bar` og filer som er tagget med `foo`, og kan leses som "`bar` *og* `foo`".
+
+Ressurser
+---------
+
+### Artikler
+
+-   [Designing better file organization around tags, not hierarchies](http://www.nayuki.io/page/designing-better-file-organization-around-tags-not-hierarchies)
+-   [Gwern Branwen's tagging system](http://www.gwern.net/About#confidence-tags)
+-   [Dotfile madness](https://0x46.net/thoughts/2019/02/01/dotfile-madness/)
+
+### Lignende prosjekter
+
+-   [hydrus network](http://hydrusnetwork.github.io/hydrus/) ([GitHub](https://github.com/hydrusnetwork/hydrus))

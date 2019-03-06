@@ -481,8 +481,8 @@ export function makeCopy(source, destination, options) {
 }
 
 /**
- * Recursively delete a directory and its contents.
- * Works similarly to `rm -rf`.
+ * Recursively delete a directory and all its contents.
+ * Works similarly to the Unix command `rm -rf`.
  * @param dir a directory
  */
 export function deleteDirectory(dir) {
@@ -491,8 +491,12 @@ export function deleteDirectory(dir) {
 
 /**
  * Use `rsync` to copy a file or a directory.
+ * The command is invoked with the parameters `-avz`.
+ * If `delete: true` is specified in `options`,
+ * then `--delete` is passed as well.
  * @param source the source path
  * @param destination the destination path
+ * @param [options] options object
  * @see hasRsync
  */
 export function invokeRsync(source, destination, options) {
@@ -676,14 +680,14 @@ export function isMetadataFile(file) {
 }
 
 /**
- * Regexp for matching the `metaPre` part of a metadata filename.
+ * Regular expression for matching the `metaPre` part of a metadata filename.
  */
 export function metadataPreRegExp() {
   return new RegExp('^' + _.escapeRegExp(metaPre));
 }
 
 /**
- * Regexp for matching the `metaExt` part of a metadata filename.
+ * Regular expression for matching the `metaExt` part of a metadata filename.
  */
 export function metadataPostRegExp() {
   return new RegExp(_.escapeRegExp(metaExt) + '$');
