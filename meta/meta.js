@@ -712,6 +712,44 @@ export function joinPaths(dir, file) {
 }
 
 /**
+ * Create a dictionary mapping tags to metadata objects.
+ * @param metaArr an array of metadata objects
+ * @param [tagFilter] a filtering function for tags
+ * @return a tag dictionary
+ */
+export function createTagDictionary(metaArr, tagFilter) {
+  const dict = {};
+  const filter = tagFilter || _.identity;
+
+  const addToTag = (tag, meta) => {
+    if (dict[tag]) {
+      dict[tag].push(meta);
+    } else {
+      dict[tag] = [meta];
+    }
+  };
+
+  // https://github.com/lodash/lodash/issues/1459
+  const sortDictionary = d =>
+    _(d)
+      .toPairs()
+      .sortBy(0)
+      .fromPairs()
+      .value();
+
+  metaArr.forEach(meta => {
+    const tags = meta.tags || [];
+    tags.forEach(tag => {
+      if (filter(tag)) {
+        addToTag(tag, meta);
+      }
+    });
+  });
+
+  return sortDictionary(dict);
+}
+
+/**
  * Whether the current system is Windows.
  * @return `true` if the system is Windows, `false` otherwise
  */

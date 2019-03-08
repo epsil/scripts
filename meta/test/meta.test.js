@@ -4,6 +4,7 @@ import rimraf from 'rimraf';
 import {
   categoryDir,
   createGlobPattern,
+  createTagDictionary,
   getFilenameFromMetadataFilename,
   getMetadataFilenameFromFilename,
   hasCmd,
@@ -185,5 +186,151 @@ describe('getMetadataFilenameFromFilename', () => {
     getMetadataFilenameFromFilename('lib/file.txt', { unix: true }).should.eql(
       'lib/.meta/.file.txt.yml'
     );
+  });
+});
+
+describe('createTagDictionary', () => {
+  it('should handle an empty array', () => {
+    createTagDictionary([]).should.eql({});
+  });
+
+  it('should handle a single metadata object with no tags', () => {
+    createTagDictionary([
+      {
+        file: '../meta.file',
+        meta: '.meta.file.yml'
+      }
+    ]).should.eql({});
+  });
+
+  it('should handle a single metadata object with a single tag', () => {
+    createTagDictionary([
+      {
+        file: '../meta.file',
+        meta: '.meta.file.yml',
+        tags: ['foo']
+      }
+    ]).should.eql({
+      foo: [
+        {
+          file: '../meta.file',
+          meta: '.meta.file.yml',
+          tags: ['foo']
+        }
+      ]
+    });
+  });
+
+  it('should handle a single metadata object with multiple tags', () => {
+    createTagDictionary([
+      {
+        file: '../meta.file',
+        meta: '.meta.file.yml',
+        tags: ['bar', 'foo']
+      }
+    ]).should.eql({
+      bar: [
+        {
+          file: '../meta.file',
+          meta: '.meta.file.yml',
+          tags: ['bar', 'foo']
+        }
+      ],
+      foo: [
+        {
+          file: '../meta.file',
+          meta: '.meta.file.yml',
+          tags: ['bar', 'foo']
+        }
+      ]
+    });
+  });
+
+  it('should handle multiple metadata objects with multiple tags', () => {
+    createTagDictionary([
+      {
+        file: '../foo',
+        meta: '.foo.yml',
+        tags: ['bar', 'foo']
+      },
+      {
+        file: '../bar',
+        meta: '.bar.yml',
+        tags: ['bar', 'baz']
+      }
+    ]).should.eql({
+      bar: [
+        {
+          file: '../foo',
+          meta: '.foo.yml',
+          tags: ['bar', 'foo']
+        },
+        {
+          file: '../bar',
+          meta: '.bar.yml',
+          tags: ['bar', 'baz']
+        }
+      ],
+      baz: [
+        {
+          file: '../bar',
+          meta: '.bar.yml',
+          tags: ['bar', 'baz']
+        }
+      ],
+      foo: [
+        {
+          file: '../foo',
+          meta: '.foo.yml',
+          tags: ['bar', 'foo']
+        }
+      ]
+    });
+  });
+
+  it('should return a sorted dictionary', () => {
+    createTagDictionary([
+      {
+        file: '../meta.file',
+        meta: '.meta.file.yml',
+        tags: ['foo', 'bar']
+      }
+    ]).should.eql({
+      bar: [
+        {
+          file: '../meta.file',
+          meta: '.meta.file.yml',
+          tags: ['foo', 'bar']
+        }
+      ],
+      foo: [
+        {
+          file: '../meta.file',
+          meta: '.meta.file.yml',
+          tags: ['foo', 'bar']
+        }
+      ]
+    });
+  });
+
+  it('should filter tags', () => {
+    createTagDictionary(
+      [
+        {
+          file: '../meta.file',
+          meta: '.meta.file.yml',
+          tags: ['foo', 'bar']
+        }
+      ],
+      tag => tag === 'foo'
+    ).should.eql({
+      foo: [
+        {
+          file: '../meta.file',
+          meta: '.meta.file.yml',
+          tags: ['foo', 'bar']
+        }
+      ]
+    });
   });
 });
