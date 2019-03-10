@@ -100,8 +100,8 @@ export async function processMetadataFilesWithTmpDir(
   options
 ) {
   const tempDirectory = await makeTemporaryDirectory(tempDir || tmpDir);
-  return processMetadataFilesInDir(inputDir, tempDirectory, options).then(() =>
-    mergeTmpDirAndOutputDir(tempDirectory, outputDir, options)
+  return processMetadataFilesInDir(inputDir, tempDirectory, options).then(
+    () => null // mergeTmpDirAndOutputDir(tempDirectory, outputDir, options)
   );
 }
 
@@ -110,11 +110,17 @@ export async function processMetadataFilesWithTmpDir(
  * @param [inputDir] the directory to look for metadata files in
  * @param [outputDir] the directory to create symlinks in
  */
-export function processMetadataFilesInDir(inputDir, outputDir, options) {
-  return iterateOverFilesStream(processMetadata, inputDir, {
-    ...options,
-    categoryDir: outputDir
+export async function processMetadataFilesInDir(inputDir, outputDir, options) {
+  console.log(inputDir);
+  console.log(outputDir);
+  const files = await iterateOverFiles(null, inputDir, options);
+  const metaArr = files.map(file => {
+    const data = fs.readFileSync(file);
+    const yml = data.toString().trim() + '\n';
+    const meta = parseMetadata(yml, file);
+    return meta;
   });
+  return processTagsAndCategoriesRecursively(metaArr, { cwd: outputDir });
 }
 
 /**
@@ -316,6 +322,62 @@ export function processTagsAndCategories(meta, options) {
   });
 }
 
+export function processTagsAndCategoriesRecursively(metaArr, options) {
+  return new Promise((resolve, reject) => {
+    const categoryDict = createTagDictionary(
+      metaArr,
+      null,
+      m => m.categories || [defaultCategory]
+    );
+    Object.keys(categoryDict).forEach(category => {
+      makeTagTreeInCategory(categoryDict[category], category, options);
+    });
+    resolve(metaArr);
+  });
+}
+
+export async function makeTagTreeInCategory(metaArr, category, options) {
+  const catDir = await makeCategoryDirectory(category, options);
+  const fullCategoryDir = path.join(options.cwd, catDir);
+  makeTagTreeInDirectory(metaArr, fullCategoryDir);
+}
+
+export function makeTagTreeInDirectory(metaArr, dir, seenTags) {
+  const seen = seenTags || [];
+  const filter = tag => !_.includes(seen, tag);
+  console.log('makeTagTreeInDirectory called with:');
+  console.log(dir);
+  console.log(seenTags);
+  metaArr.forEach(meta => {
+    const tags = meta.tags || [];
+    tags.forEach(tag => {
+      const isUnprocessedTag = filter(tag);
+      if (isUnprocessedTag) {
+        makeTagLink(meta.file, tag, { cwd: dir, tagDir: '.' }).then(tLink => {
+          console.log('tag link: ' + tLink);
+        });
+      }
+    });
+  });
+  const isAboveThreshold = metaArr.length > 1;
+  if (isAboveThreshold) {
+    const tagDict = createTagDictionary(metaArr, filter);
+    Object.keys(tagDict).forEach(tag => {
+      const isUnprocessedTag = filter(tag);
+      if (isUnprocessedTag) {
+        console.log(
+          'doing unprocessed tag: ' + tag + ', history: ' + JSON.stringify(seen)
+        );
+        const mArr = tagDict[tag];
+        const seenArr = seen.concat([tag]);
+        const subDir = path.join(dir, tag);
+        console.log('subDir: ' + subDir);
+        makeTagTreeInDirectory(mArr, subDir, seenArr);
+      }
+    });
+  }
+}
+
 /**
  * Process the `tags` property of a metadata object.
  * @param meta a metadata object
@@ -345,7 +407,7 @@ export async function makeTagLinkInCategory(filePath, category, tag, options) {
  * @param tag the tag to create a link for
  */
 export async function makeTagLink(filePath, tag, options) {
-  const dir = await makeTagDirectory(tag, options);
+  const dir = await makeTagDirectory(tag, { ...options, tagDir: '.' });
   if (options && options.makeSymLinks) {
     return makeLink(filePath, dir, options);
   }
@@ -717,11 +779,8 @@ export function joinPaths(dir, file) {
  * @param [tagFilter] a filtering function for tags
  * @return a tag dictionary
  */
-export function createTagDictionary(metaArr, tagFilter) {
-  const dict = {};
-  const filter = tagFilter || _.identity;
-
-  const addToTag = (tag, meta) => {
+export function createTagDictionary(metaArr, tagFilter, tagAccessor) {
+  const addEntry = (tag, meta) => {
     if (dict[tag]) {
       dict[tag].push(meta);
     } else {
@@ -737,11 +796,15 @@ export function createTagDictionary(metaArr, tagFilter) {
       .fromPairs()
       .value();
 
+  const dict = {};
+  const filter = tagFilter || _.identity;
+  const acc = tagAccessor || (meta => meta.tags);
+
   metaArr.forEach(meta => {
-    const tags = meta.tags || [];
+    const tags = acc(meta) || [];
     tags.forEach(tag => {
       if (filter(tag)) {
-        addToTag(tag, meta);
+        addEntry(tag, meta);
       }
     });
   });
