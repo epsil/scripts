@@ -7,7 +7,7 @@
     "metalinks": "index.js"
   },
   "scripts": {
-    "clean": "rm -rf lib cat tag tmp tmp2 trash .meta && cp -r test/fixtures/lib .",
+    "clean": "rm -rf doc lib cat tag tmp tmp2 trash .meta && cp -r test/fixtures/lib .",
     "start": "npm run clean && node index.js",
     "uninstall": "rm -rf node_modules",
     "uninstall!": "npm run uninstall && rm -f package-lock.json",
@@ -22,7 +22,8 @@
     "lint": "npm run prettier && npm run eslint",
     "test": "npm run lint && npm run mocha",
     "test!": "npm run format! && npm run mocha && npm start",
-    "mocha": "mocha test/test.js"
+    "mocha": "mocha test/test.js",
+    "jsdoc": "jsdoc -c .jsdocrc -d doc README.md meta.js tag.js"
   },
   "keywords": [],
   "author": "",
@@ -51,6 +52,7 @@
     "eslint-plugin-import": "^2.16.0",
     "eslint-plugin-jsx-a11y": "^6.2.1",
     "eslint-plugin-react": "^7.12.4",
+    "jsdoc": "^3.5.5",
     "mocha": "^5.2.0",
     "prettier": "^1.16.4"
   }
