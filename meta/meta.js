@@ -295,32 +295,42 @@ export function createGlobPattern(mDir, mExt) {
 }
 
 /**
- * Process a metadata object.
- * @param meta a metadata object
+ * Process the metadata for a file.
+ * @param file a file
  */
 export function processMetadata(file, options) {
-  return new Promise((resolve, reject) => {
-    fs.readFile(file, 'utf8', (err, data) => {
-      if (err) {
-        console.log(err);
-        reject(err);
-      } else {
-        const yml = data.toString().trim() + '\n';
-        const meta = parseMetadata(yml, file);
-        printMetadata(meta, options);
-        processTagsAndCategories(meta, options).then(() => {
-          resolve(file);
-        });
-      }
-    });
+  return readMetadataForFile(file, {
+    ...options,
+    print: true
+  }).then(meta => {
+    processTagsAndCategories(meta, options);
+    return file;
   });
 }
 
 /**
- * Process a metadata object in the context of a query.
- * @param meta a metadata object
+ * Process the metadata for a file in the context of a query.
+ * @param file a file
+ * @param query a query
  */
 export function processMetadataQuery(file, query, options) {
+  return readMetadataForFile(file, {
+    ...options,
+    print: true
+  }).then(meta => {
+    performQueryOnFile(meta, query, options);
+    return query;
+  });
+}
+
+/**
+ * Read the metadata for a file.
+ * If `print: true` is specified in `options`,
+ * then the metadata is printed to the console.
+ * @param file a file
+ * @return a metadata object (wrapped in a promise)
+ */
+export function readMetadataForFile(file, options) {
   return new Promise((resolve, reject) => {
     fs.readFile(file, 'utf8', (err, data) => {
       if (err) {
@@ -329,8 +339,10 @@ export function processMetadataQuery(file, query, options) {
       } else {
         const yml = data.toString().trim() + '\n';
         const meta = parseMetadata(yml, file);
-        performQueryOnFile(meta, query, options);
-        resolve(query);
+        if (options && options.print) {
+          printMetadata(meta, options);
+        }
+        resolve(meta);
       }
     });
   });
