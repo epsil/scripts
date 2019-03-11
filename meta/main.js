@@ -8,12 +8,12 @@ import { processMetadataFiles } from './meta';
  * file, which in turn invokes `main()`.)
  */
 function main() {
-  const [node, cmd, inputDir, outputDir] = process.argv;
+  const [node, cmd, inputDir, outputDir, query] = process.argv;
   if (inputDir === '--help' || inputDir === '-h') {
     help();
     return;
   }
-  processMetadataFiles(inputDir, outputDir);
+  processMetadataFiles(inputDir, outputDir, query);
 }
 
 /**

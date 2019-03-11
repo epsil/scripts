@@ -27,6 +27,11 @@ export const categoryDir = 'cat';
 export const tagDir = 'tag';
 
 /**
+ * The directory to store queries in.
+ */
+export const queryDir = 'q';
+
+/**
  * The default category.
  */
 export const defaultCategory = '_';
@@ -73,12 +78,17 @@ export const normalize = false;
  * @param [outputDir] the directory to create symlinks in
  * (`categoryDir` by default)
  */
-export async function processMetadataFiles(inputDir, outputDir, options) {
+export async function processMetadataFiles(
+  inputDir,
+  outputDir,
+  query,
+  options
+) {
   const inDir = inputDir || sourceDir;
   const outDir = outputDir || categoryDir;
   const ln = await hasLn();
   console.log(`Processing metadata in ${inDir}/ ...\n`);
-  return processMetadataFilesWithTmpDir(inDir, outDir, tmpDir, {
+  return processMetadataFilesWithTmpDir(inDir, outDir, tmpDir, query, {
     makeSymLinks: makeSymLinks && ln,
     ...options
   }).then(() => {
@@ -97,12 +107,16 @@ export async function processMetadataFilesWithTmpDir(
   inputDir,
   outputDir,
   tempDir,
+  query,
   options
 ) {
   const tempDirectory = await makeTemporaryDirectory(tempDir || tmpDir);
-  return processMetadataFilesInDir(inputDir, tempDirectory, options).then(() =>
-    mergeTmpDirAndOutputDir(tempDirectory, outputDir, options)
-  );
+  return processMetadataFilesInDir(
+    inputDir,
+    tempDirectory,
+    query,
+    options
+  ).then(() => mergeTmpDirAndOutputDir(tempDirectory, outputDir, options));
 }
 
 /**
@@ -110,7 +124,17 @@ export async function processMetadataFilesWithTmpDir(
  * @param [inputDir] the directory to look for metadata files in
  * @param [outputDir] the directory to create symlinks in
  */
-export function processMetadataFilesInDir(inputDir, outputDir, options) {
+export function processMetadataFilesInDir(inputDir, outputDir, query, options) {
+  if (query) {
+    return iterateOverFilesStream(
+      file => processMetadataQuery(file, query, options),
+      inputDir,
+      {
+        ...options,
+        categoryDir: outputDir
+      }
+    );
+  }
   return iterateOverFilesStream(processMetadata, inputDir, {
     ...options,
     categoryDir: outputDir
@@ -293,6 +317,26 @@ export function processMetadata(file, options) {
 }
 
 /**
+ * Process a metadata object in the context of a query.
+ * @param meta a metadata object
+ */
+export function processMetadataQuery(file, query, options) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(file, 'utf8', (err, data) => {
+      if (err) {
+        console.log(err);
+        reject(err);
+      } else {
+        const yml = data.toString().trim() + '\n';
+        const meta = parseMetadata(yml, file);
+        performQueryOnFile(meta, query, options);
+        resolve(query);
+      }
+    });
+  });
+}
+
+/**
  * Process the `categories` and `tags` properties of a metadata object.
  * @param meta a metadata object
  */
@@ -346,10 +390,23 @@ export async function makeTagLinkInCategory(filePath, category, tag, options) {
  */
 export async function makeTagLink(filePath, tag, options) {
   const dir = await makeTagDirectory(tag, options);
+  return makeLinkOrCopy(filePath, dir, options);
+}
+
+/**
+ * Make a link to, or a copy of, a file.
+ * If `makeSymLinks: true` is specified in `options`,
+ * a link is made; otherwise, the function performs copying.
+ * This function can be used to provide file copying as a fall-back
+ * on systems that do not support links.
+ * @param source the file to link to
+ * @param destination the location of the link
+ */
+export function makeLinkOrCopy(source, destination, options) {
   if (options && options.makeSymLinks) {
-    return makeLink(filePath, dir, options);
+    return makeLink(source, destination, options);
   }
-  return makeCopy(filePath, dir, options);
+  return makeCopy(source, destination, options);
 }
 
 /**
@@ -398,6 +455,7 @@ export function makeTemporaryDirectory(tempDir) {
 
 /**
  * Make a directory in the current directory.
+ * Works similarly to the Unix command `mkdir -p`.
  * No error is thrown if the directory already exists.
  */
 export function makeDirectory(dir, options) {
@@ -755,6 +813,95 @@ export function createTagDictionary(metaArr, tagFilter) {
  */
 export function isWindows() {
   return os.platform() === 'win32';
+}
+
+/**
+ * Parse a tag list string.
+ * @param tagListStr a space-separated list of tags
+ * @return an alphabetically sorted array of strings
+ * @example
+ *
+ * parseQuery('foo bar');
+ * // => ['bar', 'foo']
+ */
+export function parseQuery(tagListStr) {
+  const arr = tagListStr
+    .trim()
+    .split(' ')
+    .map(s => s.trim())
+    .filter(s => s !== '')
+    .sort();
+  return _.uniq(arr);
+}
+
+/**
+ * Filter a metadata object array by a list of tags.
+ * @param metaArr a metadata object array
+ * @param tagList an array of tags
+ * @return a filtered metadata object array
+ */
+export function filterByTagList(metaArr, tagList) {
+  const hasTag = (meta, tag) => {
+    const tags = meta.tags || [];
+    return _.includes(tags, tag);
+  };
+
+  const filter = meta => {
+    for (let i = 0; i < tagList.length; i++) {
+      const tag = tagList[i];
+      if (!hasTag(meta, tag)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  return metaArr.filter(filter);
+}
+
+/**
+ * Filter a metadata object array by a query.
+ * @param metaArr a metadata object array
+ * @param query a query
+ * @return a filtered metadata object array
+ */
+export function filterByQuery(metaArr, query) {
+  const tagList = parseQuery(query);
+  return filterByTagList(metaArr, tagList);
+}
+
+/**
+ * Make query links for a metadata object array.
+ * @param metaArr a metadata object array
+ * @param query a query
+ * @param [options] an options object
+ */
+export async function performQuery(metaArr, query, options) {
+  const matches = filterByQuery(metaArr, query);
+  matches.forEach(match => makeQueryLink(match, query, options));
+}
+
+/**
+ * Make a query link for a file if the file
+ * is matched by the query.
+ * @param meta a metadata object
+ * @param query a query
+ * @param [options] an options object
+ */
+export async function performQueryOnFile(meta, query, options) {
+  return performQuery([meta], query, options);
+}
+
+/**
+ * Make a query link.
+ * @param meta a metadata object
+ * @param query a query
+ * @param [options] an options object
+ */
+export async function makeQueryLink(meta, query, options) {
+  const qDir = (options && options.queryDir) || queryDir;
+  const dir = await makeDirectory(`${qDir}/${query}`);
+  makeLinkOrCopy(meta.file, dir, options);
 }
 
 export default {};

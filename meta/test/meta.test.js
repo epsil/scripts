@@ -5,6 +5,7 @@ import {
   categoryDir,
   createGlobPattern,
   createTagDictionary,
+  filterByTagList,
   getFilenameFromMetadataFilename,
   getMetadataFilenameFromFilename,
   hasCmd,
@@ -15,6 +16,7 @@ import {
   metaDir,
   metaExt,
   parseMetadata,
+  parseQuery,
   parseYaml,
   tagDir
 } from '../meta';
@@ -332,5 +334,62 @@ describe('createTagDictionary', () => {
         }
       ]
     });
+  });
+});
+
+describe('parseQuery', () => {
+  it('should handle empty strings', () => {
+    parseQuery('').should.eql([]);
+  });
+
+  it('should handle singleton strings', () => {
+    parseQuery('foo').should.eql(['foo']);
+  });
+
+  it('should create create a tag array from a tag list string', () => {
+    parseQuery('bar foo').should.eql(['bar', 'foo']);
+  });
+
+  it('should sort the list', () => {
+    parseQuery('foo bar').should.eql(['bar', 'foo']);
+  });
+
+  it('should remove duplicates', () => {
+    parseQuery('foo foo bar').should.eql(['bar', 'foo']);
+  });
+});
+
+describe('filterByTagList', () => {
+  it('should handle empty lists', () => {
+    filterByTagList([], []).should.eql([]);
+  });
+
+  it('should handle singleton lists', () => {
+    filterByTagList([], ['foo']).should.eql([]);
+    filterByTagList(['foo'], []).should.eql(['foo']);
+  });
+
+  it('should filter metadata objects', () => {
+    filterByTagList(
+      [
+        {
+          file: '../foo',
+          meta: '.foo.yml',
+          tags: ['bar', 'foo']
+        },
+        {
+          file: '../bar',
+          meta: '.bar.yml',
+          tags: ['bar', 'baz']
+        }
+      ],
+      ['foo']
+    ).should.eql([
+      {
+        file: '../foo',
+        meta: '.foo.yml',
+        tags: ['bar', 'foo']
+      }
+    ]);
   });
 });
