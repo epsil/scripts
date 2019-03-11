@@ -116,7 +116,10 @@ export async function processMetadataFilesWithTmpDir(
     tempDirectory,
     query,
     options
-  ).then(() => mergeTmpDirAndOutputDir(tempDirectory, outputDir, options));
+  ).then(() => {
+    // mergeTmpDirAndOutputDir(tempDirectory, outputDir, options)
+    return true;
+  });
 }
 
 /**
