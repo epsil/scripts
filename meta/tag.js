@@ -96,7 +96,43 @@ const metaExt = '.yml';
 function main() {
   const [node, cmd, ...args] = process.argv;
   const files = args;
+  if (files && files[0] === '--tag') {
+    files.shift();
+    const tag = files.shift();
+    files.forEach(file => {
+      setTagForFile(tag, file);
+    });
+    return;
+  }
   editMetadataFileForFiles(files);
+}
+
+function setTagForFile(tag, file) {
+  const fileExists = fs.existsSync(file);
+  if (!fileExists) {
+    console.log(`${file} does not exist!`);
+    return null;
+  }
+  console.log(`Setting tag ${tag} for ${file} ...`);
+  const realFile = fs.realpathSync(file);
+  const metaFile = getMetadataFilenameFromFilename(realFile);
+  const fileAlreadyExist = fs.existsSync(metaFile);
+  const continuation = () => {
+    let yml = fs.readFileSync(metaFile) + '';
+    const meta = parseYaml(yml);
+    let tags = (meta && meta.tags) || [];
+    tags.push(tag);
+    tags = _.uniq(tags.sort());
+    meta.tags = tags;
+    yml = yaml.safeDump(meta);
+    yml = '---\n' + yml.trim();
+    fs.writeFileSync(metaFile, yml);
+  };
+  if (!fileAlreadyExist) {
+    return createMetadataFile(metaFile, '').then(continuation);
+  } else {
+    continuation();
+  }
 }
 
 /**
@@ -363,7 +399,7 @@ function parseYaml(str) {
     console.log(err);
     return {};
   }
-  return meta;
+  return meta || {};
 }
 
 // invoke the "main" function
