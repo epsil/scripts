@@ -6,15 +6,25 @@
 Installasjon
 ------------
 
+### `metalinks`
+
 Avhengigheter:
 
     npm install
 
+Hvis noe går galt, prøv `npm run reinstall`.
+
 Kommandolinje:
 
-    sudo ln -s meta.js /usr/local/bin/metatag
-    sudo ln -s tag.js /usr/local/bin/tag
-    sudo ln -s tag.js /usr/local/bin/t
+    npm link
+
+Dette gjør kommandoen `metalinks` tilgjengelig fra kommandolinjen.
+
+### `metatag`
+
+Aliaser:
+
+    sudo ln -s /path/to/tag.js /usr/local/bin/metatag
 
 Snarvei:
 

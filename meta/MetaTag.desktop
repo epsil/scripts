@@ -1,6 +1,6 @@
 [Desktop Entry]
 Comment=
-Exec=/home/vegard/scripts/meta/tag.js
+Exec=metatag
 Name=MetaTag
 NoDisplay=false
 Path[$e]=
