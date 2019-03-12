@@ -96,7 +96,20 @@ const metaExt = '.yml';
 function main() {
   const [node, cmd, ...args] = process.argv;
   const files = args;
+  if (!files || !files[0] || files[0] === '--help' || files[0] === '-h') {
+    help();
+    return;
+  }
   editMetadataFileForFiles(files);
+}
+
+/**
+ * Display help message.
+ */
+function help() {
+  console.log(`Usage:
+
+metatag [file]`);
 }
 
 /**

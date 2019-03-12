@@ -1,27 +1,14 @@
 `meta.js`
 =========
 
-**`meta.js`** er et JavaScript-skript (kjøres med Node) som genererer symbolske lenker basert på metadata i YAML. Det kan brukes som et verktøy for tagging.
+**`metatag`** er et Node-skript som lagrer metadata om en fil i et YAML-dokument. **`metalinks`**  er et skript som genererer symbolske lenker basert på slike metadata. Skriptene kan brukes som verktøy for organisering og tagging av filer.
 
 Installasjon
 ------------
 
-### `metalinks`
-
-Biblioteker (prøv `npm run reinstall` hvis noe går galt):
-
-    cd links
-    npm install
-
-Kommandolinje:
-
-    npm link
-
-Dette gjør kommandoen `metalinks` tilgjengelig fra kommandolinjen.
-
 ### `metatag`
 
-Biblioteker:
+Biblioteker (prøv `npm run reinstall` hvis noe går galt):
 
     cd tag
     npm install
@@ -30,7 +17,7 @@ Kommandolinje:
 
     npm link
 
-Dette gjør kommandoen `metatag` tilgjengelig fra kommandolinjen.
+Dette gjør kommandoen `metatag` tilgjengelig fra kommandolinjen. Skriv `metatag --help` for å få hjelp.
 
 Snarvei:
 
@@ -39,6 +26,19 @@ Snarvei:
 Tjeneste:
 
     cp MetaTagService.desktop ~/.local/share/kservices5/ServiceMenus
+
+### `metalinks`
+
+Biblioteker:
+
+    cd links
+    npm install
+
+Kommandolinje:
+
+    npm link
+
+Dette gjør kommandoen `metalinks` tilgjengelig fra kommandolinjen. Skriv `metalinks --help` for å få hjelp.
 
 Spesifikasjon
 -------------

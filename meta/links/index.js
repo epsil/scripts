@@ -937,7 +937,7 @@ function main() {
 function help() {
   console.log(`Usage:
 
-./index.js [input] [output]`);
+metalinks [input] [output]`);
 }
 
 // invoke the "main" function
