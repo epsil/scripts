@@ -8,11 +8,9 @@ Installasjon
 
 ### `metalinks`
 
-Avhengigheter:
+Biblioteker (prøv `npm run reinstall` hvis noe går galt):
 
     npm install
-
-Hvis noe går galt, prøv `npm run reinstall`.
 
 Kommandolinje:
 
@@ -22,9 +20,14 @@ Dette gjør kommandoen `metalinks` tilgjengelig fra kommandolinjen.
 
 ### `metatag`
 
-Aliaser:
+Biblioteker:
 
-    sudo ln -s /path/to/tag.js /usr/local/bin/metatag
+    cd tag
+    npm install
+
+Kommandolinje:
+
+    npm link
 
 Snarvei:
 
