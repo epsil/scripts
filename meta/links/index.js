@@ -16,7 +16,7 @@ const execAsync = util.promisify(childProcess.exec);
 /**
  * The directory to look for metadata in.
  */
-const sourceDir = 'lib';
+const sourceDir = '.';
 
 /**
  * The directory to store categories in.
