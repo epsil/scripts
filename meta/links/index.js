@@ -88,6 +88,9 @@ const normalize = false;
 function processMetadataFiles(inputDir, outputDir, query, options) {
   const inDir = inputDir || sourceDir;
   const outDir = outputDir || destinationDir;
+  if (outDir === '.' || outDir === '') {
+    throw new Error('The output directory cannot be the current directory!');
+  }
   return hasLn().then(ln => {
     console.log(`Processing metadata in ${inDir}/ ...\n`);
     return processMetadataFilesWithTmpDir(inDir, outDir, tmpDir, query, {
@@ -136,8 +139,10 @@ function processMetadataFilesInDir(inputDir, outputDir, query, options) {
   //     }
   //   );
   // }
+  const inputDirectory = path.relative(outputDir, inputDir);
+  return iterateOverFilesStream(processMetadata, inputDirectory, {
     ...options,
-    categoryDir: outputDir
+    cwd: outputDir
   });
 }
 
@@ -237,13 +242,15 @@ function iterateOverFilesStream(fn, dir, options) {
   return new Promise((resolve, reject) => {
     const result = [];
     const iterator = fn || (x => x);
+    const cwd = (options && options.cwd) || '.';
+    const directory = joinPaths(cwd, dir);
     const stream = fg.stream([createGlobPattern()], {
       dot: true,
       ignore: [ignorePattern],
-      cwd: dir
+      cwd: directory
     });
     stream.on('data', entry => {
-      const file = path.join(dir, entry);
+      const file = path.join(directory, entry);
       if (normalize) {
         normalizeYamlFile(file);
       }
@@ -477,12 +484,12 @@ function makeDirectory(dir, options) {
       if (err) {
         const dirAlreadyExists = err.code === 'EEXIST';
         if (dirAlreadyExists) {
-          resolve(dir);
+          resolve(dirPath);
         } else {
-          reject(dir);
+          reject(dirPath);
         }
       } else {
-        resolve(dir);
+        resolve(dirPath);
       }
     });
   });
