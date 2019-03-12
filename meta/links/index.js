@@ -19,17 +19,22 @@ const execAsync = util.promisify(childProcess.exec);
 const sourceDir = '.';
 
 /**
- * The directory to store categories in.
+ * The directory to store links in.
+ */
+const destinationDir = '_meta';
+
+/**
+ * The subdirectory to store categories in.
  */
 const categoryDir = 'cat';
 
 /**
- * The directory to store tags in.
+ * The subdirectory to store tags in.
  */
 const tagDir = 'tag';
 
 /**
- * The directory to store queries in.
+ * The subdirectory to store queries in.
  */
 const queryDir = 'q';
 
@@ -46,7 +51,7 @@ const metaDir = '.meta';
 /**
  * Temporary directory to generate symlinks in.
  */
-const tmpDir = 'tmp';
+const tmpDir = '_tmp';
 
 /**
  * The dotfile prefix for metadata files.
@@ -82,7 +87,7 @@ const normalize = false;
  */
 function processMetadataFiles(inputDir, outputDir, query, options) {
   const inDir = inputDir || sourceDir;
-  const outDir = outputDir || categoryDir;
+  const outDir = outputDir || destinationDir;
   return hasLn().then(ln => {
     console.log(`Processing metadata in ${inDir}/ ...\n`);
     return processMetadataFilesWithTmpDir(inDir, outDir, tmpDir, query, {
