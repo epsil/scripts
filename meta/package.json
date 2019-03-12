@@ -10,7 +10,7 @@
     "clean": "rm -rf doc lib cat tag q tmp tmp2 trash .meta && cp -r test/fixtures/lib .",
     "start": "npm run clean && node index.js",
     "query": "node index.js lib . \"foo bar\"",
-    "uninstall": "rm -rf node_modules",
+    "uninstall": "rm -rf node_modules && npm run clean",
     "uninstall!": "npm run uninstall && rm -f package-lock.json",
     "reinstall": "npm run uninstall! && npm install",
     "prettier": "npm run prettier-js && npm run prettier-json",
