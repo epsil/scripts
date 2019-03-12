@@ -29,7 +29,9 @@ describe('makeCategoryContainer', () => {
         dir.should.eql(meta.categoryDir);
       });
     } finally {
-      rimraf.sync(dir);
+      if (dir) {
+        rimraf.sync(dir);
+      }
     }
   });
 });
@@ -42,7 +44,9 @@ describe('makeTagContainer', () => {
         dir.should.eql(meta.tagDir);
       });
     } finally {
-      rimraf.sync(dir);
+      if (dir) {
+        rimraf.sync(dir);
+      }
     }
   });
 });
