@@ -78,21 +78,17 @@ export const normalize = false;
  * @param [outputDir] the directory to create symlinks in
  * (`categoryDir` by default)
  */
-export async function processMetadataFiles(
-  inputDir,
-  outputDir,
-  query,
-  options
-) {
+export function processMetadataFiles(inputDir, outputDir, query, options) {
   const inDir = inputDir || sourceDir;
   const outDir = outputDir || categoryDir;
-  const ln = await hasLn();
-  console.log(`Processing metadata in ${inDir}/ ...\n`);
-  return processMetadataFilesWithTmpDir(inDir, outDir, tmpDir, query, {
-    makeSymLinks: makeSymLinks && ln,
-    ...options
-  }).then(() => {
-    console.log('Done.');
+  return hasLn().then(ln => {
+    console.log(`Processing metadata in ${inDir}/ ...\n`);
+    return processMetadataFilesWithTmpDir(inDir, outDir, tmpDir, query, {
+      makeSymLinks: makeSymLinks && ln,
+      ...options
+    }).then(() => {
+      console.log('Done.');
+    });
   });
 }
 
@@ -103,20 +99,18 @@ export async function processMetadataFiles(
  * @param [outputDir] the directory to create symlinks in
  * @param [tempDir] the temporary directory to create symlinks in
  */
-export async function processMetadataFilesWithTmpDir(
+export function processMetadataFilesWithTmpDir(
   inputDir,
   outputDir,
   tempDir,
   query,
   options
 ) {
-  const tempDirectory = await makeTemporaryDirectory(tempDir || tmpDir);
-  return processMetadataFilesInDir(
-    inputDir,
-    tempDirectory,
-    query,
-    options
-  ).then(() => mergeTmpDirAndOutputDir(tempDirectory, outputDir, options));
+  makeTemporaryDirectory(tempDir || tmpDir).then(tempDirectory =>
+    processMetadataFilesInDir(inputDir, tempDirectory, query, options).then(
+      () => mergeTmpDirAndOutputDir(tempDirectory, outputDir, options)
+    )
+  );
 }
 
 /**
@@ -146,12 +140,13 @@ export function processMetadataFilesInDir(inputDir, outputDir, query, options) {
  * @param [tempDir] the temporary directory
  * @param [outputDir] the output directory
  */
-export async function mergeTmpDirAndOutputDir(tempDir, outputDir, options) {
-  const rsync = await hasRsync();
-  if (rsync) {
-    return mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options);
-  }
-  return mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options);
+export function mergeTmpDirAndOutputDir(tempDir, outputDir, options) {
+  return hasRsync().then(rsync => {
+    if (rsync) {
+      return mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options);
+    }
+    return mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options);
+  });
 }
 
 /**
@@ -159,11 +154,7 @@ export async function mergeTmpDirAndOutputDir(tempDir, outputDir, options) {
  * @param [tempDir] the temporary directory
  * @param [outputDir] the output directory
  */
-export async function mergeTmpDirAndOutputDirWithRsync(
-  tempDir,
-  outputDir,
-  options
-) {
+export function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
   const temporaryDir = tempDir + '/';
   return makeDirectory(outputDir)
     .then(() =>
@@ -180,11 +171,7 @@ export async function mergeTmpDirAndOutputDirWithRsync(
  * @param [tempDir] the temporary directory
  * @param [outputDir] the output directory
  */
-export async function mergeTmpDirAndOutputDirWithMv(
-  tempDir,
-  outputDir,
-  options
-) {
+export function mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options) {
   if (isWindows()) {
     console.log(`Windows: cannot move ${tempDir}/ to ${outputDir}/.`);
     return null;
@@ -273,11 +260,12 @@ export function iterateOverFilesStream(fn, dir, options) {
  * @param dir the directory to look in
  * @return an array of return values
  */
-async function iterateOverFilesAsync(fn, dir, options) {
+export function iterateOverFilesAsync(fn, dir, options) {
   const iterator = fn || (x => x);
-  const files = await iterateOverFiles(null, dir, options);
-  const proms = files.map(file => iterator(file, options));
-  return Promise.all(proms);
+  return iterateOverFiles(null, dir, options).then(files => {
+    const proms = files.map(file => iterator(file, options));
+    return Promise.all(proms);
+  });
 }
 
 /**
@@ -390,9 +378,10 @@ export function processTags(meta, options) {
  * @param category the category to create a link within
  * @param tag the tag to create a link for
  */
-export async function makeTagLinkInCategory(filePath, category, tag, options) {
-  const dir = await makeCategoryDirectory(category, options);
-  return makeTagLink(filePath, tag, { ...options, cwd: dir, tagDir: '.' });
+export function makeTagLinkInCategory(filePath, category, tag, options) {
+  return makeCategoryDirectory(category, options).then(dir =>
+    makeTagLink(filePath, tag, { ...options, cwd: dir, tagDir: '.' })
+  );
 }
 
 /**
@@ -400,9 +389,10 @@ export async function makeTagLinkInCategory(filePath, category, tag, options) {
  * @param filePath the file path of the referenced file
  * @param tag the tag to create a link for
  */
-export async function makeTagLink(filePath, tag, options) {
-  const dir = await makeTagDirectory(tag, options);
-  return makeLinkOrCopy(filePath, dir, options);
+export function makeTagLink(filePath, tag, options) {
+  return makeTagDirectory(tag, options).then(dir =>
+    makeLinkOrCopy(filePath, dir, options)
+  );
 }
 
 /**
@@ -424,18 +414,21 @@ export function makeLinkOrCopy(source, destination, options) {
 /**
  * Make a category directory.
  */
-export async function makeCategoryDirectory(category, options) {
-  const dir = await makeCategoryContainer(options);
-  return makeDirectory(`${dir}/${category}`, options);
+export function makeCategoryDirectory(category, options) {
+  return makeCategoryContainer(options).then(dir =>
+    makeDirectory(`${dir}/${category}`, options)
+  );
 }
 
 /**
  * Make a tag directory.
  */
-export async function makeTagDirectory(tag, options) {
-  let dir = (options && options.tagDir) || tagDir;
+export function makeTagDirectory(tag, options) {
+  const dir = (options && options.tagDir) || tagDir;
   if (!dir) {
-    dir = await makeTagContainer(options);
+    return makeTagContainer(options).then(directory =>
+      makeDirectory(`${directory}/${tag}`, options)
+    );
   }
   return makeDirectory(`${dir}/${tag}`, options);
 }
@@ -888,7 +881,7 @@ export function filterByQuery(metaArr, query) {
  * @param query a query
  * @param [options] an options object
  */
-export async function performQuery(metaArr, query, options) {
+export function performQuery(metaArr, query, options) {
   const matches = filterByQuery(metaArr, query);
   matches.forEach(match => makeQueryLink(match, query, options));
 }
@@ -900,7 +893,7 @@ export async function performQuery(metaArr, query, options) {
  * @param query a query
  * @param [options] an options object
  */
-export async function performQueryOnFile(meta, query, options) {
+export function performQueryOnFile(meta, query, options) {
   return performQuery([meta], query, options);
 }
 
@@ -910,10 +903,11 @@ export async function performQueryOnFile(meta, query, options) {
  * @param query a query
  * @param [options] an options object
  */
-export async function makeQueryLink(meta, query, options) {
+export function makeQueryLink(meta, query, options) {
   const qDir = (options && options.queryDir) || queryDir;
-  const dir = await makeDirectory(`${qDir}/${query}`);
-  makeLinkOrCopy(meta.file, dir, options);
+  return makeDirectory(`${qDir}/${query}`).then(dir =>
+    makeLinkOrCopy(meta.file, dir, options)
+  );
 }
 
 export default {};
