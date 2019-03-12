@@ -30,6 +30,8 @@ Kommandolinje:
 
     npm link
 
+Dette gjør kommandoen `metatag` tilgjengelig fra kommandolinjen.
+
 Snarvei:
 
     cp MetaTag.desktop ~/.local/share/applications
