@@ -126,17 +126,16 @@ function processMetadataFilesWithTmpDir(
  * @param [outputDir] the directory to create symlinks in
  */
 function processMetadataFilesInDir(inputDir, outputDir, query, options) {
-  if (query) {
-    return iterateOverFilesStream(
-      file => processMetadataQuery(file, query, options),
-      inputDir,
-      {
-        ...options,
-        categoryDir: outputDir
-      }
-    );
-  }
-  return iterateOverFilesStream(processMetadata, inputDir, {
+  // if (query) {
+  //   return iterateOverFilesStream(
+  //     file => processMetadataQuery(file, query, options),
+  //     inputDir,
+  //     {
+  //       ...options,
+  //       categoryDir: outputDir
+  //     }
+  //   );
+  // }
     ...options,
     categoryDir: outputDir
   });
