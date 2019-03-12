@@ -418,6 +418,7 @@ export async function makeTagLink(filePath, tag, options) {
  * @param destination the location of the link
  */
 export function makeLinkOrCopy(source, destination, options) {
+  console.log(2);
   if (options && options.makeSymLinks) {
     return makeLink(source, destination, options);
   }
@@ -498,6 +499,7 @@ export function makeDirectory(dir, options) {
  * @param destination the location of the link
  */
 export function makeLink(source, destination, options) {
+  console.log(1);
   return new Promise((resolve, reject) => {
     const cwd = (options && options.cwd) || '.';
     const sourcePath = joinPaths(cwd, source);
@@ -915,6 +917,7 @@ export async function performQueryOnFile(meta, query, options) {
  */
 export async function makeQueryLink(meta, query, options) {
   const qDir = (options && options.queryDir) || queryDir;
+  await makeDirectory(`${qDir}`);
   const dir = await makeDirectory(`${qDir}/${query}`);
   makeLinkOrCopy(meta.file, dir, options);
 }
