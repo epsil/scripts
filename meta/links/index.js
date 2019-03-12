@@ -87,9 +87,11 @@ const normalize = false;
  */
 function processMetadataFiles(inputDir, outputDir, query, options) {
   const inDir = inputDir || sourceDir;
-  const outDir = outputDir || destinationDir;
+  let outDir = outputDir || destinationDir;
   if (outDir === '.' || outDir === '') {
-    throw new Error('The output directory cannot be the current directory!');
+    outDir = destinationDir;
+    console.log(`Warning: the output directory cannot be the current directory.
+Outputting to ${outDir}/ instead.`);
   }
   return hasLn().then(ln => {
     console.log(`Processing metadata in ${inDir}/ ...\n`);
@@ -118,7 +120,11 @@ function processMetadataFilesWithTmpDir(
 ) {
   return makeTemporaryDirectory(tempDir || tmpDir).then(tempDirectory =>
     processMetadataFilesInDir(inputDir, tempDirectory, query, options).then(
-      () => mergeTmpDirAndOutputDir(tempDirectory, outputDir, options)
+      () =>
+        mergeTmpDirAndOutputDir(tempDirectory, outputDir, {
+          ...options,
+          delete: !query
+        })
     )
   );
 }
@@ -129,21 +135,19 @@ function processMetadataFilesWithTmpDir(
  * @param [outputDir] the directory to create symlinks in
  */
 function processMetadataFilesInDir(inputDir, outputDir, query, options) {
-  // if (query) {
-  //   return iterateOverFilesStream(
-  //     file => processMetadataQuery(file, query, options),
-  //     inputDir,
-  //     {
-  //       ...options,
-  //       categoryDir: outputDir
-  //     }
-  //   );
-  // }
   const inputDirectory = path.relative(outputDir, inputDir);
-  return iterateOverFilesStream(processMetadata, inputDirectory, {
+  const opt = {
     ...options,
     cwd: outputDir
-  });
+  };
+  if (query) {
+    return iterateOverFilesStream(
+      (file, opts) => processMetadataQuery(file, query, opts),
+      inputDirectory,
+      opt
+    );
+  }
+  return iterateOverFilesStream(processMetadata, inputDirectory, opt);
 }
 
 /**
@@ -171,7 +175,8 @@ function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
     .then(() =>
       invokeRsync(temporaryDir, outputDir, {
         errorValue: true,
-        delete: true
+        delete: true,
+        ...options
       })
     )
     .then(() => deleteDirectory(tempDir));
@@ -335,7 +340,6 @@ function readMetadataForFile(file, options) {
   return new Promise((resolve, reject) => {
     fs.readFile(file, 'utf8', (err, data) => {
       if (err) {
-        console.log(err);
         reject(err);
       } else {
         const yml = data.toString().trim() + '\n';
@@ -447,7 +451,7 @@ function makeTagDirectory(tag, options) {
 }
 
 /**
- * Make a category container.
+ * Make a category container directory (usually `cat/`).
  */
 function makeCategoryContainer(options) {
   const dir = (options && options.categoryDir) || categoryDir;
@@ -455,10 +459,18 @@ function makeCategoryContainer(options) {
 }
 
 /**
- * Make a tag container.
+ * Make a tag container directory (usually `tag/`).
  */
 function makeTagContainer(options) {
   const dir = (options && options.tagDir) || tagDir;
+  return makeDirectory(dir, options);
+}
+
+/**
+ * Make a query container directory (usually `q/`).
+ */
+function makeQueryContainer(options) {
+  const dir = (options && options.queryDir) || queryDir;
   return makeDirectory(dir, options);
 }
 
@@ -920,10 +932,9 @@ function performQueryOnFile(meta, query, options) {
  * @param [options] an options object
  */
 function makeQueryLink(meta, query, options) {
-  const qDir = (options && options.queryDir) || queryDir;
-  return makeDirectory(`${qDir}/${query}`).then(dir =>
-    makeLinkOrCopy(meta.file, dir, options)
-  );
+  return makeQueryContainer(options)
+    .then(dir => makeDirectory(`${dir}/${query}`, options))
+    .then(dir => makeLinkOrCopy(meta.file, dir, options));
 }
 
 /**
