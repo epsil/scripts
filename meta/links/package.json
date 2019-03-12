@@ -1,0 +1,60 @@
+{
+  "name": "metalinks",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "metalinks": "index.js"
+  },
+  "scripts": {
+    "clean": "rm -rf doc lib cat q tmp tmp2 trash .meta && cp -r ../test/fixtures/lib .",
+    "start": "npm run clean && node index.js",
+    "query": "node index.js lib . \"foo bar\"",
+    "uninstall": "rm -rf node_modules && npm run clean",
+    "uninstall!": "npm run uninstall && rm -f package-lock.json",
+    "reinstall": "npm run uninstall! && npm install",
+    "prettier": "npm run prettier-js && npm run prettier-json",
+    "prettier-js": "prettier --single-quote --write \"**/*.{js,jsx,ts}\"",
+    "prettier-json": "prettier --single-quote --write \"**/*.json\"",
+    "eslint": "eslint . --ext .js,.jsx",
+    "eslint-fix": "eslint . --fix --ext .js,.jsx",
+    "format": "npm run prettier && npm run eslint-fix",
+    "format!": "npm run lint && npm run format",
+    "lint": "npm run prettier && npm run eslint",
+    "test": "npm run lint && npm run mocha",
+    "test!": "npm run format! && npm run mocha && npm start",
+    "mocha": "mocha ../test/test.js",
+    "jsdoc": "jsdoc -c .jsdocrc -d doc README.md meta.js tag.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/core": "^7.2.2",
+    "@babel/polyfill": "^7.2.5",
+    "@babel/preset-env": "^7.3.1",
+    "@babel/register": "^7.0.0",
+    "child_process": "^1.0.2",
+    "fast-glob": "^2.2.6",
+    "fs": "0.0.1-security",
+    "js-yaml": "^3.12.2",
+    "lodash": "^4.17.11",
+    "os": "^0.1.1",
+    "path": "^0.12.7",
+    "rimraf": "^2.6.3",
+    "util": "^0.11.1"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.0.1",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "eslint": "^5.13.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-jsx-a11y": "^6.2.1",
+    "eslint-plugin-react": "^7.12.4",
+    "jsdoc": "^3.5.5",
+    "mocha": "^5.2.0",
+    "prettier": "^1.16.4"
+  }
+}

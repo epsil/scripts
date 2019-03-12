@@ -10,6 +10,7 @@ Installasjon
 
 Biblioteker (prøv `npm run reinstall` hvis noe går galt):
 
+    cd links
     npm install
 
 Kommandolinje:

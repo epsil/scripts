@@ -8,7 +8,7 @@ chai.should();
 
 const fs = require('fs');
 const rimraf = require('rimraf');
-const metalinks = require('../index');
+const metalinks = require('../links');
 
 process.chdir('test'); // working directory
 
