@@ -110,7 +110,7 @@ The first command creates symlinks for all the files in the
 current directory. The second command performs a query in the
 current directory (.).
 
-Output is stored in the _meta/ folder by default.
+Output is stored in the ./_meta subdirectory by default.
 A different location may be specified with the OUTPUTDIR parameter.`);
 }
 
@@ -122,15 +122,19 @@ A different location may be specified with the OUTPUTDIR parameter.`);
  * (`categoryDir` by default)
  */
 function processMetadataFiles(inputDir, outputDir, query, options) {
-  const inDir = inputDir || sourceDir;
-  let outDir = outputDir || destinationDir;
-  if (outDir === '.' || outDir === '') {
-    outDir = destinationDir;
-    console.log(`Warning: the output directory cannot be the current directory.
-Outputting to ${outDir}/ instead.`);
+  let inDir = inputDir;
+  let outDir = outputDir;
+  if (!inDir || inDir === '.') {
+    inDir = sourceDir;
+    console.log(`Input directory is: ${inDir}`);
   }
+  if (!outDir || outDir === '.') {
+    outDir = destinationDir;
+    console.log(`Output directory is: ./${outDir}`);
+  }
+  validateDirectories(inDir, outDir);
   return hasLn().then(ln => {
-    console.log(`Processing metadata in ${inDir}/ ...\n`);
+    console.log(`Processing metadata ...\n`);
     return processMetadataFilesWithTmpDir(inDir, outDir, tmpDir, query, {
       makeSymLinks: makeSymLinks && ln,
       ...options
@@ -138,6 +142,16 @@ Outputting to ${outDir}/ instead.`);
       console.log('Done.');
     });
   });
+}
+
+/**
+ * Verify that the input and output directories are safe.
+ * If not, then throw an error to prevent data loss.
+ */
+function validateDirectories(inputDir, outputDir) {
+  if (!outputDir || outputDir === '.') {
+    throw new Error('Output directory cannot be the current directory!');
+  }
 }
 
 /**
