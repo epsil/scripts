@@ -7,8 +7,27 @@ const util = require('util');
 const yaml = require('js-yaml');
 const _ = require('lodash');
 
-// http://stackoverflow.com/questions/20643470/execute-a-command-line-binary-with-node-js#20643568
-const execAsync = util.promisify(childProcess.exec);
+/**
+ * Help message to display when running with --help.
+ */
+const helpMessage = `Usage:
+
+    metatag [FILES...]
+
+Example:
+
+    metatag FILE
+
+This launches a text editor for editing the metadata of FILE.
+
+    metatag FILE1 FILE2 FILE3
+
+This launches text editors for editing the metadata of FILE1,
+FILE2 and FILE3.
+
+    metatag --tag foo FILE1 FILE2 FILE3
+
+This adds the tag foo to FILE1, FILE2 and FILE3.`;
 
 /**
  * Text editor for editing metadata files.
@@ -91,11 +110,23 @@ const metaPre = '.';
 const metaExt = '.yml';
 
 /**
+ * Promise wrapper for `childProcess.exec()`.
+ * http://stackoverflow.com/questions/20643470/execute-a-command-line-binary-with-node-js#20643568
+ */
+const execAsync = util.promisify(childProcess.exec);
+
+/**
  * "Main" function.
  */
 function main() {
   const [node, cmd, ...args] = process.argv;
   const files = args;
+  const noArgs = !files || files.length === 0;
+  const helpArg = files && (files[0] === '--help' || files[0] === '-h');
+  if (noArgs || helpArg) {
+    help();
+    return;
+  }
   if (files && files[0] === '--tag') {
     files.shift();
     const tag = files.shift();
@@ -111,11 +142,7 @@ function main() {
  * Display help message.
  */
 function help() {
-  console.log(`Usage:
-
-    metatag [FILE]
-
-This launches a text editor for editing the metadata of FILE.`);
+  console.log(helpMessage);
 }
 
 /**

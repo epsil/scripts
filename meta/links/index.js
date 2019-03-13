@@ -10,8 +10,24 @@ const yaml = require('js-yaml');
 const _ = require('lodash');
 const childProcess = require('child_process');
 
-// http://stackoverflow.com/questions/20643470/execute-a-command-line-binary-with-node-js#20643568
-const execAsync = util.promisify(childProcess.exec);
+/**
+ * Help message to display when running with --help.
+ */
+const helpMessage = `Usage:
+
+    metalinks [INPUTDIR] [OUTPUTDIR] [QUERY]
+
+Examples:
+
+    metalinks
+    metalinks . . "foo bar"
+
+The first command creates symlinks for all the files in the
+current directory. The second command performs a query in the
+current directory (.).
+
+Output is stored in the ./_meta subdirectory by default.
+A different location may be specified with the OUTPUTDIR parameter.`;
 
 /**
  * The directory to look for metadata in.
@@ -79,6 +95,12 @@ const ignorePattern = 'node_modules/**';
 const normalize = false;
 
 /**
+ * Promise wrapper for `childProcess.exec()`.
+ * http://stackoverflow.com/questions/20643470/execute-a-command-line-binary-with-node-js#20643568
+ */
+const execAsync = util.promisify(childProcess.exec);
+
+/**
  * The "main" function.
  *
  * Execution begins here when the script is run from the command line
@@ -97,21 +119,7 @@ function main() {
  * Display help message.
  */
 function help() {
-  console.log(`Usage:
-
-    metalinks [INPUTDIR] [OUTPUTDIR] [QUERY]
-
-Examples:
-
-    metalinks
-    metalinks . . "foo bar"
-
-The first command creates symlinks for all the files in the
-current directory. The second command performs a query in the
-current directory (.).
-
-Output is stored in the ./_meta subdirectory by default.
-A different location may be specified with the OUTPUTDIR parameter.`);
+  console.log(helpMessage);
 }
 
 /**
@@ -980,11 +988,6 @@ function makeQueryLink(meta, query, options) {
     .then(dir => makeLinkOrCopy(meta.file, dir, options));
 }
 
-// invoke the "main" function
-if (require.main === module) {
-  main();
-}
-
 module.exports = {
   categoryDir,
   createGlobPattern,
@@ -1004,3 +1007,8 @@ module.exports = {
   parseYaml,
   tagDir
 };
+
+// invoke the "main" function
+if (require.main === module) {
+  main();
+}
