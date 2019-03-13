@@ -430,3 +430,41 @@ describe('filterByTagList', () => {
       ]);
   });
 });
+
+describe('mergeTmpDirAndOutputDirWithRsync', () => {
+  it('should throw an error if the working directory is equivalent to the output directory', () => {
+    let error = '';
+    try {
+      metalinks.mergeTmpDirAndOutputDirWithRsync('.', '.');
+    } catch (err) {
+      error = err.message;
+    }
+    error.should.equal(
+      'The working directory cannot be equivalent to the output directory'
+    );
+  });
+
+  it('should throw an error if the output directory is a parent of the working directory', () => {
+    let error = '';
+    try {
+      metalinks.mergeTmpDirAndOutputDirWithRsync('foo/bar', 'foo');
+    } catch (err) {
+      error = err.message;
+    }
+    error.should.equal(
+      'The output directory cannot be a parent of the working directory'
+    );
+  });
+});
+
+describe('validateDirectories', () => {
+  it('should throw an error if the output directory is equivalent to the current directory', () => {
+    let error = '';
+    try {
+      metalinks.validateDirectories('.', '.');
+    } catch (err) {
+      error = err.message;
+    }
+    error.should.equal('Output directory cannot be the current directory');
+  });
+});

@@ -158,7 +158,7 @@ function processMetadataFiles(inputDir, outputDir, query, options) {
  */
 function validateDirectories(inputDir, outputDir) {
   if (!outputDir || outputDir === '.') {
-    throw new Error('Output directory cannot be the current directory!');
+    throw new Error('Output directory cannot be the current directory');
   }
 }
 
@@ -228,6 +228,20 @@ function mergeTmpDirAndOutputDir(tempDir, outputDir, options) {
  * @param [outputDir] the output directory
  */
 function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
+  const absTempDir = path.resolve(tempDir);
+  const absOutputDir = path.resolve(outputDir);
+  const isSameDir = absTempDir === absOutputDir;
+  if (isSameDir) {
+    throw new Error(
+      'The working directory cannot be equivalent to the output directory'
+    );
+  }
+  const outputDirIsParentOfTempDir = absTempDir.startsWith(absOutputDir);
+  if (outputDirIsParentOfTempDir) {
+    throw new Error(
+      'The output directory cannot be a parent of the working directory'
+    );
+  }
   const temporaryDir = tempDir + '/';
   return makeDirectory(outputDir)
     .then(() =>
@@ -988,6 +1002,7 @@ function makeQueryLink(meta, query, options) {
     .then(dir => makeLinkOrCopy(meta.file, dir, options));
 }
 
+// export functions for testing
 module.exports = {
   categoryDir,
   createGlobPattern,
@@ -1000,12 +1015,14 @@ module.exports = {
   makeCategoryContainer,
   makeDirectory,
   makeTagContainer,
+  mergeTmpDirAndOutputDirWithRsync,
   metaDir,
   metaExt,
   parseMetadata,
   parseQuery,
   parseYaml,
-  tagDir
+  tagDir,
+  validateDirectories
 };
 
 // invoke the "main" function
