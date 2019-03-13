@@ -719,7 +719,7 @@ function parseYaml(str) {
     console.log(err);
     return {};
   }
-  return meta;
+  return meta || {};
 }
 
 /**
