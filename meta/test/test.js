@@ -432,10 +432,20 @@ describe('filterByTagList', () => {
 });
 
 describe('mergeTmpDirAndOutputDirWithRsync', () => {
-  it('should throw an error if the working directory is equivalent to the output directory', () => {
+  it('should throw an error if the working directory is the current directory', () => {
     let error = '';
     try {
       metalinks.mergeTmpDirAndOutputDirWithRsync('.', '.');
+    } catch (err) {
+      error = err.message;
+    }
+    error.should.equal('The working directory cannot be the current directory');
+  });
+
+  it('should throw an error if the working directory is equivalent to the output directory', () => {
+    let error = '';
+    try {
+      metalinks.mergeTmpDirAndOutputDirWithRsync('foo', 'foo');
     } catch (err) {
       error = err.message;
     }

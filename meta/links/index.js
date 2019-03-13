@@ -26,7 +26,7 @@ The first command creates symlinks for all the files in the
 current directory. The second command performs a query in the
 current directory (.).
 
-Output is stored in the ./_meta subdirectory by default.
+Output is stored in the _meta subdirectory by default.
 A different location may be specified with the OUTPUTDIR parameter.`;
 
 /**
@@ -228,6 +228,11 @@ function mergeTmpDirAndOutputDir(tempDir, outputDir, options) {
  * @param [outputDir] the output directory
  */
 function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
+  // validate directory paths to prevent data loss
+  const tempDirIsCurrentDir = tempDir === '.' || tempDir === '';
+  if (tempDirIsCurrentDir) {
+    throw new Error('The working directory cannot be the current directory');
+  }
   const absTempDir = path.resolve(tempDir);
   const absOutputDir = path.resolve(outputDir);
   const isSameDir = absTempDir === absOutputDir;
@@ -242,16 +247,17 @@ function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
       'The output directory cannot be a parent of the working directory'
     );
   }
+  // directory paths look okay, proceed with merge
   const temporaryDir = tempDir + '/';
   return makeDirectory(outputDir)
     .then(() =>
       invokeRsync(temporaryDir, outputDir, {
         errorValue: true,
-        delete: true,
+        delete: true, // destructive!
         ...options
       })
     )
-    .then(() => deleteDirectory(tempDir));
+    .then(() => deleteDirectory(tempDir)); // destructive!
 }
 
 /**
