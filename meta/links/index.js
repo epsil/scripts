@@ -79,6 +79,42 @@ const ignorePattern = 'node_modules/**';
 const normalize = false;
 
 /**
+ * The "main" function.
+ *
+ * Execution begins here when the script is run from the command line
+ * with Node.
+ */
+function main() {
+  const [node, cmd, inputDir, outputDir, query] = process.argv;
+  if (inputDir === '--help' || inputDir === '-h') {
+    help();
+    return;
+  }
+  processMetadataFiles(inputDir, outputDir, query);
+}
+
+/**
+ * Display help message.
+ */
+function help() {
+  console.log(`Usage:
+
+    metalinks [INPUTDIR] [OUTPUTDIR] [QUERY]
+
+Examples:
+
+    metalinks
+    metalinks . . "foo bar"
+
+The first command creates symlinks for all the files in the
+current directory. The second command performs a query in the
+current directory (.).
+
+Output is stored in the _meta/ folder by default.
+A different location may be specified with the OUTPUTDIR parameter.`);
+}
+
+/**
  * Process all metadata files in the given directory.
  * @param [inputDir] the directory to look for metadata files in
  * (`sourceDir` by default)
@@ -359,20 +395,13 @@ function readMetadataForFile(file, options) {
  */
 function processTagsAndCategories(meta, options) {
   return new Promise((resolve, reject) => {
-    const tags = meta.tags || [];
-    const categories = meta.categories;
-    if (!categories) {
-      const category = defaultCategory;
-      tags.forEach(tag =>
-        makeTagLinkInCategory(meta.file, category, tag, options)
-      );
-    } else {
-      categories.forEach(category => {
-        tags.forEach(tag =>
-          makeTagLinkInCategory(meta.file, category, tag, options)
-        );
+    const tags = (meta && meta.tags) || [];
+    const categories = (meta && meta.categories) || [defaultCategory];
+    categories.forEach(category => {
+      tags.forEach(tag => {
+        makeTagLinkInCategory(meta.file, category, tag, options);
       });
-    }
+    });
     resolve(meta);
   });
 }
@@ -937,33 +966,10 @@ function makeQueryLink(meta, query, options) {
     .then(dir => makeLinkOrCopy(meta.file, dir, options));
 }
 
-/**
- * The "main" function.
- *
- * Execution begins here when the script is run from the command line with Node.
- * (Note that the execution actually begins in `index.js`, which includes this
- * file, which in turn invokes `main()`.)
- */
-function main() {
-  const [node, cmd, inputDir, outputDir, query] = process.argv;
-  if (inputDir === '--help' || inputDir === '-h') {
-    help();
-    return;
-  }
-  processMetadataFiles(inputDir, outputDir, query);
-}
-
-/**
- * Display help message.
- */
-function help() {
-  console.log(`Usage:
-
-metalinks [input] [output]`);
-}
-
 // invoke the "main" function
-main();
+if (require.main === module) {
+  main();
+}
 
 module.exports = {
   categoryDir,

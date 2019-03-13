@@ -109,7 +109,9 @@ function main() {
 function help() {
   console.log(`Usage:
 
-metatag [file]`);
+    metatag [FILE]
+
+This launches a text editor for editing the metadata of FILE.`);
 }
 
 /**
