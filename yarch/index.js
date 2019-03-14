@@ -49,7 +49,7 @@ function download(url) {
 }
 
 function youtubedl(url) {
-  const ydl = `youtube-dl`;
+  const ydl = 'youtube-dl';
   const opt =
     '--add-metadata --embed-thumbnail --all-subs --embed-subs --sub-format srt --write-info-json';
   const mp4 = `${ydl} -f mp4 --add-metadata --embed-thumbnail --all-subs --embed-subs --sub-format srt --write-info-json --merge-output-format mp4 "${url}"`;

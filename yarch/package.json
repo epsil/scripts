@@ -9,9 +9,12 @@
   "scripts": {
     "clean": "rm -rf node_modules package-lock.json",
     "format": "npm run prettier",
+    "format!": "npm run format && npm run eslint-fix",
     "prettier": "npm run prettier-js && npm run prettier-json",
     "prettier-js": "prettier --single-quote --write \"**/*.{js,jsx,ts}\"",
     "prettier-json": "prettier --single-quote --write \"**/*.json\"",
+    "eslint": "eslint . --ext .js,.jsx",
+    "eslint-fix": "eslint . --fix --ext .js,.jsx",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -22,6 +25,7 @@
     "shelljs": "^0.8.3"
   },
   "devDependencies": {
+    "eslint": "^5.13.0",
     "prettier": "^1.16.4"
   }
 }

@@ -142,7 +142,7 @@ function processMetadataFiles(inputDir, outputDir, query, options) {
   }
   validateDirectories(inDir, outDir);
   return hasLn().then(ln => {
-    console.log(`Processing metadata ...\n`);
+    console.log('Processing metadata ...\n');
     return processMetadataFilesWithTmpDir(inDir, outDir, tmpDir, query, {
       makeSymLinks: makeSymLinks && ln,
       ...options
@@ -224,11 +224,14 @@ function mergeTmpDirAndOutputDir(tempDir, outputDir, options) {
 
 /**
  * Use `rsync` to merge a temporary directory into the target directory.
- * This function is potentially destructive and is equipped with a number
- * of validation checks to prevent data loss. Even so, the caller should
- * take care to ensure that its parameters are correct.
- * @param [tempDir] the working directory, temporary
- * @param [outputDir] the output directory
+ * If `delete: true` is specified in `options`, then `rsync` is invoked
+ * with the `--delete` option. This function is potentially destructive
+ * and is equipped with a number of validation checks to prevent data loss.
+ * Even so, the caller should take the most utmost care to ensure that the
+ * parameters are correct.
+ * @param tempDir the working directory (temporary)
+ * @param outputDir the output directory
+ * @see mergeTmpDirAndOutputDirWithMv
  */
 function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
   // validation checks
@@ -269,23 +272,34 @@ function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
         ...options
       })
     )
-    .then(() => deleteDirectory(tempDir)); // destructive!
+    .then(() => {
+      if (options && options.delete) {
+        deleteDirectory(tempDir);
+      }
+    }); // destructive!
 }
 
 /**
  * Use `mv` to merge a temporary directory into the target directory.
- * @param [tempDir] the temporary directory
- * @param [outputDir] the output directory
+ * If `delete: true` is specified in `options`, and the target
+ * directory already exists, then it is replaced completely.
+ * @param tempDir the working directory (temporary)
+ * @param outputDir the output directory
+ * @see mergeTmpDirAndOutputDirWithRsync
  */
 function mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options) {
   const outputDirExists = fs.existsSync(outputDir);
   if (!outputDirExists) {
     return moveFile(tempDir, outputDir, options);
   }
-  const trashDir = tempDir + '2'; // 'tmp2'
+  const trashDir = tempDir + '2'; // '_tmp2'
   return moveFile(outputDir, trashDir)
     .then(() => moveFile(tempDir, outputDir))
-    .then(() => deleteDirectory(trashDir));
+    .then(() => {
+      if (options && options.delete) {
+        deleteDirectory(trashDir);
+      }
+    });
 }
 
 /**
@@ -661,7 +675,7 @@ function moveFile(source, destination, options) {
   return new Promise((resolve, reject) => {
     const cwd = (options && options.cwd) || '.';
     const sourcePath = joinPaths(cwd, source);
-    let destinationPath = joinPaths(cwd, destination);
+    const destinationPath = joinPaths(cwd, destination);
     fs.rename(sourcePath, destinationPath, err => {
       if (err) {
         reject(err);
