@@ -122,6 +122,7 @@ function convertUrlToFilename(url) {
   let file = url;
   file = file.replace(/^https?:\/\//i, '');
   file = file.replace(/^www\./i, '');
+  file = file.replace(/\/+$/i, '');
   file = _.deburr(file);
   file = file.replace(/[/?=]/gi, '_');
   file = file.replace(/[^-0-9a-z_.,]/gi, '');
