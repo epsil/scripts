@@ -99,6 +99,10 @@ function convertUrlToFilename(url) {
   return file;
 }
 
+/**
+ * Look for `.json` files in the current directory.
+ * @return a `ShellString` listing found files
+ */
 function findJsonFile() {
   const jsonFiles = shell.ls('-R', '*.json');
   const foundFiles = jsonFiles.length > 0;
@@ -109,6 +113,9 @@ function findJsonFile() {
   return '';
 }
 
+/**
+ * Normalize metadata as YAML, if any.
+ */
 function fixMetadata() {
   const jsonFile = findJsonFile();
   if (jsonFile) {
@@ -116,6 +123,11 @@ function fixMetadata() {
   }
 }
 
+/**
+ * Convert a JSON file to a YAML file.
+ * This deletes the original file.
+ * @param file a JSON file
+ */
 function convertJSONFileToYAMLFile(file) {
   const metaDir = '.meta';
   const json = fs.readFileSync(file);
@@ -129,6 +141,11 @@ function convertJSONFileToYAMLFile(file) {
   shell.rm('-f', file);
 }
 
+/**
+ * Convert a JSON string to a YAML string.
+ * @param json a JSON string
+ * @return a YAML string
+ */
 function convertJSONtoYAML(json) {
   const obj = JSON.parse(json);
   let yml = yaml.safeDump(obj);
