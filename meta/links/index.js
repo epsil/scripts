@@ -224,7 +224,7 @@ function mergeTmpDirAndOutputDir(tempDir, outputDir, options) {
 
 /**
  * Use `rsync` to merge a temporary directory into the target directory.
- * @param [tempDir] the temporary directory
+ * @param [tempDir] the working directory, temporary
  * @param [outputDir] the output directory
  */
 function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
@@ -247,7 +247,16 @@ function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
       'The output directory cannot be a parent of the working directory'
     );
   }
-  // directory paths look okay, proceed with merge
+  const tempDirDoesNotExist = !fs.existsSync(tempDir);
+  if (tempDirDoesNotExist) {
+    throw new Error('The working directory does not exist');
+  }
+  const tempDirIsEmpty = fs.readdirSync(tempDir).length === 0;
+  if (tempDirIsEmpty) {
+    console.log('Working directory is empty, aborting merge.');
+    return Promise.resolve(null);
+  }
+  // directories look okay, proceed with merge
   const temporaryDir = tempDir + '/';
   return makeDirectory(outputDir)
     .then(() =>
