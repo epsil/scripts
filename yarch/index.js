@@ -20,12 +20,33 @@ Data is saved to its own folder.`;
  */
 function main() {
   const [node, cmd, ...args] = process.argv;
+
+  const youtubedlIsMissing = !shell.which('youtube-dl');
+  if (youtubedlIsMissing) {
+    shell.echo(`youtube-dl is missing. Get it from:
+http://ytdl-org.github.io/youtube-dl/`);
+    shell.exit(1);
+  }
+
   const noArgs = !args || args.length === 0;
   const helpArg = args && (args[0] === '--help' || args[0] === '-h');
   if (noArgs || helpArg) {
     help();
-    return;
+    shell.exit(0);
   }
+
+  const urls = args;
+  urls.forEach(download);
+  shell.exit(0);
+}
+
+function download(url) {
+  youtubedl(url);
+}
+
+function youtubedl(url) {
+  const cmd = `youtube-dl "${url}"`;
+  return shell.exec(cmd);
 }
 
 /**
