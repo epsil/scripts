@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const shell = require('shelljs');
+const _ = require('lodash');
 
 /**
  * Help message to display when running with --help.
@@ -41,6 +42,9 @@ http://ytdl-org.github.io/youtube-dl/`);
 }
 
 function download(url) {
+  const dir = convertUrlToFilename(url);
+  shell.mkdir('-p', dir);
+  shell.cd(dir);
   youtubedl(url);
 }
 
@@ -53,6 +57,16 @@ function youtubedl(url) {
   const def = `${ydl} ${opt} "${url}"`;
   const cmd = mp4;
   return shell.exec(cmd);
+}
+
+function convertUrlToFilename(url) {
+  let file = url;
+  file = file.replace(/^https?:\/\//i, '');
+  file = file.replace(/^www\./i, '');
+  file = _.deburr(file);
+  file = file.replace(/[/?]/gi, '-');
+  file = file.replace(/[^0-9a-z.,-]/gi, '');
+  return file;
 }
 
 /**
