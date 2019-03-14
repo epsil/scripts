@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
+const fs = require('fs');
 const shell = require('shelljs');
+const yaml = require('js-yaml');
 const _ = require('lodash');
 
 /**
@@ -50,6 +52,7 @@ function download(url) {
   shell.mkdir('-p', dir);
   shell.cd(dir);
   youtubedl(url);
+  fixMetadata();
 }
 
 /**
@@ -90,9 +93,47 @@ function convertUrlToFilename(url) {
   file = file.replace(/^https?:\/\//i, '');
   file = file.replace(/^www\./i, '');
   file = _.deburr(file);
-  file = file.replace(/[/?]/gi, '-');
-  file = file.replace(/[^0-9a-z.,-]/gi, '');
+  file = file.replace(/[/?=]/gi, '-');
+  file = file.replace(/[^0-9a-z.,-_]/gi, '');
+  console.log(file);
   return file;
+}
+
+function findJsonFile() {
+  const jsonFiles = shell.ls('-R', '*.json');
+  const foundFiles = jsonFiles.length > 0;
+  if (foundFiles) {
+    const file = jsonFiles.shift();
+    return file;
+  }
+  return '';
+}
+
+function fixMetadata() {
+  const jsonFile = findJsonFile();
+  if (jsonFile) {
+    convertJSONFileToYAMLFile(jsonFile);
+  }
+}
+
+function convertJSONFileToYAMLFile(file) {
+  const metaDir = '.meta';
+  const json = fs.readFileSync(file);
+  const yml = convertJSONtoYAML(json);
+  shell.mkdir('-p', metaDir);
+  let ymlFileName = file;
+  ymlFileName = ymlFileName.replace(/\.info\.json$/, '');
+  ymlFileName = '.' + ymlFileName + '.mp4' + '.yml';
+  const ymlPath = metaDir + '/' + ymlFileName;
+  fs.writeFileSync(ymlPath, yml);
+  shell.rm('-f', file);
+}
+
+function convertJSONtoYAML(json) {
+  const obj = JSON.parse(json);
+  let yml = yaml.safeDump(obj);
+  yml = '---\n' + yml.trim();
+  return yml;
 }
 
 // invoke the "main" function
