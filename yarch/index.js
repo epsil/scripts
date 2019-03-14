@@ -45,7 +45,13 @@ function download(url) {
 }
 
 function youtubedl(url) {
-  const cmd = `youtube-dl "${url}"`;
+  const ydl = `youtube-dl`;
+  const opt =
+    '--add-metadata --embed-thumbnail --all-subs --embed-subs --sub-format srt --write-info-json';
+  const mp4 = `${ydl} -f mp4 --add-metadata --embed-thumbnail --all-subs --embed-subs --sub-format srt --write-info-json --merge-output-format mp4 "${url}"`;
+  const mkv = `${ydl} ${opt} --merge-output-format mkv "${url}"`;
+  const def = `${ydl} ${opt} "${url}"`;
+  const cmd = mp4;
   return shell.exec(cmd);
 }
 
