@@ -21,6 +21,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cli-input": "^0.2.0",
     "fs": "0.0.1-security",
     "js-yaml": "^3.12.2",
     "lodash": "^4.17.11",

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
+const prompt = require('cli-input');
 const shell = require('shelljs');
 const yaml = require('js-yaml');
 const _ = require('lodash');
@@ -24,16 +25,32 @@ Data is saved to its own folder.`;
 function main() {
   const [node, cmd, ...args] = process.argv;
   checkYoutubedl();
-  const noArgs = !args || args.length === 0;
+
   const helpArg = args && (args[0] === '--help' || args[0] === '-h');
-  if (noArgs || helpArg) {
+  if (helpArg) {
     help();
     shell.exit(0);
   }
 
-  const urls = args;
-  urls.forEach(download);
-  shell.exit(0);
+  const noArgs = !args || args.length === 0;
+  if (noArgs) {
+    console.log('Enter URLs separated by newlines. Submit with Ctrl-D.\n');
+    const ps = prompt();
+    ps.multiline(function(err, lines, str) {
+      ps.close();
+      if (err) {
+        console.log(err);
+        shell.exit(1);
+      }
+      const urls = lines.filter(line => line.trim() !== '');
+      downloadUrls(urls);
+      shell.exit(0);
+    });
+  } else {
+    const urls = args;
+    downloadUrls(urls);
+    shell.exit(0);
+  }
 }
 
 /**
@@ -41,6 +58,14 @@ function main() {
  */
 function help() {
   console.log(helpMessage);
+}
+
+/**
+ * Download URLs.
+ * @param urls an array of URLs
+ */
+function downloadUrls(urls) {
+  urls.forEach(download);
 }
 
 /**
@@ -80,7 +105,8 @@ function youtubedl(url) {
   const mkv = `${ydl} ${opt} --merge-output-format mkv "${url}"`;
   const def = `${ydl} ${opt} "${url}"`;
   const cmd = mp4;
-  return shell.exec(cmd);
+  shell.exec(cmd);
+  return url; // FIXME: return name of downloaded file
 }
 
 /**
@@ -93,9 +119,8 @@ function convertUrlToFilename(url) {
   file = file.replace(/^https?:\/\//i, '');
   file = file.replace(/^www\./i, '');
   file = _.deburr(file);
-  file = file.replace(/[/?=]/gi, '-');
-  file = file.replace(/[^0-9a-z.,-_]/gi, '');
-  console.log(file);
+  file = file.replace(/[/?=]/gi, '_');
+  file = file.replace(/[^-0-9a-z_.,]/gi, '');
   return file;
 }
 
