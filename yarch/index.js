@@ -113,6 +113,10 @@ function youtubedl(url) {
  * Convert a URL to a filename.
  * @param url a URL
  * @return a filename
+ * @example
+ *
+ * convertUrlToFilename('http://www.example.org/foo');
+ * // => 'example.org_foo'
  */
 function convertUrlToFilename(url) {
   let file = url;
@@ -125,8 +129,8 @@ function convertUrlToFilename(url) {
 }
 
 /**
- * Look for `.json` files in the current directory.
- * @return a `ShellString` listing found files
+ * Look for a JSON metadata file in the current directory.
+ * @return a file path, or the empty string if not found
  */
 function findJsonFile() {
   const jsonFiles = shell.ls('-R', '*.json');
@@ -139,7 +143,7 @@ function findJsonFile() {
 }
 
 /**
- * Normalize metadata as YAML, if any.
+ * Look for a JSON metadata file and convert it to YAML.
  */
 function fixMetadata() {
   const jsonFile = findJsonFile();
