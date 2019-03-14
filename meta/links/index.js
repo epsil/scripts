@@ -224,11 +224,14 @@ function mergeTmpDirAndOutputDir(tempDir, outputDir, options) {
 
 /**
  * Use `rsync` to merge a temporary directory into the target directory.
+ * This function is potentially destructive and is equipped with a number
+ * of validation checks to prevent data loss. Even so, the caller should
+ * take care to ensure that its parameters are correct.
  * @param [tempDir] the working directory, temporary
  * @param [outputDir] the output directory
  */
 function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
-  // validate directory paths to prevent data loss
+  // validation checks
   const tempDirIsCurrentDir = tempDir === '.' || tempDir === '';
   if (tempDirIsCurrentDir) {
     throw new Error('The working directory cannot be the current directory');
@@ -275,17 +278,13 @@ function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
  * @param [outputDir] the output directory
  */
 function mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options) {
-  if (isWindows()) {
-    console.log(`Windows: cannot move ${tempDir}/ to ${outputDir}/.`);
-    return null;
-  }
   const outputDirExists = fs.existsSync(outputDir);
   if (!outputDirExists) {
-    return invokeCmd(`mv "${tempDir}" "${outputDir}"`);
+    return moveFile(tempDir, outputDir, options);
   }
   const trashDir = tempDir + '2'; // 'tmp2'
-  return invokeCmd(`mv "${outputDir}" "${trashDir}"`)
-    .then(() => invokeCmd(`mv "${tempDir}" "${outputDir}"`))
+  return moveFile(outputDir, trashDir)
+    .then(() => moveFile(tempDir, outputDir))
     .then(() => deleteDirectory(trashDir));
 }
 
@@ -565,13 +564,15 @@ function makeTemporaryDirectory(tempDir) {
 
 /**
  * Make a directory in the current directory.
- * Works similarly to the Unix command `mkdir -p`.
+ * Works similarly to the Unix command `mkdir`.
  * No error is thrown if the directory already exists.
  */
 function makeDirectory(dir, options) {
   return new Promise((resolve, reject) => {
     const cwd = (options && options.cwd) || '.';
     const dirPath = joinPaths(cwd, dir);
+    // warning: the `recursive` option does not work
+    // with old Node versions
     fs.mkdir(dirPath, { recursive: true }, err => {
       if (err) {
         const dirAlreadyExists = err.code === 'EEXIST';
@@ -589,6 +590,7 @@ function makeDirectory(dir, options) {
 
 /**
  * Make a link to a file.
+ * Works similarly to the Unix command `ln`.
  * @param source the file to link to
  * @param destination the location of the link
  */
@@ -621,6 +623,7 @@ function makeLink(source, destination, options) {
 
 /**
  * Make a copy of a file.
+ * Works similarly to the Unix command `cp`.
  * @param source the source file
  * @param destination the destination file
  */
@@ -641,6 +644,27 @@ function makeCopy(source, destination, options) {
         // ignore errors
         console.log(err);
         resolve(destination);
+      } else {
+        resolve(destination);
+      }
+    });
+  });
+}
+
+/**
+ * Move a file.
+ * Works similarly to the Unix command `mv`.
+ * @param source the file to move
+ * @param destination the destination
+ */
+function moveFile(source, destination, options) {
+  return new Promise((resolve, reject) => {
+    const cwd = (options && options.cwd) || '.';
+    const sourcePath = joinPaths(cwd, source);
+    let destinationPath = joinPaths(cwd, destination);
+    fs.rename(sourcePath, destinationPath, err => {
+      if (err) {
+        reject(err);
       } else {
         resolve(destination);
       }
