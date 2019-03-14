@@ -1,0 +1,26 @@
+{
+  "name": "yarch",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "yarch": "index.js"
+  },
+  "scripts": {
+    "clean": "rm -rf node_modules package-lock.json",
+    "format": "npm run prettier",
+    "prettier": "npm run prettier-js && npm run prettier-json",
+    "prettier-js": "prettier --single-quote --write \"**/*.{js,jsx,ts}\"",
+    "prettier-json": "prettier --single-quote --write \"**/*.json\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "shelljs": "^0.8.3"
+  },
+  "devDependencies": {
+    "prettier": "^1.16.4"
+  }
+}
