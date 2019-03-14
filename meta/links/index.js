@@ -659,11 +659,10 @@ function deleteDirectory(dir) {
  * @see hasRsync
  */
 function invokeRsync(source, destination, options) {
-  const params = options && options.delete ? '-avz --delete' : '-avz';
-  return invokeCmd(`rsync ${params} "${source}" "${destination}"`, {
-    ...options,
-    successValue: destination
-  });
+  const opt = { ...options, successValue: destination };
+  const param = opt.delete ? '-avz --delete' : '-avz';
+  const cmd = `rsync ${param} "${source}" "${destination}"`;
+  return invokeCmd(cmd, opt);
 }
 
 /**
