@@ -21,14 +21,7 @@ Data is saved to its own folder.`;
  */
 function main() {
   const [node, cmd, ...args] = process.argv;
-
-  const youtubedlIsMissing = !shell.which('youtube-dl');
-  if (youtubedlIsMissing) {
-    shell.echo(`youtube-dl is missing. Get it from:
-http://ytdl-org.github.io/youtube-dl/`);
-    shell.exit(1);
-  }
-
+  checkYoutubedl();
   const noArgs = !args || args.length === 0;
   const helpArg = args && (args[0] === '--help' || args[0] === '-h');
   if (noArgs || helpArg) {
@@ -41,6 +34,17 @@ http://ytdl-org.github.io/youtube-dl/`);
   shell.exit(0);
 }
 
+/**
+ * Display help message.
+ */
+function help() {
+  console.log(helpMessage);
+}
+
+/**
+ * Download a URL.
+ * @param url the URL to download
+ */
 function download(url) {
   const dir = convertUrlToFilename(url);
   shell.mkdir('-p', dir);
@@ -48,6 +52,23 @@ function download(url) {
   youtubedl(url);
 }
 
+/**
+ * Check if `youtube-dl` is available on the system.
+ * If not, display a help message and exit.
+ */
+function checkYoutubedl() {
+  const youtubedlIsMissing = !shell.which('youtube-dl');
+  if (youtubedlIsMissing) {
+    shell.echo(`youtube-dl is missing. Get it from:
+http://ytdl-org.github.io/youtube-dl/`);
+    shell.exit(1);
+  }
+}
+
+/**
+ * Download a URL with `youtube-dl`.
+ * @param url the URL to download
+ */
 function youtubedl(url) {
   const ydl = 'youtube-dl';
   const opt =
@@ -59,6 +80,11 @@ function youtubedl(url) {
   return shell.exec(cmd);
 }
 
+/**
+ * Convert a URL to a filename.
+ * @param url a URL
+ * @return a filename
+ */
 function convertUrlToFilename(url) {
   let file = url;
   file = file.replace(/^https?:\/\//i, '');
@@ -67,13 +93,6 @@ function convertUrlToFilename(url) {
   file = file.replace(/[/?]/gi, '-');
   file = file.replace(/[^0-9a-z.,-]/gi, '');
   return file;
-}
-
-/**
- * Display help message.
- */
-function help() {
-  console.log(helpMessage);
 }
 
 // invoke the "main" function
