@@ -260,6 +260,9 @@ function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
   const tempDirIsEmpty = fs.readdirSync(tempDir).length === 0;
   if (tempDirIsEmpty) {
     console.log('Working directory is empty, aborting merge.');
+    if (options && options.delete) {
+      deleteDirectory(tempDir);
+    }
     return Promise.resolve(null);
   }
   // directories look okay, proceed with merge
