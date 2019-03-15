@@ -23,9 +23,9 @@ Data is saved to its own folder.`;
  * with Node.
  */
 function main() {
-  const [node, cmd, ...args] = process.argv;
-  checkYoutubeDl();
+  checkDependencies();
 
+  const [node, cmd, ...args] = process.argv;
   const helpArg = args && (args[0] === '--help' || args[0] === '-h');
   if (helpArg) {
     help();
@@ -54,6 +54,42 @@ function main() {
  */
 function help() {
   console.log(helpMessage);
+}
+
+/**
+ * Check if `youtube-dl` and `atomicparsley` are available
+ * on the system. If the former is unavailable, the program
+ * will exit.
+ */
+function checkDependencies() {
+  checkYoutubeDl();
+  checkAtomicParsley();
+}
+
+/**
+ * Check if `youtube-dl` is available on the system.
+ * If not, display a help message and exit.
+ */
+function checkYoutubeDl() {
+  const youtubeDlIsMissing = !shell.which('youtube-dl');
+  if (youtubeDlIsMissing) {
+    shell.echo(`youtube-dl is missing. Get it from:
+http://ytdl-org.github.io/youtube-dl/`);
+    shell.exit(1);
+  }
+}
+
+/**
+ * Check if `atomicparsley` is available on the system.
+ * If not, display a help message.
+ */
+function checkAtomicParsley() {
+  const atomicParsleyIsMissing = !shell.which('atomicparsley');
+  if (atomicParsleyIsMissing) {
+    shell.echo(`AtomicParsley is missing. Get it from:
+http://atomicparsley.sourceforge.net/
+`);
+  }
 }
 
 /**
@@ -90,22 +126,10 @@ function downloadUrls(urls) {
 function download(url) {
   const dir = convertUrlToFilename(url);
   shell.mkdir('-p', dir);
-  shell.cd(dir);
+  shell.pushd('-q', dir);
   youtubeDl(url);
   fixMetadata();
-}
-
-/**
- * Check if `youtube-dl` is available on the system.
- * If not, display a help message and exit.
- */
-function checkYoutubeDl() {
-  const youtubeDlIsMissing = !shell.which('youtube-dl');
-  if (youtubeDlIsMissing) {
-    shell.echo(`youtube-dl is missing. Get it from:
-http://ytdl-org.github.io/youtube-dl/`);
-    shell.exit(1);
-  }
+  shell.popd('-q');
 }
 
 /**
