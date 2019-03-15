@@ -87,7 +87,7 @@ http://ytdl-org.github.io/youtube-dl/`);
  * If not, display a help message.
  */
 function checkAtomicParsley() {
-  const atomicParsleyIsMissing = !shell.which('atomicparsley');
+  const atomicParsleyIsMissing = !shell.which('AtomicParsley');
   if (atomicParsleyIsMissing) {
     shell.echo(`AtomicParsley is missing. Get it from:
 http://atomicparsley.sourceforge.net/
