@@ -24,7 +24,7 @@ Data is saved to its own folder.`;
  */
 function main() {
   const [node, cmd, ...args] = process.argv;
-  checkYoutubedl();
+  checkYoutubeDl();
 
   const helpArg = args && (args[0] === '--help' || args[0] === '-h');
   if (helpArg) {
@@ -91,7 +91,7 @@ function download(url) {
   const dir = convertUrlToFilename(url);
   shell.mkdir('-p', dir);
   shell.cd(dir);
-  youtubedl(url);
+  youtubeDl(url);
   fixMetadata();
 }
 
@@ -99,9 +99,9 @@ function download(url) {
  * Check if `youtube-dl` is available on the system.
  * If not, display a help message and exit.
  */
-function checkYoutubedl() {
-  const youtubedlIsMissing = !shell.which('youtube-dl');
-  if (youtubedlIsMissing) {
+function checkYoutubeDl() {
+  const youtubeDlIsMissing = !shell.which('youtube-dl');
+  if (youtubeDlIsMissing) {
     shell.echo(`youtube-dl is missing. Get it from:
 http://ytdl-org.github.io/youtube-dl/`);
     shell.exit(1);
@@ -112,7 +112,7 @@ http://ytdl-org.github.io/youtube-dl/`);
  * Download a URL with `youtube-dl`.
  * @param url the URL to download
  */
-function youtubedl(url) {
+function youtubeDl(url) {
   const ydl = 'youtube-dl';
   const opt =
     '--add-metadata --embed-thumbnail --all-subs --embed-subs --sub-format srt --write-info-json';
