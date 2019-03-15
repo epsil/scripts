@@ -34,7 +34,14 @@ function main() {
 
   const noArgs = !args || args.length === 0;
   if (noArgs) {
-    promptForURLs();
+    promptForURLs()
+      .then(urls => {
+        downloadUrls(urls);
+        shell.exit(0);
+      })
+      .catch(err => {
+        shell.exit(1);
+      });
   } else {
     const urls = args;
     downloadUrls(urls);
@@ -50,20 +57,21 @@ function help() {
 }
 
 /**
- * Read URLs from a prompt, and download them.
+ * Read URLs from a prompt.
  */
 function promptForURLs() {
-  console.log('Enter URLs separated by newlines. Submit with Ctrl-D.\n');
-  const ps = prompt();
-  ps.multiline(function(err, lines, str) {
-    ps.close();
-    if (err) {
-      console.log(err);
-      shell.exit(1);
-    }
-    const urls = lines.filter(line => line.trim() !== '');
-    downloadUrls(urls);
-    shell.exit(0);
+  return new Promise((resolve, reject) => {
+    console.log('Enter URLs separated by newlines. Submit with Ctrl-D.\n');
+    const ps = prompt();
+    ps.multiline(function(err, lines, str) {
+      ps.close();
+      if (err) {
+        console.log(err);
+        reject(err);
+      }
+      const urls = lines.filter(line => line.trim() !== '');
+      resolve(urls);
+    });
   });
 }
 
