@@ -34,18 +34,7 @@ function main() {
 
   const noArgs = !args || args.length === 0;
   if (noArgs) {
-    console.log('Enter URLs separated by newlines. Submit with Ctrl-D.\n');
-    const ps = prompt();
-    ps.multiline(function(err, lines, str) {
-      ps.close();
-      if (err) {
-        console.log(err);
-        shell.exit(1);
-      }
-      const urls = lines.filter(line => line.trim() !== '');
-      downloadUrls(urls);
-      shell.exit(0);
-    });
+    promptForURLs();
   } else {
     const urls = args;
     downloadUrls(urls);
@@ -58,6 +47,24 @@ function main() {
  */
 function help() {
   console.log(helpMessage);
+}
+
+/**
+ * Read URLs from a prompt, and download them.
+ */
+function promptForURLs() {
+  console.log('Enter URLs separated by newlines. Submit with Ctrl-D.\n');
+  const ps = prompt();
+  ps.multiline(function(err, lines, str) {
+    ps.close();
+    if (err) {
+      console.log(err);
+      shell.exit(1);
+    }
+    const urls = lines.filter(line => line.trim() !== '');
+    downloadUrls(urls);
+    shell.exit(0);
+  });
 }
 
 /**
