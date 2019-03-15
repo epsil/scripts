@@ -14,7 +14,9 @@ const helpMessage = `Usage:
     yarch [URL]
     yarch [URL1] [URL2] [URL3] ...
 
-Data is saved to its own folder.`;
+If the program is invoked without arguments, then it will
+prompt the user for URLs. Each URL is saved to its own folder,
+whose name is derived from the URL.`;
 
 /**
  * The "main" function.
@@ -59,7 +61,8 @@ function help() {
 /**
  * Check if `youtube-dl` and `atomicparsley` are available
  * on the system. If the former is unavailable, the program
- * will exit.
+ * will exit. If only the latter is unavailable, the program
+ * will display a warning, but continue execution.
  */
 function checkDependencies() {
   checkYoutubeDl();
