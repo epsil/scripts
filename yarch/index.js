@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
+const meow = require('meow');
 const prompt = require('cli-input');
 const shell = require('shelljs');
 const yaml = require('js-yaml');
@@ -11,7 +12,7 @@ shell.config.silent = true;
 /**
  * Help message to display when running with --help.
  */
-const helpMessage = `Usage:
+const help = `Usage:
 
     yarch [URL]
     yarch [URL1] [URL2] [URL3] ...
@@ -28,15 +29,8 @@ whose name is derived from the URL.`;
  */
 function main() {
   checkDependencies();
-
-  const [node, cmd, ...args] = process.argv;
-  const helpArg = args && (args[0] === '--help' || args[0] === '-h');
-  if (helpArg) {
-    help();
-    shell.exit(0);
-  }
-
-  const noArgs = !args || args.length === 0;
+  const cli = meow(help);
+  const noArgs = cli.input.length === 0;
   if (noArgs) {
     promptForURLs()
       .then(urls => {
@@ -47,17 +41,10 @@ function main() {
         shell.exit(1);
       });
   } else {
-    const urls = args;
+    const urls = cli.input;
     downloadUrls(urls);
     shell.exit(0);
   }
-}
-
-/**
- * Display help message.
- */
-function help() {
-  console.log(helpMessage);
 }
 
 /**
