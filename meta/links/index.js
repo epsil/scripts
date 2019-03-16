@@ -113,9 +113,7 @@ function main() {
     return;
   }
   if (inputDir && !outputDir && !query) {
-    query = inputDir;
-    inputDir = '';
-    outputDir = '';
+    ([node, cmd, query, inputDir, outputDir] = process.argv);
   }
   processMetadataFiles(inputDir, outputDir, query);
 }
