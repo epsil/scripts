@@ -146,6 +146,7 @@ function download(url) {
  * @return the status code returned by `youtube-dl` (`0` for success)
  */
 function youtubeDl(url) {
+  // FIXME: clean up this mess
   const ydl = 'youtube-dl';
   const opt =
     '--add-metadata --embed-thumbnail --all-subs --embed-subs --sub-format srt --write-info-json';

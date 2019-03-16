@@ -15,12 +15,13 @@ const childProcess = require('child_process');
  */
 const helpMessage = `Usage:
 
-    metalinks [INPUTDIR] [OUTPUTDIR] [QUERY]
+    metalinks [QUERY] [INPUTDIR] [OUTPUTDIR]
 
 Examples:
 
     metalinks
-    metalinks . . "foo bar"
+    metalinks "foo bar"
+    metalinks "foo bar" ./lib ./_meta
 
 The first command creates symlinks for all the files in the
 current directory. The second command performs a query in the
@@ -107,13 +108,10 @@ const execAsync = util.promisify(childProcess.exec);
  * with Node.
  */
 function main() {
-  let [node, cmd, inputDir, outputDir, query] = process.argv;
+  let [node, cmd, query, inputDir, outputDir] = process.argv;
   if (inputDir === '--help' || inputDir === '-h') {
     help();
     return;
-  }
-  if (inputDir && !outputDir && !query) {
-    ([node, cmd, query, inputDir, outputDir] = process.argv);
   }
   processMetadataFiles(inputDir, outputDir, query);
 }
