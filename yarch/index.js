@@ -106,7 +106,7 @@ function checkWget() {
   const wgetIsMissing = !shell.which('wget');
   if (wgetIsMissing) {
     shell.echo(`wget is missing. Get it from:
-https://www.gnu.org/software/wget/
+http://www.gnu.org/software/wget/
 `);
   }
 }

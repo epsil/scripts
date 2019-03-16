@@ -21,14 +21,16 @@ Examples:
 
     metalinks
     metalinks "foo bar"
-    metalinks "foo bar" ./lib ./_meta
+    metalinks "foo bar" . ./_meta
 
-The first command creates symlinks for all the files in the
-current directory. The second command performs a query in the
-current directory (.).
+The first command creates symlinks for all the files in the current
+directory.
 
-Output is stored in the _meta subdirectory by default.
-A different location may be specified with the OUTPUTDIR parameter.`;
+The second command performs a query in the current directory (.).
+
+The third command specifies the input and output directories
+explicitly. By default, the input directory is . and the output
+directory is ./_meta.`;
 
 /**
  * The directory to look for metadata in.
@@ -109,7 +111,7 @@ const execAsync = util.promisify(childProcess.exec);
  */
 function main() {
   let [node, cmd, query, inputDir, outputDir] = process.argv;
-  if (inputDir === '--help' || inputDir === '-h') {
+  if (query === '--help' || query === '-h') {
     help();
     return;
   }
