@@ -107,10 +107,15 @@ const execAsync = util.promisify(childProcess.exec);
  * with Node.
  */
 function main() {
-  const [node, cmd, inputDir, outputDir, query] = process.argv;
+  let [node, cmd, inputDir, outputDir, query] = process.argv;
   if (inputDir === '--help' || inputDir === '-h') {
     help();
     return;
+  }
+  if (inputDir && !outputDir && !query) {
+    query = inputDir;
+    inputDir = '';
+    outputDir = '';
   }
   processMetadataFiles(inputDir, outputDir, query);
 }
