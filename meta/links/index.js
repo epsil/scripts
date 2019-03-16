@@ -137,20 +137,23 @@ function processMetadataFiles(inputDir, outputDir, query, options) {
   let outDir = outputDir;
   if (!inDir || inDir === '.') {
     inDir = sourceDir;
-    console.log(`Input directory is: ${inDir}`);
   }
   if (!outDir || outDir === '.') {
     outDir = destinationDir;
-    console.log(`Output directory is: ./${outDir}`);
   }
   validateDirectories(inDir, outDir);
   return hasLn().then(ln => {
+    console.log(`Input directory is: ${inDir}`);
+    console.log(`Output directory is: ${outDir}`);
+    if (query) {
+      console.log(`Query is: ${query}`);
+    }
     console.log('Processing metadata ...\n');
     return processMetadataFilesWithTmpDir(inDir, outDir, tmpDir, query, {
       makeSymLinks: makeSymLinks && ln,
       ...options
     }).then(() => {
-      console.log('Done.');
+      console.log('Done.\n');
     });
   });
 }
