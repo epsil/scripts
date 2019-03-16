@@ -61,7 +61,7 @@ function help() {
 }
 
 /**
- * Check if `youtube-dl` and `atomicparsley` are available
+ * Check if `youtube-dl`, `atomicparsley` and `wget` are available
  * on the system. If the former is unavailable, the program
  * will exit. If only the latter is unavailable, the program
  * will display a warning, but continue execution.
@@ -69,6 +69,7 @@ function help() {
 function checkDependencies() {
   checkYoutubeDl();
   checkAtomicParsley();
+  checkWget();
 }
 
 /**
@@ -93,6 +94,19 @@ function checkAtomicParsley() {
   if (atomicParsleyIsMissing) {
     shell.echo(`AtomicParsley is missing. Get it from:
 http://atomicparsley.sourceforge.net/
+`);
+  }
+}
+
+/**
+ * Check if `wget` is available on the system.
+ * If not, display a help message.
+ */
+function checkWget() {
+  const wgetIsMissing = !shell.which('wget');
+  if (wgetIsMissing) {
+    shell.echo(`wget is missing. Get it from:
+https://www.gnu.org/software/wget/
 `);
   }
 }
@@ -136,8 +150,11 @@ function download(url) {
   const downloadWasSuccessful = statusCode === 0;
   if (downloadWasSuccessful) {
     fixMetadata();
+    shell.popd('-q');
+  } else {
+    shell.popd('-q');
+    wget(url);
   }
-  shell.popd('-q');
 }
 
 /**
@@ -154,6 +171,19 @@ function youtubeDl(url) {
   const mkv = `${ydl} ${opt} --merge-output-format mkv "${url}"`;
   const def = `${ydl} ${opt} "${url}"`;
   const cmd = mp4;
+  return shell.exec(cmd).code;
+}
+
+/**
+ * Download a URL with `wget`.
+ * @param url the URL to download
+ * @return the status code returned by `wget` (`0` for success)
+ */
+function wget(url) {
+  const wget = 'wget';
+  const opt =
+    '--mirror --convert-links --adjust-extension --page-requisites --no-parent --no-check-certificate';
+  const cmd = `${wget} ${opt} "${url}"`;
   return shell.exec(cmd).code;
 }
 
