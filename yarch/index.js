@@ -6,6 +6,8 @@ const shell = require('shelljs');
 const yaml = require('js-yaml');
 const _ = require('lodash');
 
+shell.config.silent = true;
+
 /**
  * Help message to display when running with --help.
  */
@@ -130,14 +132,18 @@ function download(url) {
   const dir = convertUrlToFilename(url);
   shell.mkdir('-p', dir);
   shell.pushd('-q', dir);
-  youtubeDl(url);
-  fixMetadata();
+  const statusCode = youtubeDl(url);
+  const downloadWasSuccessful = statusCode === 0;
+  if (downloadWasSuccessful) {
+    fixMetadata();
+  }
   shell.popd('-q');
 }
 
 /**
  * Download a URL with `youtube-dl`.
  * @param url the URL to download
+ * @return the status code returned by `youtube-dl` (`0` for success)
  */
 function youtubeDl(url) {
   const ydl = 'youtube-dl';
@@ -147,8 +153,7 @@ function youtubeDl(url) {
   const mkv = `${ydl} ${opt} --merge-output-format mkv "${url}"`;
   const def = `${ydl} ${opt} "${url}"`;
   const cmd = mp4;
-  shell.exec(cmd);
-  return url; // FIXME: return name of downloaded file
+  return shell.exec(cmd).code;
 }
 
 /**
