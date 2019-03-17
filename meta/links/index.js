@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const fg = require('fast-glob');
+const meow = require('meow');
 const os = require('os');
 const path = require('path');
 const rimraf = require('rimraf');
@@ -13,7 +14,7 @@ const childProcess = require('child_process');
 /**
  * Help message to display when running with --help.
  */
-const helpMessage = `Usage:
+const help = `Usage:
 
     metalinks [QUERY] [INPUTDIR] [OUTPUTDIR]
 
@@ -28,9 +29,9 @@ directory.
 
 The second command performs a query in the current directory (.).
 
-The third command specifies the input and output directories
-explicitly. By default, the input directory is . and the output
-directory is ./_meta.`;
+The third command performs a query while specifying the input
+and output directories explicitly. By default, the input directory
+is . and the output directory is ./_meta.`;
 
 /**
  * The directory to look for metadata in.
@@ -110,19 +111,9 @@ const execAsync = util.promisify(childProcess.exec);
  * with Node.
  */
 function main() {
-  let [node, cmd, query, inputDir, outputDir] = process.argv;
-  if (query === '--help' || query === '-h') {
-    help();
-    return;
-  }
+  const cli = meow(help);
+  const [query, inputDir, outputDir] = cli.input;
   processMetadataFiles(inputDir, outputDir, query);
-}
-
-/**
- * Display help message.
- */
-function help() {
-  console.log(helpMessage);
 }
 
 /**

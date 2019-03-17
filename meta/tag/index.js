@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 
-const childProcess = require('child_process');
 const fs = require('fs');
+const meow = require('meow');
 const path = require('path');
-const util = require('util');
+const shell = require('shelljs');
 const yaml = require('js-yaml');
 const _ = require('lodash');
 
 /**
  * Help message to display when running with --help.
  */
-const helpMessage = `Usage:
+const help = `Usage:
 
     metatag [FILES...]
 
@@ -110,39 +110,24 @@ const metaPre = '.';
 const metaExt = '.yml';
 
 /**
- * Promise wrapper for `childProcess.exec()`.
- * http://stackoverflow.com/questions/20643470/execute-a-command-line-binary-with-node-js#20643568
- */
-const execAsync = util.promisify(childProcess.exec);
-
-/**
  * "Main" function.
  */
 function main() {
-  const [node, cmd, ...args] = process.argv;
-  const files = args;
-  const noArgs = !files || files.length === 0;
-  const helpArg = files && (files[0] === '--help' || files[0] === '-h');
-  if (noArgs || helpArg) {
-    help();
-    return;
-  }
-  if (files && files[0] === '--tag') {
-    files.shift();
-    const tag = files.shift();
-    files.forEach(file => {
-      setTagForFile(tag, file);
-    });
+  const cli = meow(help, {
+    flags: {
+      tag: {
+        type: 'string',
+        alias: 't'
+      }
+    }
+  });
+  const files = cli.input;
+  const tag = cli.flags.tag;
+  if (tag) {
+    files.forEach(file => setTagForFile(tag, file));
     return;
   }
   editMetadataFileForFiles(files);
-}
-
-/**
- * Display help message.
- */
-function help() {
-  console.log(helpMessage);
 }
 
 /**
@@ -215,9 +200,9 @@ function setTagForFile(tag, file) {
   };
   if (!fileAlreadyExist) {
     return createMetadataFile(metaFile, '').then(continuation);
-  } else {
-    continuation();
   }
+  continuation();
+  return null;
 }
 
 /**
@@ -324,11 +309,13 @@ function editMetadataFile(metaFile, tmp) {
   const fileAlreadyExist = fs.existsSync(metaFile);
   if (fileAlreadyExist) {
     normalizeYamlFile(metaFile);
-    return launchEditor(metaFile, editor);
+    return launchEditor(metaFile, editor).then(() =>
+      normalizeYamlFile(metaFile)
+    );
   }
-  return createMetadataFile(metaFile, tmp).then(() =>
-    launchEditor(metaFile, editor)
-  );
+  return createMetadataFile(metaFile, tmp)
+    .then(() => launchEditor(metaFile, editor))
+    .then(() => normalizeYamlFile(metaFile));
 }
 
 /**
@@ -337,7 +324,19 @@ function editMetadataFile(metaFile, tmp) {
  * @param textEditor the editor to use
  */
 function launchEditor(file, textEditor) {
-  return execAsync(`${textEditor} "${file}"`);
+  return new Promise((resolve, reject) => {
+    shell.exec(
+      `${textEditor} "${file}"`,
+      { async: true, silent: true },
+      (code, stdout, stderr) => {
+        if (code === 0) {
+          resolve(code);
+        } else {
+          reject(code);
+        }
+      }
+    );
+  });
 }
 
 /**
