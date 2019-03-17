@@ -47,8 +47,8 @@ function main() {
 
 /**
  * Check if `youtube-dl`, `atomicparsley` and `wget` are available
- * on the system. If the former is unavailable, the program
- * will exit. If only the latter is unavailable, the program
+ * on the system. If `youtube-dl` is unavailable, the program
+ * will exit. If the others are unavailable, the program
  * will display a warning, but continue execution.
  */
 function checkDependencies() {

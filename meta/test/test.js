@@ -78,16 +78,6 @@ describe('invokeRsync', () => {
   });
 });
 
-describe('hasCmd', () => {
-  it('should invoke a command with --version', () => {
-    metalinks
-      .hasCmd('foo', {
-        debug: true
-      })
-      .should.eql('foo --version');
-  });
-});
-
 describe('parseMetadata', () => {
   it('should create a metadata object from a YAML string', () => {
     metalinks

@@ -6,6 +6,7 @@ const meow = require('meow');
 const os = require('os');
 const path = require('path');
 const rimraf = require('rimraf');
+const shell = require('shelljs');
 const util = require('util');
 const yaml = require('js-yaml');
 const _ = require('lodash');
@@ -133,19 +134,17 @@ function processMetadataFiles(inputDir, outputDir, query, options) {
     outDir = destinationDir;
   }
   validateDirectories(inDir, outDir);
-  return hasLn().then(ln => {
-    console.log(`Input directory is: ${inDir}`);
-    console.log(`Output directory is: ${outDir}`);
-    if (query) {
-      console.log(`Query is: ${query}`);
-    }
-    console.log('Processing metadata ...\n');
-    return processMetadataFilesWithTmpDir(inDir, outDir, tmpDir, query, {
-      makeSymLinks: makeSymLinks && ln,
-      ...options
-    }).then(() => {
-      console.log('Done.\n');
-    });
+  console.log(`Input directory is: ${inDir}`);
+  console.log(`Output directory is: ${outDir}`);
+  if (query) {
+    console.log(`Query is: ${query}`);
+  }
+  console.log('Processing metadata ...\n');
+  return processMetadataFilesWithTmpDir(inDir, outDir, tmpDir, query, {
+    makeSymLinks: makeSymLinks && hasLn(),
+    ...options
+  }).then(() => {
+    console.log('Done.\n');
   });
 }
 
@@ -211,12 +210,10 @@ function processMetadataFilesInDir(inputDir, outputDir, query, options) {
  * @param [outputDir] the output directory
  */
 function mergeTmpDirAndOutputDir(tempDir, outputDir, options) {
-  return hasRsync().then(rsync => {
-    if (rsync) {
-      return mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options);
-    }
-    return mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options);
-  });
+  if (hasRsync()) {
+    return mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options);
+  }
+  return mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options);
 }
 
 /**
@@ -274,9 +271,9 @@ function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
     )
     .then(() => {
       if (options && options.delete) {
-        deleteDirectory(tempDir);
+        deleteDirectory(tempDir); // destructive!
       }
-    }); // destructive!
+    });
 }
 
 /**
@@ -736,31 +733,15 @@ function invokeCmd(cmd, options) {
  * @see invokeRsync
  */
 function hasRsync(options) {
-  return hasCmd('rsync', options);
+  return shell.which('rsync') && true;
 }
 
 /**
  * Whether `ln` is available on the system.
  * @return `true` if `ln` is available, `false` otherwise
  */
-function hasLn(options) {
-  if (isWindows()) {
-    return Promise.resolve(false);
-  }
-  return hasCmd('ln', options);
-}
-
-/**
- * Whether a command is available on the system.
- * @param command the command
- * @return `true` if `command` is available, `false` otherwise
- */
-function hasCmd(command, options) {
-  return invokeCmd(`${command} --version`, {
-    ...options,
-    successValue: true,
-    errorValue: false
-  });
+function hasLn() {
+  return !isWindows() && shell.which('ln') && true;
 }
 
 /**
@@ -1062,7 +1043,6 @@ module.exports = {
   filterByTagList,
   getFilenameFromMetadataFilename,
   getMetadataFilenameFromFilename,
-  hasCmd,
   invokeRsync,
   makeCategoryContainer,
   makeDirectory,
