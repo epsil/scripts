@@ -7,8 +7,6 @@ const shell = require('shelljs');
 const yaml = require('js-yaml');
 const _ = require('lodash');
 
-shell.config.silent = true;
-
 /**
  * Help message to display when running with --help.
  */
