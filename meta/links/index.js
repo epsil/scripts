@@ -6,6 +6,9 @@ const meow = require('meow');
 const os = require('os');
 const path = require('path');
 const rimraf = require('rimraf');
+const Rx = require('rxjs/Rx');
+const RxOp = require('rxjs/operators');
+const shell = require('shelljs');
 const util = require('util');
 const yaml = require('js-yaml');
 const _ = require('lodash');
@@ -303,6 +306,125 @@ function mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options) {
 }
 
 /**
+ * Iterate over all metadata files in the given directory, as a RxJS stream.
+ * @param fn an iterator function, receiving a file path for each metadata file
+ * @param dir the directory to look in
+ * @return a Promise-wrapped array of return values
+ */
+function iterateOverFilesStream(fn, dir, options) {
+  return new Promise((resolve, reject) => {
+    const files = [];
+    const iterator = fn || (x => x);
+    let files$ = iterateOverFilesStreamObservable(dir, options);
+    files$ = iterateOverFilesStreamFilter(files$);
+    files$.subscribe(
+      file => {
+        files.push(iterator(file, options));
+      },
+      null,
+      () => {
+        resolve(Promise.all(files));
+      }
+    );
+  });
+}
+
+/**
+ * Filter a RxJS observable for non-existing files.
+ * @param obs$ a RxJS observable
+ * @return a filterered RxJS observable
+ */
+function iterateOverFilesStreamFilter(obs$) {
+  return obs$.pipe(
+    RxOp.filter(file => {
+      if (normalize) {
+        normalizeYamlFile(file);
+      }
+      const origFile = getFilenameFromMetadataFilename(file);
+      const origFileExists = fs.existsSync(origFile);
+      if (!origFileExists) {
+        console.log(`${origFile} does not exist!
+  (referenced by ${file})`);
+        return false;
+      }
+      return true;
+    })
+  );
+}
+
+/**
+ * Create a RxJS observable to iterate over all metadata files
+ * in the given directory.
+ * @param dir the directory to look in
+ * @return a stream object, in the form of a RxJS observable
+ */
+function iterateOverFilesStreamObservable(dir, options) {
+  const files$ = new Rx.Subject();
+  const cwd = (options && options.cwd) || '.';
+  const directory = joinPaths(cwd, dir);
+  const stream = fg.stream([createGlobPattern()], {
+    dot: true,
+    ignore: [ignorePattern],
+    cwd: directory
+  });
+  stream.on('data', entry => {
+    const file = path.join(directory, entry);
+    files$.next(file);
+  });
+  stream.once('end', () => files$.complete());
+  return files$;
+}
+
+/**
+ * Iterate over all metadata files in the given directory, in parallel.
+ * @param fn an iterator function, receiving a file path for each metadata file
+ * @param dir the directory to look in
+ * @return an array of return values
+ */
+function iterateOverFilesAsync(fn, dir, options) {
+  const iterator = fn || (x => x);
+  return iterateOverFiles(null, dir, options).then(files => {
+    const proms = files.map(file => iterator(file, options));
+    return Promise.all(proms);
+  });
+}
+
+/**
+ * Iterate over all metadata files in the given directory, as a stream.
+ * @param fn an iterator function, receiving a file path for each metadata file
+ * @param dir the directory to look in
+ * @return an array of return values
+ */
+function iterateOverFilesStreamLegacy(fn, dir, options) {
+  return new Promise((resolve, reject) => {
+    const result = [];
+    const iterator = fn || (x => x);
+    const cwd = (options && options.cwd) || '.';
+    const directory = joinPaths(cwd, dir);
+    const stream = fg.stream([createGlobPattern()], {
+      dot: true,
+      ignore: [ignorePattern],
+      cwd: directory
+    });
+    stream.on('data', entry => {
+      const file = path.join(directory, entry);
+      if (normalize) {
+        normalizeYamlFile(file);
+      }
+      const origFile = getFilenameFromMetadataFilename(file);
+      const origFileExists = fs.existsSync(origFile);
+      if (!origFileExists) {
+        console.log(`${origFile} does not exist!
+  (referenced by ${file})`);
+      } else {
+        result.push(iterator(file, options));
+      }
+    });
+    stream.once('end', () => resolve(Promise.all(result)));
+  });
+}
+
+/**
  * Iterate over all metadata files in the given directory.
  * @param fn an iterator function, receiving a file path for each metadata file
  * @param dir the directory to look in
@@ -335,55 +457,6 @@ function iterateOverFiles(fn, dir, options) {
         })
         .filter(x => x !== null)
     );
-}
-
-/**
- * Iterate over all metadata files in the given directory, as a stream.
- * @param fn an iterator function, receiving a file path for each metadata file
- * @param dir the directory to look in
- * @return an array of return values
- */
-function iterateOverFilesStream(fn, dir, options) {
-  return new Promise((resolve, reject) => {
-    const result = [];
-    const iterator = fn || (x => x);
-    const cwd = (options && options.cwd) || '.';
-    const directory = joinPaths(cwd, dir);
-    const stream = fg.stream([createGlobPattern()], {
-      dot: true,
-      ignore: [ignorePattern],
-      cwd: directory
-    });
-    stream.on('data', entry => {
-      const file = path.join(directory, entry);
-      if (normalize) {
-        normalizeYamlFile(file);
-      }
-      const origFile = getFilenameFromMetadataFilename(file);
-      const origFileExists = fs.existsSync(origFile);
-      if (!origFileExists) {
-        console.log(`${origFile} does not exist!
-  (referenced by ${file})`);
-      } else {
-        result.push(iterator(file, options));
-      }
-    });
-    stream.once('end', () => resolve(Promise.all(result)));
-  });
-}
-
-/**
- * Iterate over all metadata files in the given directory, in parallel.
- * @param fn an iterator function, receiving a file path for each metadata file
- * @param dir the directory to look in
- * @return an array of return values
- */
-function iterateOverFilesAsync(fn, dir, options) {
-  const iterator = fn || (x => x);
-  return iterateOverFiles(null, dir, options).then(files => {
-    const proms = files.map(file => iterator(file, options));
-    return Promise.all(proms);
-  });
 }
 
 /**
