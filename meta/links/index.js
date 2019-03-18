@@ -121,6 +121,7 @@ function main() {
   // TODO: create RxJS stream for stdin, so that input can
   // be processed faster, as it arrives
   getStdin().then(str => {
+    console.log('stdin support is not implemented yet.');
     console.log(str);
   });
 }
