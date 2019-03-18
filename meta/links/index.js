@@ -332,7 +332,7 @@ function iterateOverStream(files$, fn, options) {
   return new Promise((resolve, reject) => {
     const files = [];
     const iterator = fn || (x => x);
-    return filterNonExistantFiles(files$).subscribe(
+    return files$.subscribe(
       file => {
         files.push(iterator(file, options));
       },
@@ -342,29 +342,6 @@ function iterateOverStream(files$, fn, options) {
       }
     );
   });
-}
-
-/**
- * Filter a RxJS observable for non-existing files.
- * @param files$ a RxJS observable of file paths
- * @return a filtered RxJS observable
- */
-function filterNonExistantFiles(files$) {
-  return files$.pipe(
-    RxOp.filter(file => {
-      if (normalize) {
-        normalizeYamlFile(file);
-      }
-      const origFile = getFilenameFromMetadataFilename(file);
-      const origFileExists = fs.existsSync(origFile);
-      if (!origFileExists) {
-        console.log(`${origFile} does not exist!
-  (referenced by ${file})`);
-        return false;
-      }
-      return true;
-    })
-  );
 }
 
 /**
@@ -387,7 +364,31 @@ function metadataInDirectory(dir, options) {
     files$.next(file);
   });
   stream.once('end', () => files$.complete());
-  return files$;
+  return filterNonExistentFiles(files$);
+}
+
+/**
+ * Filter a RxJS observable for non-existing files.
+ * Only existing files are retained.
+ * @param files$ a RxJS observable of file paths
+ * @return a filtered RxJS observable
+ */
+function filterNonExistentFiles(files$) {
+  return files$.pipe(
+    RxOp.filter(file => {
+      if (normalize) {
+        normalizeYamlFile(file);
+      }
+      const origFile = getFilenameFromMetadataFilename(file);
+      const origFileExists = fs.existsSync(origFile);
+      if (!origFileExists) {
+        console.log(`${origFile} does not exist!
+  (referenced by ${file})`);
+        return false;
+      }
+      return true;
+    })
+  );
 }
 
 /**
