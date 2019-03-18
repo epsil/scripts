@@ -205,13 +205,13 @@ function processMetadataFilesInDir(inputDir, outputDir, query, options) {
     cwd: outputDir
   };
   if (query) {
-    return iterateOverFilesStream(
-      (file, opts) => processMetadataQuery(file, query, opts),
+    return iterateOverDirectory(
       inputDirectory,
+      (file, opts) => processMetadataQuery(file, query, opts),
       opt
     );
   }
-  return iterateOverFilesStream(processMetadata, inputDirectory, opt);
+  return iterateOverDirectory(inputDirectory, processMetadata, opt);
 }
 
 /**
@@ -312,18 +312,27 @@ function mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options) {
 }
 
 /**
- * Iterate over all metadata files in the given directory, as a RxJS stream.
+ * Iterate over all metadata files in a given directory.
  * @param fn an iterator function, receiving a file path for each metadata file
  * @param dir the directory to look in
  * @return a Promise-wrapped array of return values
  */
-function iterateOverFilesStream(fn, dir, options) {
+function iterateOverDirectory(dir, fn, options) {
+  const files$ = metadataInDirectory(dir, options);
+  return iterateOverStream(files$, fn, options);
+}
+
+/**
+ * Iterate over all metadata files in a RxJS stream.
+ * @param files$ a RxJS stream of metadata file paths
+ * @param fn an iterator function, receiving a file path for each metadata file
+ * @return a Promise-wrapped array of return values
+ */
+function iterateOverStream(files$, fn, options) {
   return new Promise((resolve, reject) => {
     const files = [];
     const iterator = fn || (x => x);
-    let files$ = iterateOverFilesStreamObservable(dir, options);
-    files$ = iterateOverFilesStreamFilter(files$);
-    files$.subscribe(
+    return filterNonExistantFiles(files$).subscribe(
       file => {
         files.push(iterator(file, options));
       },
@@ -337,11 +346,11 @@ function iterateOverFilesStream(fn, dir, options) {
 
 /**
  * Filter a RxJS observable for non-existing files.
- * @param obs$ a RxJS observable
- * @return a filterered RxJS observable
+ * @param files$ a RxJS observable of file paths
+ * @return a filtered RxJS observable
  */
-function iterateOverFilesStreamFilter(obs$) {
-  return obs$.pipe(
+function filterNonExistantFiles(files$) {
+  return files$.pipe(
     RxOp.filter(file => {
       if (normalize) {
         normalizeYamlFile(file);
@@ -364,7 +373,7 @@ function iterateOverFilesStreamFilter(obs$) {
  * @param dir the directory to look in
  * @return a stream object, in the form of a RxJS observable
  */
-function iterateOverFilesStreamObservable(dir, options) {
+function metadataInDirectory(dir, options) {
   const files$ = new Rx.Subject();
   const cwd = (options && options.cwd) || '.';
   const directory = joinPaths(cwd, dir);
