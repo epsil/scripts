@@ -117,13 +117,20 @@ const execAsync = util.promisify(childProcess.exec);
 function main() {
   const cli = meow(help);
   const [query, inputDir, outputDir] = cli.input;
-  processMetadataFiles(inputDir, outputDir, query);
-  // TODO: create RxJS stream for stdin, so that input can
-  // be processed faster, as it arrives
-  getStdin().then(str => {
-    console.log('stdin support is not implemented yet.');
-    console.log(str);
-  });
+  const hasStdin = !process.stdin.isTTY;
+  if (!hasStdin) {
+    processMetadataFiles(inputDir, outputDir, query);
+  } else {
+    // TODO: create RxJS stream in terms of process.stdin.on(),
+    // so that input can processed as it arrives
+    getStdin().then(str => {
+      console.log('stdin support is not implemented yet.');
+      const file$ = Rx.Observable.from(str.trim().split('\n'));
+      file$.subscribe(file => {
+        console.log(file);
+      });
+    });
+  }
 }
 
 /**
