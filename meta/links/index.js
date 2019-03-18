@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
-const getStdin = require('get-stdin');
-const fs = require('fs');
+const childProcess = require('child_process');
 const fg = require('fast-glob');
+const fs = require('fs');
+const getStdin = require('get-stdin');
 const meow = require('meow');
 const os = require('os');
 const path = require('path');
@@ -13,7 +14,6 @@ const shell = require('shelljs');
 const util = require('util');
 const yaml = require('js-yaml');
 const _ = require('lodash');
-const childProcess = require('child_process');
 
 /**
  * Help message to display when running with --help.
@@ -285,7 +285,7 @@ function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
     }
     return Promise.resolve(null);
   }
-  // directories look okay, proceed with merge
+  // parameters look okay, proceed with merge
   const temporaryDir = tempDir + '/';
   return makeDirectory(outputDir)
     .then(() =>
@@ -297,9 +297,9 @@ function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
     )
     .then(() => {
       if (options && options.delete) {
-        deleteDirectory(tempDir);
+        deleteDirectory(tempDir); // destructive!
       }
-    }); // destructive!
+    });
 }
 
 /**
@@ -340,7 +340,8 @@ function iterateOverDirectory(dir, fn, options) {
  * Iterate over all metadata files in a RxJS stream.
  * @param files$ a RxJS stream of metadata file paths
  * @param fn an iterator function, invoked as `fn(file, options)`
- * @return a Promise-wrapped array of return values
+ * @return a Promise-wrapped array of return values,
+ * resolved when execution has finished
  */
 function iterateOverStream(files$, fn, options) {
   return new Promise((resolve, reject) => {
@@ -941,9 +942,30 @@ function joinPaths(dir, file) {
 
 /**
  * Create a dictionary mapping tags to metadata objects.
+ * This is basically a multimap -- i.e., a mapping from
+ * keys (tags) to multiple values (metadata objects).
  * @param metaArr an array of metadata objects
  * @param [tagFilter] a filtering function for tags
  * @return a tag dictionary
+ * @example
+ *
+ * createTagDictionary([
+ *   {
+ *     tags: ['bar', 'foo']
+ *   }
+ * ]);
+ * // => {
+ * //   bar: [
+ * //     {
+ * //       tags: ['bar', 'foo']
+ * //     }
+ * //   ],
+ * //   foo: [
+ * //     {
+ * //       tags: ['bar', 'foo']
+ * //     }
+ * //   ]
+ * // }
  */
 function createTagDictionary(metaArr, tagFilter) {
   const dict = {};
