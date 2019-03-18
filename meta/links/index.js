@@ -126,9 +126,15 @@ function main() {
     getStdin().then(str => {
       console.log('stdin support is not implemented yet.');
       const file$ = Rx.Observable.from(str.trim().split('\n'));
-      file$.subscribe(file => {
-        console.log(file);
-      });
+      const subscription = file$.subscribe(
+        file => {
+          console.log(file);
+        },
+        null,
+        () => {
+          subscription.unsubscribe();
+        }
+      );
     });
   }
 }
@@ -321,8 +327,8 @@ function mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options) {
 
 /**
  * Iterate over all metadata files in a given directory.
- * @param fn an iterator function, receiving a file path for each metadata file
  * @param dir the directory to look in
+ * @param fn an iterator function, invoked as `fn(file, options)`
  * @return a Promise-wrapped array of return values
  */
 function iterateOverDirectory(dir, fn, options) {
@@ -333,19 +339,20 @@ function iterateOverDirectory(dir, fn, options) {
 /**
  * Iterate over all metadata files in a RxJS stream.
  * @param files$ a RxJS stream of metadata file paths
- * @param fn an iterator function, receiving a file path for each metadata file
+ * @param fn an iterator function, invoked as `fn(file, options)`
  * @return a Promise-wrapped array of return values
  */
 function iterateOverStream(files$, fn, options) {
   return new Promise((resolve, reject) => {
     const files = [];
     const iterator = fn || (x => x);
-    return files$.subscribe(
+    const subscription = files$.subscribe(
       file => {
         files.push(iterator(file, options));
       },
       null,
       () => {
+        subscription.unsubscribe();
         resolve(Promise.all(files));
       }
     );
@@ -377,7 +384,7 @@ function metadataInDirectory(dir, options) {
 
 /**
  * Filter a RxJS observable for non-existing files.
- * Only existing files are retained.
+ * In other words, only existing files are retained.
  * @param files$ a RxJS observable of file paths
  * @return a filtered RxJS observable
  */
