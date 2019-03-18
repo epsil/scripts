@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const getStdin = require('get-stdin');
 const fs = require('fs');
 const fg = require('fast-glob');
 const meow = require('meow');
@@ -117,6 +118,11 @@ function main() {
   const cli = meow(help);
   const [query, inputDir, outputDir] = cli.input;
   processMetadataFiles(inputDir, outputDir, query);
+  // TODO: create RxJS stream for stdin, so that input can
+  // be processed faster, as it arrives
+  getStdin().then(str => {
+    console.log(str);
+  });
 }
 
 /**
