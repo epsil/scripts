@@ -151,11 +151,13 @@ function download(url) {
   const dir = convertUrlToFilename(url);
   shell.mkdir('-p', dir);
   shell.pushd('-q', dir);
-  const statusCode = youtubeDl(url);
-  const downloadWasSuccessful = statusCode === 0;
+  const file = youtubeDl(url);
+  const downloadWasSuccessful = file !== '';
   if (downloadWasSuccessful) {
     fixMetadata(url);
     shell.popd('-q');
+    const directory = file.replace(/\.mp4$/i, '');
+    shell.mv(dir, directory);
   } else {
     shell.popd('-q');
     wget(url);
@@ -176,7 +178,17 @@ function youtubeDl(url) {
   const mkv = `${ydl} ${opt} --merge-output-format mkv "${url}"`;
   const def = `${ydl} ${opt} "${url}"`;
   const cmd = mp4;
-  return shell.exec(cmd).code;
+  const statusCode = shell.exec(cmd).code;
+  const downloadWasSuccessful = statusCode === 0;
+  if (downloadWasSuccessful) {
+    const mp4Files = shell.ls('-R', '*.mp4');
+    const foundFiles = mp4Files.length > 0;
+    if (foundFiles) {
+      const file = mp4Files.shift();
+      return file;
+    }
+  }
+  return '';
 }
 
 /**
