@@ -16,19 +16,19 @@ const help = `Usage:
     yarch [URL]
     yarch [URL1] [URL2] [URL3] ...
 
-If the program is invoked without arguments, then it will prompt
-the user for URLs.
+If invoked without arguments, yarch prompts the user for URLs.
 
-yarch can also read URLs from standard input. If files.txt contains
-a newline-separated list of URLs to download, then the following
-instructs yarch to read its URLs from files.txt:
+yarch can also read URLs from standard input. If urls.txt is a
+text file containing a newline-separated list of URLs to download,
+then the following instructs yarch to read URLs from urls.txt:
 
-    cat files.txt | yarch
+    cat urls.txt | yarch
 
-Each URL is saved to its own folder, named after the URL.
+Each URL is saved to its own directory, named after the URL.
+Metadata is stored in the subdirectory .meta.
 
-yarch requires youtube-dl, AtomicParsley and wget. It will complain
-if these are missing.`;
+yarch requires youtube-dl, AtomicParsley and wget.
+It will complain if these are missing.`;
 
 /**
  * The "main" function.
