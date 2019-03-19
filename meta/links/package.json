@@ -24,7 +24,7 @@
     "test": "npm run lint && npm run mocha",
     "test!": "npm run format! && npm run mocha && npm start",
     "mocha": "mocha ../test/test.js",
-    "jsdoc": "jsdoc -c .jsdocrc -d doc README.md meta.js tag.js"
+    "jsdoc": "jsdoc -c ../.jsdocrc -d doc ../README.md index.js ../tag/index.js"
   },
   "keywords": [],
   "author": "",
