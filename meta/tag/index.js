@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
+const getStdin = require('get-stdin');
 const meow = require('meow');
 const path = require('path');
 const shell = require('shelljs');
@@ -121,8 +122,28 @@ function main() {
       }
     }
   });
-  const files = cli.input;
+  let files = cli.input;
   const tag = cli.flags.tag;
+  const hasStdin = !process.stdin.isTTY;
+  if (hasStdin) {
+    getStdin().then(str => {
+      files = str
+        .trim()
+        .split('\n')
+        .filter(x => x !== '');
+      processFiles(files, tag);
+    });
+  } else {
+    processFiles(files, tag);
+  }
+}
+
+/**
+ * Process a list of files.
+ * @param files an array of file paths
+ * @param [tag] a tag to set, optional
+ */
+function processFiles(files, tag) {
   if (tag) {
     files.forEach(file => setTagForFile(tag, file));
     return;

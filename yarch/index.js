@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
+const getStdin = require('get-stdin');
 const meow = require('meow');
 const prompt = require('cli-input');
 const shell = require('shelljs');
@@ -15,9 +16,19 @@ const help = `Usage:
     yarch [URL]
     yarch [URL1] [URL2] [URL3] ...
 
-If the program is invoked without arguments, then it will
-prompt the user for URLs. Each URL is saved to its own folder,
-whose name is derived from the URL.`;
+If the program is invoked without arguments, then it will prompt
+the user for URLs.
+
+yarch can also read URLs from standard input. If files.txt contains
+a newline-separated list of URLs to download, then the following
+instructs yarch to read its URLs from files.txt:
+
+    cat files.txt | yarch
+
+Each URL is saved to its own folder, named after the URL.
+
+yarch requires youtube-dl, AtomicParsley and wget. It will complain
+if these are missing.`;
 
 /**
  * The "main" function.
@@ -28,20 +39,29 @@ whose name is derived from the URL.`;
 function main() {
   checkDependencies();
   const cli = meow(help);
-  const noArgs = cli.input.length === 0;
-  if (noArgs) {
-    promptForURLs()
-      .then(urls => {
-        downloadUrls(urls);
-        shell.exit(0);
-      })
-      .catch(err => {
-        shell.exit(1);
-      });
+  const hasStdin = !process.stdin.isTTY;
+  if (hasStdin) {
+    getStdin().then(str => {
+      const urls = str.trim().split('\n');
+      downloadUrls(urls);
+      shell.exit(0);
+    });
   } else {
-    const urls = cli.input;
-    downloadUrls(urls);
-    shell.exit(0);
+    const noArgs = cli.input.length === 0;
+    if (noArgs) {
+      promptForURLs()
+        .then(urls => {
+          downloadUrls(urls);
+          shell.exit(0);
+        })
+        .catch(err => {
+          shell.exit(1);
+        });
+    } else {
+      const urls = cli.input;
+      downloadUrls(urls);
+      shell.exit(0);
+    }
   }
 }
 
