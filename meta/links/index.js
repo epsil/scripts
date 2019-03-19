@@ -173,16 +173,6 @@ function processMetadataFiles(inputDir, outputDir, query, options) {
 }
 
 /**
- * Verify that the input and output directories are safe.
- * If not, then throw an error to prevent data loss.
- */
-function validateDirectories(inputDir, outputDir) {
-  if (!outputDir || outputDir === '.') {
-    throw new Error('Output directory cannot be the current directory');
-  }
-}
-
-/**
  * Process metadata files by creating symlinks in a temporary directory
  * and then merging that into the target directory.
  * @param [inputDir] the directory to look for metadata files in
@@ -254,6 +244,33 @@ function mergeTmpDirAndOutputDir(tempDir, outputDir, options) {
  * @see mergeTmpDirAndOutputDirWithMv
  */
 function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
+  validateRsyncParams(tempDir, outputDir, options);
+  const temporaryDir = tempDir + '/';
+  return makeDirectory(outputDir)
+    .then(() =>
+      invokeRsync(temporaryDir, outputDir, {
+        errorValue: true,
+        delete: true, // destructive!
+        ...options
+      })
+    )
+    .then(() => {
+      if (options && options.delete) {
+        deleteDirectory(tempDir); // destructive!
+      }
+    });
+}
+
+/**
+ * Verify that `rsync`'s parameters are safe.
+ * Invoking `rsync` with incorrect parameters may cause data loss.
+ * This function throws an error if an issue is detected,
+ * stalling execution.
+ * @param tempDir the working directory
+ * @param outputDir the output directory
+ * @see mergeTmpDirAndOutputDirWithRsync
+ */
+function validateRsyncParams(tempDir, outputDir, options) {
   // validation checks
   const tempDirIsCurrentDir = tempDir === '.' || tempDir === '';
   if (tempDirIsCurrentDir) {
@@ -285,21 +302,16 @@ function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
     }
     return Promise.resolve(null);
   }
-  // parameters look okay, proceed with merge
-  const temporaryDir = tempDir + '/';
-  return makeDirectory(outputDir)
-    .then(() =>
-      invokeRsync(temporaryDir, outputDir, {
-        errorValue: true,
-        delete: true, // destructive!
-        ...options
-      })
-    )
-    .then(() => {
-      if (options && options.delete) {
-        deleteDirectory(tempDir); // destructive!
-      }
-    });
+}
+
+/**
+ * Verify that the input and output directories are safe.
+ * If not, then throw an error to prevent data loss.
+ */
+function validateDirectories(inputDir, outputDir) {
+  if (!outputDir || outputDir === '.') {
+    throw new Error('Output directory cannot be the current directory');
+  }
 }
 
 /**
