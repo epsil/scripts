@@ -7,7 +7,6 @@ const getStdin = require('get-stdin');
 const meow = require('meow');
 const os = require('os');
 const path = require('path');
-const rimraf = require('rimraf');
 const Rx = require('rxjs/Rx');
 const RxOp = require('rxjs/operators');
 const shell = require('shelljs');
@@ -728,7 +727,7 @@ function moveFile(source, destination, options) {
  * @param dir a directory
  */
 function deleteDirectory(dir) {
-  rimraf.sync(dir);
+  return shell.rm('-rf', dir);
 }
 
 /**
