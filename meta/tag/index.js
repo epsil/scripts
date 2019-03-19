@@ -124,7 +124,7 @@ function main() {
   });
   let files = cli.input;
   const tag = cli.flags.tag;
-  const hasStdin = !process.stdin.isTTY;
+  const hasStdin = !process.stdin.isTTY && !files;
   if (hasStdin) {
     getStdin().then(str => {
       files = str
