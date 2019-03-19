@@ -539,7 +539,7 @@ function makeLinkOrCopy(source, destination, options) {
   if (options && options.makeSymLinks) {
     return makeLink(source, destination, options);
   }
-  return makeCopy(source, destination, options);
+  return makeCopy(source, destination, { ...options, force: true });
 }
 
 /**
@@ -676,9 +676,12 @@ function makeCopy(source, destination, options) {
     }
     fs.copyFile(sourcePath, destinationPath, err => {
       if (err) {
-        // ignore errors
-        console.log(err);
-        resolve(destination);
+        if (options && options.force) {
+          resolve(destination); // ignore errors
+        } else {
+          console.log(err);
+          reject(destination);
+        }
       } else {
         resolve(destination);
       }
