@@ -154,7 +154,7 @@ function download(url) {
   const statusCode = youtubeDl(url);
   const downloadWasSuccessful = statusCode === 0;
   if (downloadWasSuccessful) {
-    fixMetadata();
+    fixMetadata(url);
     shell.popd('-q');
   } else {
     shell.popd('-q');
@@ -229,10 +229,10 @@ function findJsonFile() {
 /**
  * Look for a JSON metadata file and convert it to YAML.
  */
-function fixMetadata() {
+function fixMetadata(url) {
   const jsonFile = findJsonFile();
   if (jsonFile) {
-    convertJSONFileToYAMLFile(jsonFile);
+    convertJSONFileToYAMLFile(jsonFile, url);
   }
 }
 
@@ -241,10 +241,10 @@ function fixMetadata() {
  * This deletes the original file.
  * @param file a JSON file
  */
-function convertJSONFileToYAMLFile(file) {
+function convertJSONFileToYAMLFile(file, url) {
   const metaDir = '.meta';
   const json = fs.readFileSync(file);
-  const yml = convertJSONtoYAML(json);
+  const yml = convertJSONtoYAML(json, url);
   shell.mkdir('-p', metaDir);
   let ymlFileName = file;
   ymlFileName = ymlFileName.replace(/\.info\.json$/, '');
@@ -259,11 +259,86 @@ function convertJSONFileToYAMLFile(file) {
  * @param json a JSON string
  * @return a YAML string
  */
-function convertJSONtoYAML(json) {
-  const obj = JSON.parse(json);
+function convertJSONtoYAML(json, url) {
+  let obj = JSON.parse(json);
+  if (url) {
+    if (obj.url) {
+      obj.urls = [url, obj.url];
+      obj.urls = _.uniq(obj.urls);
+    }
+    obj.url = url;
+  }
+  obj = reorderProperties(obj);
   let yml = yaml.safeDump(obj);
   yml = '---\n' + yml.trim();
   return yml;
+}
+
+/**
+ * Reorder the properties of a metadata object.
+ * More salient properties like `title` and `author`
+ * are listed first. The end result is a more readable
+ * YAML file.
+ * @param obj a metadata object
+ * @return a reordered metadata object
+ */
+function reorderProperties(obj) {
+  // FIXME: there should be a less tedious way to write this,
+  // but js-yaml's safeDump() method refuses `undefined` values ...
+  const result = {};
+  const {
+    title,
+    subtitle,
+    fulltitle,
+    description,
+    author,
+    uploader,
+    date,
+    url,
+    urls,
+    tags,
+    categories
+  } = obj;
+  if (title) {
+    result.title = title;
+  }
+  if (subtitle) {
+    result.subtitle = subtitle;
+  }
+  if (fulltitle) {
+    result.fulltitle = fulltitle;
+  }
+  if (description) {
+    result.description = description;
+  }
+  if (author) {
+    result.author = author;
+  }
+  if (uploader) {
+    result.uploader = uploader;
+  }
+  if (date) {
+    result.date = date;
+  }
+  if (tags) {
+    result.tags = tags;
+    if (Array.isArray(result.tags)) {
+      result.tags = result.tags.sort();
+    }
+  }
+  if (categories) {
+    result.categories = categories;
+    if (Array.isArray(result.categories)) {
+      result.categories = result.categories.sort();
+    }
+  }
+  if (url) {
+    result.url = url;
+  }
+  if (urls) {
+    result.urls = urls;
+  }
+  return { ...result, ...obj };
 }
 
 // invoke the "main" function
