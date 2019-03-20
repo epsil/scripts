@@ -274,11 +274,12 @@ function convertJSONFileToYAMLFile(file, url) {
 function convertJSONtoYAML(json, url) {
   let obj = JSON.parse(json);
   if (url) {
+    const normUrl = normalizeUrl(url);
     if (obj.url) {
-      obj.urls = [url, obj.url];
+      obj.urls = [normUrl, obj.url];
       obj.urls = _.uniq(obj.urls);
     }
-    obj.url = url;
+    obj.url = normUrl;
   }
   obj = reorderProperties(obj);
   let yml = yaml.safeDump(obj);
@@ -287,68 +288,91 @@ function convertJSONtoYAML(json, url) {
 }
 
 /**
+ * Simple normalization function for URLs.
+ * @param url a relative URL or URL fragment
+ * @return an absolute URL
+ */
+function normalizeUrl(url) {
+  let normUrl = url;
+  const hasProtocol = normUrl.match(/^https?:\/\//i);
+  if (!hasProtocol) {
+    normUrl = 'http://' + normUrl;
+  }
+  return normUrl;
+}
+
+/**
  * Reorder the properties of a metadata object.
- * More salient properties like `title` and `author`
- * are listed first. The end result is a more readable
- * YAML file.
+ * Salient properties like `title` and `author`
+ * are listed at the top, making for a much more
+ * readable YAML file.
  * @param obj a metadata object
  * @return a reordered metadata object
  */
 function reorderProperties(obj) {
   // FIXME: there should be a less tedious way to write this,
-  // but js-yaml's safeDump() method refuses `undefined` values ...
+  // but shorthand property syntax results in `undefined` values
+  // that are rejected by js-yaml's `safeDump()` method ...
   const result = {};
-  const {
-    title,
-    subtitle,
-    fulltitle,
-    description,
-    author,
-    uploader,
-    date,
-    url,
-    urls,
-    tags,
-    categories
-  } = obj;
-  if (title) {
-    result.title = title;
+  if (obj.title) {
+    result.title = obj.title;
   }
-  if (subtitle) {
-    result.subtitle = subtitle;
+  if (obj.subtitle) {
+    result.subtitle = obj.subtitle;
   }
-  if (fulltitle) {
-    result.fulltitle = fulltitle;
+  if (obj.fulltitle) {
+    result.fulltitle = obj.fulltitle;
   }
-  if (description) {
-    result.description = description;
+  if (obj.description) {
+    result.description = obj.description;
   }
-  if (author) {
-    result.author = author;
+  if (obj.author) {
+    result.author = obj.author;
   }
-  if (uploader) {
-    result.uploader = uploader;
+  if (obj.uploader) {
+    result.uploader = obj.uploader;
   }
-  if (date) {
-    result.date = date;
+  if (obj['uploader_id']) {
+    result['uploader_id'] = obj['uploader_id'];
   }
-  if (tags) {
-    result.tags = tags;
+  if (obj['uploader_url']) {
+    result['uploader_url'] = obj['uploader_url'];
+  }
+  if (obj.date) {
+    result.date = obj.date;
+  }
+  if (obj['upload_date']) {
+    result['upload_date'] = obj['upload_date'];
+  }
+  if (obj.tags) {
+    result.tags = obj.tags;
     if (Array.isArray(result.tags)) {
       result.tags = result.tags.sort();
     }
   }
-  if (categories) {
-    result.categories = categories;
+  if (obj.categories) {
+    result.categories = obj.categories;
     if (Array.isArray(result.categories)) {
       result.categories = result.categories.sort();
     }
   }
-  if (url) {
-    result.url = url;
+  if (obj.url) {
+    result.url = obj.url;
   }
-  if (urls) {
-    result.urls = urls;
+  if (obj.urls) {
+    result.urls = obj.urls;
+  }
+  if (obj['webpage_url']) {
+    result['webpage_url'] = obj['webpage_url'];
+  }
+  if (obj.thumbnail) {
+    result.thumbnail = obj.thumbnail;
+  }
+  if (obj['like_count']) {
+    result['like_count'] = obj['like_count'];
+  }
+  if (obj['dislike_count']) {
+    result['dislike_count'] = obj['dislike_count'];
   }
   return { ...result, ...obj };
 }
