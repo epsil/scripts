@@ -156,16 +156,29 @@ function processMetadataFiles(inputDir, outputDir, query, options) {
   }
   validateDirectories(inDir, outDir);
   return hasLn().then(ln => {
+    const opts = {
+      makeSymLinks: makeSymLinks && ln,
+      ...options
+    };
     console.log(`Input directory is: ${inDir}`);
     console.log(`Output directory is: ${outDir}`);
     if (query) {
       console.log(`Query is: ${query}`);
     }
     console.log('Processing metadata ...\n');
-    return processMetadataFilesWithTmpDir(inDir, outDir, tmpDir, query, {
-      makeSymLinks: makeSymLinks && ln,
-      ...options
-    }).then(() => {
+    if (isWindows()) {
+      // temp dir doesn't work on Windows (yet)
+      return processMetadataFilesInDir(inDir, outDir, query, opts).then(() => {
+        console.log('Done.\n');
+      });
+    }
+    return processMetadataFilesWithTmpDir(
+      inDir,
+      outDir,
+      tmpDir,
+      query,
+      opts
+    ).then(() => {
       console.log('Done.\n');
     });
   });
@@ -328,11 +341,26 @@ function validateDirectories(inputDir, outputDir) {
 function mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options) {
   const outputDirExists = fs.existsSync(outputDir);
   if (!outputDirExists) {
-    return moveFile(tempDir, outputDir, options);
+    return moveFile(tempDir, outputDir, options).catch(() => {
+      // the wonders of working with files on Windows ...
+      console.log('Windows is locking the directory, copying instead.');
+      shell.cp('-r', tempDir, outputDir);
+    });
   }
   const trashDir = tempDir + '2'; // '_tmp2'
   return moveFile(outputDir, trashDir)
     .then(() => moveFile(tempDir, outputDir))
+    .catch(() => {
+      console.log('Windows is locking the directory, copying instead.');
+      const outputDirStillExists = fs.existsSync(outputDir);
+      if (outputDirStillExists) {
+        // moveFile() didn't succeed either, acting accordingly
+        console.log('Copying into previous directory ...');
+        shell.cp('-r', tempDir + '/*', outputDir);
+      } else {
+        shell.cp('-r', tempDir, outputDir);
+      }
+    })
     .then(() => {
       if (options && options.delete) {
         deleteDirectory(trashDir);
