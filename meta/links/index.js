@@ -243,7 +243,10 @@ function mergeTmpDirAndOutputDir(tempDir, outputDir, options) {
  * @see mergeTmpDirAndOutputDirWithMv
  */
 function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
-  validateRsyncParams(tempDir, outputDir, options);
+  const validParams = validateRsyncParams(tempDir, outputDir, options);
+  if (!validParams) {
+    return Promise.resolve(false);
+  }
   const temporaryDir = tempDir + '/';
   return makeDirectory(outputDir)
     .then(() =>
@@ -299,8 +302,9 @@ function validateRsyncParams(tempDir, outputDir, options) {
     if (options && options.delete) {
       deleteDirectory(tempDir);
     }
-    return Promise.resolve(null);
+    return false;
   }
+  return true;
 }
 
 /**
