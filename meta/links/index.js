@@ -1265,7 +1265,7 @@ function toFilename(str) {
   file = file.replace(/ &+ /gi, ' and ');
   file = _.deburr(file);
   file = file.replace(/[/?=*:&]/gi, '_');
-  file = file.replace(/[^-0-9a-z_., ]/gi, '');
+  file = file.replace(/[^-0-9a-z_.,' ]/gi, '');
   return file;
 }
 
