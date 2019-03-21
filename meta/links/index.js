@@ -44,10 +44,10 @@ which is faster. To split the queries across multiple lines, write:
 One can use the --input and --output options to specify the input
 and output directories explicitly:
 
-    metalinks --input . --output _meta "foo bar"
+    metalinks --input . --output _q "foo bar"
 
 By default, the input directory is . (the current directory)
-and the output directory is ./_meta.
+and the output directory is _q.
 
 Files can also be read from standard input. If files.txt is a
 text file containing a newline-separated list of files to process,
@@ -68,7 +68,7 @@ const sourceDir = '.';
 /**
  * The directory to store symlinks in.
  */
-const destinationDir = '_meta';
+const destinationDir = '_q';
 
 /**
  * Temporary directory to generate symlinks in.
@@ -78,7 +78,7 @@ const tmpDir = '_tmp';
 /**
  * The subdirectory to store queries in.
  */
-const queryDir = 'q';
+const queryDir = '.';
 
 /**
  * The subdirectory to store categories in.
@@ -667,8 +667,7 @@ function makeTagDirectory(tag, options) {
  * @param [options] an options object
  */
 function makeCategoryContainer(options) {
-  let dir = (options && options.categoryDir) || categoryDir;
-  dir = toFilename(dir);
+  const dir = (options && options.categoryDir) || categoryDir;
   return makeDirectory(dir, options);
 }
 
@@ -677,8 +676,7 @@ function makeCategoryContainer(options) {
  * @param [options] an options object
  */
 function makeTagContainer(options) {
-  let dir = (options && options.tagDir) || tagDir;
-  dir = toFilename(dir);
+  const dir = (options && options.tagDir) || tagDir;
   return makeDirectory(dir, options);
 }
 
@@ -687,8 +685,7 @@ function makeTagContainer(options) {
  * @param [options] an options object
  */
 function makeQueryContainer(options) {
-  let dir = (options && options.queryDir) || queryDir;
-  dir = toFilename(dir);
+  const dir = (options && options.queryDir) || queryDir;
   return makeDirectory(dir, options);
 }
 
@@ -1192,7 +1189,16 @@ function filterByQuery(metaArr, query) {
  */
 function performQuery(metaArr, query, options) {
   if (!query || query === '*') {
-    return metaArr.forEach(meta => processTagsAndCategories(meta, options));
+    const qDir = (options && options.queryDir) || queryDir;
+    const cDir = toFilename('*');
+    return makeDirectory(`${qDir}/${cDir}`, options).then(dir => {
+      return metaArr.forEach(meta =>
+        processTagsAndCategories(meta, {
+          ...options,
+          categoryDir: dir
+        })
+      );
+    });
   }
   const matches = filterByQuery(metaArr, query);
   return matches.forEach(match => makeQueryLink(match, query, options));
