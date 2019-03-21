@@ -219,12 +219,12 @@ function main() {
  * @param [options] an options object
  * @see processQueriesInTempDir
  */
-function processQueries(queries, files$, outputDir, tempDir, options) {
+function processQueries(queries, files$, outputDir, options) {
   const hasTmpFileSupport = !isWindows(); // doesn't yet work on Windows
   if (!hasTmpFileSupport) {
     return processQueriesInDir(queries, files$, outputDir, options);
   }
-  return processQueriesInTempDir(queries, files$, outputDir, tempDir, options);
+  return processQueriesInTempDir(queries, files$, outputDir, tmpDir, options);
 }
 
 /**
