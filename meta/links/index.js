@@ -19,22 +19,46 @@ const _ = require('lodash');
  */
 const help = `Usage:
 
-    metalinks [QUERY] [INPUTDIR] [OUTPUTDIR]
+    metalinks [OPTIONS...] [QUERIES...]
 
 Examples:
 
     metalinks
+    metalinks "*"
     metalinks "foo bar"
-    metalinks "foo bar" . ./_meta
+    metalinks "*" "foo bar"
 
-The first command creates symlinks for all the files in the current
-directory.
+The first and second commands create symlinks for all the files
+in the current directory.
 
-The second command performs a query in the current directory (.).
+The third command performs a query for files tagged with both
+"foo" and "bar", creating symlinks for the matches.
 
-The third command performs a query while specifying the input
-and output directories explicitly. By default, the input directory
-is . and the output directory is ./_meta.`;
+The fourth command executes the second and third commands in one go,
+which is faster. To split the queries across multiple lines, write:
+
+    metalinks "*" \\
+      "foo bar" \\
+      "baz quux"
+
+One can use the --input and --output options to specify the input
+and output directories explicitly:
+
+    metalinks --input . --output _meta "foo bar"
+
+By default, the input directory is . (the current directory)
+and the output directory is ./_meta.
+
+Files can also be read from standard input. If files.txt is a
+text file containing a newline-separated list of files to process,
+then one can do:
+
+    cat files.txt | metalinks "foo bar"
+
+This makes it possible to combine metalinks with other utilities,
+such as find and grep.
+
+Type metalinks --version to see the current version.`;
 
 /**
  * The directory to look for metadata in.
@@ -42,9 +66,19 @@ is . and the output directory is ./_meta.`;
 const sourceDir = '.';
 
 /**
- * The directory to store links in.
+ * The directory to store symlinks in.
  */
 const destinationDir = '_meta';
+
+/**
+ * Temporary directory to generate symlinks in.
+ */
+const tmpDir = '_tmp';
+
+/**
+ * The subdirectory to store queries in.
+ */
+const queryDir = 'q';
 
 /**
  * The subdirectory to store categories in.
@@ -57,34 +91,29 @@ const categoryDir = 'cat';
 const tagDir = 'tag';
 
 /**
- * The subdirectory to store queries in.
- */
-const queryDir = 'q';
-
-/**
- * The default category.
- */
-const defaultCategory = '_';
-
-/**
- * The directory to store metadata files in.
+ * The directory to look for a metadata file in.
  */
 const metaDir = '.meta';
 
 /**
- * Temporary directory to generate symlinks in.
- */
-const tmpDir = '_tmp';
-
-/**
- * The dotfile prefix for metadata files.
+ * The dotfile prefix for a metadata file.
  */
 const metaPre = '.';
 
 /**
- * The file extension for metadata files.
+ * The file extension for a metadata file.
  */
 const metaExt = '.yml';
+
+/**
+ * The default query.
+ */
+const defaultQuery = '*';
+
+/**
+ * The default category.
+ */
+const defaultCategory = '*';
 
 /**
  * Whether to make symbolic links or copies.
@@ -114,126 +143,117 @@ const execAsync = util.promisify(childProcess.exec);
  * with Node.
  */
 function main() {
-  const cli = meow(help);
-  const [query, inputDir, outputDir] = cli.input;
-  const hasStdin = !process.stdin.isTTY;
-  if (!hasStdin) {
-    processMetadataFiles(inputDir, outputDir, query);
-  } else {
-    // TODO: create RxJS stream in terms of process.stdin.on(),
-    // so that input can processed as it arrives
-    getStdin().then(str => {
-      console.log('stdin support is not implemented yet.');
-      const file$ = Rx.Observable.from(str.trim().split('\n'));
-      const subscription = file$.subscribe(
-        file => {
-          console.log(file);
-        },
-        null,
-        () => {
-          subscription.unsubscribe();
-        }
-      );
-    });
-  }
-}
-
-/**
- * Process all metadata files in the given directory.
- * @param [inputDir] the directory to look for metadata files in
- * (`sourceDir` by default)
- * @param [outputDir] the directory to create symlinks in
- * (`categoryDir` by default)
- */
-function processMetadataFiles(inputDir, outputDir, query, options) {
-  let inDir = inputDir;
-  let outDir = outputDir;
-  if (!inDir || inDir === '.') {
-    inDir = sourceDir;
-  }
-  if (!outDir || outDir === '.') {
-    outDir = destinationDir;
-  }
-  validateDirectories(inDir, outDir);
-  return hasLn().then(ln => {
-    const opts = {
-      makeSymLinks: makeSymLinks && ln,
-      ...options
-    };
-    console.log(`Input directory is: ${inDir}`);
-    console.log(`Output directory is: ${outDir}`);
-    if (query) {
-      console.log(`Query is: ${query}`);
+  const cli = meow(help, {
+    flags: {
+      input: {
+        type: 'string',
+        alias: 'i'
+      },
+      output: {
+        type: 'string',
+        alias: 'o'
+      },
+      clean: {
+        type: 'boolean',
+        alias: 'c'
+      }
     }
-    console.log('Processing metadata ...\n');
-    if (isWindows()) {
-      // temp dir doesn't work on Windows (yet)
-      return processMetadataFilesInDir(inDir, outDir, query, opts).then(() => {
+  });
+
+  let queries = cli.input;
+  if (queries.length === 0) {
+    queries = [defaultQuery];
+  }
+
+  const { input, output, clean } = cli.flags;
+  const inputDir = input || sourceDir;
+  const outputDir = output || destinationDir;
+  validateDirectories(inputDir, outputDir);
+
+  if (clean) {
+    console.log(`Deleting ${outputDir} ...\n`);
+    deleteDirectory(outputDir);
+  }
+
+  console.log(`Input directory: ${inputDir}`);
+  console.log(`Output directory: ${outputDir}`);
+  console.log(`Queries: ${queries.join(', ')}\n`);
+
+  return hasLn().then(ln => {
+    const options = {
+      makeSymLinks: makeSymLinks && ln
+    };
+    const hasStdin = !process.stdin.isTTY;
+    if (!hasStdin) {
+      const files$ = metadataInDirectory(inputDir, options);
+      processQueries(queries, files$, outputDir, options).then(() => {
         console.log('Done.\n');
       });
+    } else {
+      getStdin().then(str => {
+        // TODO: create RxJS stream in terms of process.stdin.on(),
+        // so that input can processed as it arrives
+        console.log('Reading files from stdin ...');
+        const files = str
+          .trim()
+          .split('\n')
+          .map(s => s.trim())
+          .filter(s => s !== '');
+        const files$ = metadataForFiles(files, options);
+        processQueries(queries, files$, outputDir, options).then(() => {
+          console.log('Done.\n');
+        });
+      });
     }
-    return processMetadataFilesWithTmpDir(
-      inDir,
-      outDir,
-      tmpDir,
-      query,
-      opts
-    ).then(() => {
-      console.log('Done.\n');
-    });
   });
 }
 
 /**
- * Process metadata files by creating symlinks in a temporary directory
- * and then merging that into the target directory.
- * @param [inputDir] the directory to look for metadata files in
- * @param [outputDir] the directory to create symlinks in
- * @param [tempDir] the temporary directory to create symlinks in
+ * Process queries on a stream of files and create symlinks in a given directory.
+ * If running on a system supporting it, this function uses a temporary directory
+ * for its working directory. See `processQueriesInTempDir()` for details.
+ * @param queries an array of queries, e.g., `['*', 'foo bar']`
+ * @param files$ an RxJS stream of metadata files
+ * @param outputDir the directory to create symlinks in
+ * @param [tempDir] the working directory, default `tmpDir`
+ * @param [options] an options object
+ * @see processQueriesInTempDir
  */
-function processMetadataFilesWithTmpDir(
-  inputDir,
-  outputDir,
-  tempDir,
-  query,
-  options
-) {
-  return makeTemporaryDirectory(tempDir || tmpDir).then(tempDirectory =>
-    processMetadataFilesInDir(inputDir, tempDirectory, query, options).then(
-      () =>
+function processQueries(queries, files$, outputDir, tempDir, options) {
+  const hasTmpFileSupport = !isWindows(); // doesn't yet work on Windows
+  if (!hasTmpFileSupport) {
+    return processQueriesInDir(queries, files$, outputDir, options);
+  }
+  return processQueriesInTempDir(queries, files$, outputDir, tempDir, options);
+}
+
+/**
+ * Process queries on a stream of files and create symlinks in a given directory.
+ * Note that this function does its work in a temporary directory, `tempDir`, and
+ * then merges that directory into the output directory, `outputDir`.
+ * @param queries an array of queries, e.g., `['*', 'foo bar']`
+ * @param files$ an RxJS stream of metadata files
+ * @param outputDir the directory to create symlinks in
+ * @param [tempDir] the working directory, default `tmpDir`
+ * @param [options] an options object
+ */
+function processQueriesInTempDir(queries, files$, outputDir, tempDir, options) {
+  return makeTemporaryDirectory(tempDir || tmpDir, options).then(
+    tempDirectory =>
+      processQueriesInDir(queries, files$, tempDirectory, options).then(() =>
         mergeTmpDirAndOutputDir(tempDirectory, outputDir, {
           ...options,
-          delete: !query
+          delete: true
         })
-    )
+      )
   );
 }
 
 /**
- * Process metadata files by creating symlinks in a target directory.
- * @param [inputDir] the directory to look for metadata files in
- * @param [outputDir] the directory to create symlinks in
- */
-function processMetadataFilesInDir(inputDir, outputDir, query, options) {
-  const inputDirectory = path.relative(outputDir, inputDir);
-  const opt = {
-    ...options,
-    cwd: outputDir
-  };
-  if (query) {
-    return iterateOverDirectory(
-      inputDirectory,
-      (file, opts) => processMetadataQuery(file, query, opts),
-      opt
-    );
-  }
-  return iterateOverDirectory(inputDirectory, processMetadata, opt);
-}
-
-/**
- * Merge a temporary directory of symlinks into the target directory.
+ * Merge a temporary directory, containing symlinks, into the target directory.
  * @param [tempDir] the temporary directory
  * @param [outputDir] the output directory
+ * @param [options] an options object
  */
 function mergeTmpDirAndOutputDir(tempDir, outputDir, options) {
   return hasRsync().then(rsync => {
@@ -253,6 +273,7 @@ function mergeTmpDirAndOutputDir(tempDir, outputDir, options) {
  * parameters are correct.
  * @param tempDir the working directory (temporary)
  * @param outputDir the output directory
+ * @param [options] an options object
  * @see mergeTmpDirAndOutputDirWithMv
  */
 function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
@@ -283,6 +304,7 @@ function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
  * stalling execution.
  * @param tempDir the working directory
  * @param outputDir the output directory
+ * @param [options] an options object
  * @see mergeTmpDirAndOutputDirWithRsync
  */
 function validateRsyncParams(tempDir, outputDir, options) {
@@ -336,6 +358,7 @@ function validateDirectories(inputDir, outputDir) {
  * directory already exists, then it is replaced completely.
  * @param tempDir the working directory (temporary)
  * @param outputDir the output directory
+ * @param [options] an options object
  * @see mergeTmpDirAndOutputDirWithRsync
  */
 function mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options) {
@@ -369,20 +392,35 @@ function mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options) {
 }
 
 /**
- * Iterate over all metadata files in a given directory.
- * @param dir the directory to look in
- * @param fn an iterator function, invoked as `fn(file, options)`
- * @return a Promise-wrapped array of return values
+ * Process queries on a stream of files and create symlinks in a given directory.
+ * @param queries an array of queries, e.g., `['*', 'foo bar']`
+ * @param files$ an RxJS stream of metadata files
+ * @param outputDir the directory to create symlinks in
+ * @param [options] an options object
+ * @return a Promise-wrapped array of return values,
+ * resolved when execution has finished
  */
-function iterateOverDirectory(dir, fn, options) {
-  const files$ = metadataInDirectory(dir, options);
-  return iterateOverStream(files$, fn, options);
+function processQueriesInDir(queries, files$, outputDir, options) {
+  return new Promise((resolve, reject) => {
+    const result = [];
+    (queries || []).forEach(query => {
+      result.push(
+        iterateOverStream(
+          files$,
+          (file, opts) => processMetadataQuery(file, query, opts),
+          { cwd: outputDir, ...options }
+        )
+      );
+    });
+    resolve(Promise.all(result));
+  });
 }
 
 /**
  * Iterate over all metadata files in a RxJS stream.
  * @param files$ a RxJS stream of metadata file paths
  * @param fn an iterator function, invoked as `fn(file, options)`
+ * @param [options] an options object
  * @return a Promise-wrapped array of return values,
  * resolved when execution has finished
  */
@@ -407,6 +445,7 @@ function iterateOverStream(files$, fn, options) {
  * Create a RxJS observable to iterate over all metadata files
  * in the given directory.
  * @param dir the directory to look in
+ * @param [options] an options object
  * @return a stream object, in the form of a RxJS observable
  */
 function metadataInDirectory(dir, options) {
@@ -423,26 +462,57 @@ function metadataInDirectory(dir, options) {
     files$.next(file);
   });
   stream.once('end', () => files$.complete());
-  return filterNonExistentFiles(files$);
+  return filterInvalidMetadata(files$).pipe(RxOp.share());
 }
 
 /**
- * Filter a RxJS observable for non-existing files.
- * In other words, only existing files are retained.
+ * Create a RxJS observable to iterate over all metadata files
+ * belonging to a list of files.
+ * @param files a list of files, e.g., `['foo.txt', 'bar.txt']`
+ * @param [options] an options object
+ * @return a stream object, in the form of a RxJS observable
+ */
+function metadataForFiles(files, options) {
+  let files$ = new Rx.Subject();
+  const cwd = (options && options.cwd) || '.';
+  files.forEach(f => {
+    const file = joinPaths(cwd, f);
+    const isDirectory = fs.lstatSync(file).isDirectory();
+    if (isDirectory) {
+      const dir$ = metadataInDirectory(file);
+      files$ = files$.merge(dir$);
+    } else {
+      const metaFile = getMetadataFilenameFromFilename(file);
+      const metaFile$ = Rx.Observable.of(metaFile);
+      files$ = files$.merge(metaFile$);
+    }
+  });
+  return filterInvalidMetadata(files$).pipe(RxOp.share());
+}
+
+/**
+ * Filter a RxJS observable for invalid metadata files. Metadata files
+ * that reference non-existent files are regarded as invalid,
+ * and a warning is displayed.
  * @param files$ a RxJS observable of file paths
  * @return a filtered RxJS observable
  */
-function filterNonExistentFiles(files$) {
+function filterInvalidMetadata(files$) {
   return files$.pipe(
-    RxOp.filter(file => {
-      if (normalize) {
-        normalizeYamlFile(file);
+    RxOp.filter(metaFile => {
+      const metaFileExists = fs.existsSync(metaFile);
+      if (!metaFileExists) {
+        console.log(`${metaFile} does not exist!`);
+        return false;
       }
-      const origFile = getFilenameFromMetadataFilename(file);
+      if (normalize) {
+        normalizeYamlFile(metaFile);
+      }
+      const origFile = getFilenameFromMetadataFilename(metaFile);
       const origFileExists = fs.existsSync(origFile);
       if (!origFileExists) {
         console.log(`${origFile} does not exist!
-  (referenced by ${file})`);
+  (referenced by ${metaFile})`);
         return false;
       }
       return true;
@@ -465,23 +535,10 @@ function createGlobPattern(mDir, mExt) {
 }
 
 /**
- * Process the metadata for a file.
- * @param file a file
- */
-function processMetadata(file, options) {
-  return readMetadataForFile(file, {
-    ...options,
-    print: true
-  }).then(meta => {
-    processTagsAndCategories(meta, options);
-    return file;
-  });
-}
-
-/**
  * Process the metadata for a file in the context of a query.
  * @param file a file
  * @param query a query
+ * @param [options] an options object
  */
 function processMetadataQuery(file, query, options) {
   return readMetadataForFile(file, {
@@ -498,6 +555,7 @@ function processMetadataQuery(file, query, options) {
  * If `print: true` is specified in `options`,
  * then the metadata is printed to the console.
  * @param file a file
+ * @param [options] an options object
  * @return a metadata object (wrapped in a promise)
  */
 function readMetadataForFile(file, options) {
@@ -520,6 +578,7 @@ function readMetadataForFile(file, options) {
 /**
  * Process the `categories` and `tags` properties of a metadata object.
  * @param meta a metadata object
+ * @param [options] an options object
  */
 function processTagsAndCategories(meta, options) {
   return new Promise((resolve, reject) => {
@@ -535,22 +594,11 @@ function processTagsAndCategories(meta, options) {
 }
 
 /**
- * Process the `tags` property of a metadata object.
- * @param meta a metadata object
- */
-function processTags(meta, options) {
-  return new Promise((resolve, reject) => {
-    const tags = meta.tags || [];
-    tags.forEach(tag => makeTagLink(meta.file, tag, options));
-    resolve(meta);
-  });
-}
-
-/**
  * Make a tag link within a category.
  * @param filePath the file path of the referenced file
  * @param category the category to create a link within
  * @param tag the tag to create a link for
+ * @param [options] an options object
  */
 function makeTagLinkInCategory(filePath, category, tag, options) {
   return makeCategoryDirectory(category, options).then(dir =>
@@ -562,6 +610,7 @@ function makeTagLinkInCategory(filePath, category, tag, options) {
  * Make a tag link.
  * @param filePath the file path of the referenced file
  * @param tag the tag to create a link for
+ * @param [options] an options object
  */
 function makeTagLink(filePath, tag, options) {
   return makeTagDirectory(tag, options).then(dir =>
@@ -577,6 +626,7 @@ function makeTagLink(filePath, tag, options) {
  * on systems that do not support links.
  * @param source the file to link to
  * @param destination the location of the link
+ * @param [options] an options object
  */
 function makeLinkOrCopy(source, destination, options) {
   if (options && options.makeSymLinks) {
@@ -587,63 +637,77 @@ function makeLinkOrCopy(source, destination, options) {
 
 /**
  * Make a category directory.
+ * @param [options] an options object
  */
 function makeCategoryDirectory(category, options) {
+  const cDir = toFilename(category);
   return makeCategoryContainer(options).then(dir =>
-    makeDirectory(`${dir}/${category}`, options)
+    makeDirectory(`${dir}/${cDir}`, options)
   );
 }
 
 /**
  * Make a tag directory.
+ * @param [options] an options object
  */
 function makeTagDirectory(tag, options) {
-  const dir = (options && options.tagDir) || tagDir;
+  let dir = (options && options.tagDir) || tagDir;
+  dir = toFilename(dir);
+  const tDir = toFilename(tag);
   if (!dir) {
     return makeTagContainer(options).then(directory =>
-      makeDirectory(`${directory}/${tag}`, options)
+      makeDirectory(`${directory}/${tDir}`, options)
     );
   }
-  return makeDirectory(`${dir}/${tag}`, options);
+  return makeDirectory(`${dir}/${tDir}`, options);
 }
 
 /**
  * Make a category container directory (usually `cat/`).
+ * @param [options] an options object
  */
 function makeCategoryContainer(options) {
-  const dir = (options && options.categoryDir) || categoryDir;
+  let dir = (options && options.categoryDir) || categoryDir;
+  dir = toFilename(dir);
   return makeDirectory(dir, options);
 }
 
 /**
  * Make a tag container directory (usually `tag/`).
+ * @param [options] an options object
  */
 function makeTagContainer(options) {
-  const dir = (options && options.tagDir) || tagDir;
+  let dir = (options && options.tagDir) || tagDir;
+  dir = toFilename(dir);
   return makeDirectory(dir, options);
 }
 
 /**
  * Make a query container directory (usually `q/`).
+ * @param [options] an options object
  */
 function makeQueryContainer(options) {
-  const dir = (options && options.queryDir) || queryDir;
+  let dir = (options && options.queryDir) || queryDir;
+  dir = toFilename(dir);
   return makeDirectory(dir, options);
 }
 
 /**
  * Make a temporary empty directory.
  * @param tempDir the directory to create
+ * @param [options] an options object
  */
-function makeTemporaryDirectory(tempDir) {
-  deleteDirectory(tempDir);
-  return makeDirectory(tempDir);
+function makeTemporaryDirectory(tempDir, options) {
+  deleteDirectory(tempDir, options);
+  return makeDirectory(tempDir, options);
 }
 
 /**
  * Make a directory in the current directory.
  * Works similarly to the Unix command `mkdir`.
  * No error is thrown if the directory already exists.
+ * @param dir the directory to create
+ * @param [options] an options object
  */
 function makeDirectory(dir, options) {
   return new Promise((resolve, reject) => {
@@ -671,6 +735,7 @@ function makeDirectory(dir, options) {
  * Works similarly to the Unix command `ln`.
  * @param source the file to link to
  * @param destination the location of the link
+ * @param [options] an options object
  */
 function makeLink(source, destination, options) {
   return new Promise((resolve, reject) => {
@@ -704,6 +769,7 @@ function makeLink(source, destination, options) {
  * Works similarly to the Unix command `cp`.
  * @param source the source file
  * @param destination the destination file
+ * @param [options] an options object
  */
 function makeCopy(source, destination, options) {
   return new Promise((resolve, reject) => {
@@ -737,6 +803,7 @@ function makeCopy(source, destination, options) {
  * Works similarly to the Unix command `mv`.
  * @param source the file to move
  * @param destination the destination
+ * @param [options] an options object
  */
 function moveFile(source, destination, options) {
   return new Promise((resolve, reject) => {
@@ -755,7 +822,8 @@ function moveFile(source, destination, options) {
 
 /**
  * Recursively delete a directory and all its contents.
- * Works similarly to the Unix command `rm -rf`.
+ * Works similarly to the Unix command `rm -rf`
+ * (sometimes called "rimraf").
  * @param dir a directory
  */
 function deleteDirectory(dir) {
@@ -782,6 +850,7 @@ function invokeRsync(source, destination, options) {
 /**
  * Invoke a command in the current working directory.
  * @param cmd the command to invoke
+ * @param [options] an options object
  */
 function invokeCmd(cmd, options) {
   if (options && options.debug) {
@@ -799,6 +868,7 @@ function invokeCmd(cmd, options) {
 
 /**
  * Whether `rsync` is available on the system.
+ * @param [options] an options object
  * @return `true` if `rsync` is available, `false` otherwise
  * @see invokeRsync
  */
@@ -808,6 +878,7 @@ function hasRsync(options) {
 
 /**
  * Whether `ln` is available on the system.
+ * @param [options] an options object
  * @return `true` if `ln` is available, `false` otherwise
  */
 function hasLn(options) {
@@ -820,6 +891,7 @@ function hasLn(options) {
 /**
  * Whether a command is available on the system.
  * @param command the command
+ * @param [options] an options object
  * @return `true` if `command` is available, `false` otherwise
  */
 function hasCmd(command, options) {
@@ -833,6 +905,7 @@ function hasCmd(command, options) {
 /**
  * Print a metadata object to the console.
  * @param meta a metadata object
+ * @param [options] an options object
  */
 function printMetadata(meta, options) {
   console.log(meta && meta.file);
@@ -846,6 +919,7 @@ function printMetadata(meta, options) {
 /**
  * Create a metadata object from a YAML string.
  * @param str a YAML string
+ * @param [options] an options object
  * @return a metadata object
  */
 function parseMetadata(str, filePath, options) {
@@ -899,6 +973,7 @@ function normalizeYamlFile(file) {
  * Get the filename of the file that a metadata file is referring to,
  * by looking at the metadata file's filename.
  * @param filePath the filename of the metadata file
+ * @param [options] an options object
  * @return the filename of the referenced file
  * @see getMetadataFilenameFromFilename
  */
@@ -924,6 +999,7 @@ function getFilenameFromMetadataFilename(filePath, options) {
  * Get the filename of the metadata file for a file,
  * by looking at the file's filename.
  * @param filePath the filename of the file
+ * @param [options] an options object
  * @return the filename of the file's metadata file
  * @see getFilenameFromMetadataFilename
  */
@@ -1115,8 +1191,11 @@ function filterByQuery(metaArr, query) {
  * @param [options] an options object
  */
 function performQuery(metaArr, query, options) {
+  if (!query || query === '*') {
+    return metaArr.forEach(meta => processTagsAndCategories(meta, options));
+  }
   const matches = filterByQuery(metaArr, query);
-  matches.forEach(match => makeQueryLink(match, query, options));
+  return matches.forEach(match => makeQueryLink(match, query, options));
 }
 
 /**
@@ -1137,9 +1216,35 @@ function performQueryOnFile(meta, query, options) {
  * @param [options] an options object
  */
 function makeQueryLink(meta, query, options) {
+  const qDir = toFilename(query);
   return makeQueryContainer(options)
-    .then(dir => makeDirectory(`${dir}/${query}`, options))
+    .then(dir => makeDirectory(`${dir}/${qDir}`, options))
     .then(dir => makeLinkOrCopy(meta.file, dir, options));
+}
+
+/**
+ * Convert a string to a filename-safe string. This function returns
+ * a pure ASCII string stripped of unsafe characters.
+ * @param str a string
+ * @return a filename
+ * @example
+ *
+ * toFilename('*');
+ * // => '_'
+ *
+ * toFilename('foo:bar');
+ * // => 'foo_bar'
+ */
+function toFilename(str) {
+  let file = str;
+  file = file.replace(/^https?:\/\//i, '');
+  file = file.replace(/^www\./i, '');
+  file = file.replace(/\/+$/i, '');
+  file = file.replace(/ &+ /gi, ' and ');
+  file = _.deburr(file);
+  file = file.replace(/[/?=*:&]/gi, '_');
+  file = file.replace(/[^-0-9a-z_., ]/gi, '');
+  return file;
 }
 
 // export functions for testing
