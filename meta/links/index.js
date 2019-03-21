@@ -1191,14 +1191,14 @@ function performQuery(metaArr, query, options) {
   if (!query || query === '*') {
     const qDir = (options && options.queryDir) || queryDir;
     const cDir = toFilename('*');
-    return makeDirectory(`${qDir}/${cDir}`, options).then(dir => {
-      return metaArr.forEach(meta =>
+    return makeDirectory(`${qDir}/${cDir}`, options).then(dir =>
+      metaArr.forEach(meta =>
         processTagsAndCategories(meta, {
           ...options,
           categoryDir: dir
         })
-      );
-    });
+      )
+    );
   }
   const matches = filterByQuery(metaArr, query);
   return matches.forEach(match => makeQueryLink(match, query, options));
