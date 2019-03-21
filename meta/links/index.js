@@ -185,8 +185,8 @@ function main() {
     };
     const hasStdin = !process.stdin.isTTY;
     if (!hasStdin) {
-      const files$ = metadataInDirectory(inputDir, options);
-      processQueries(queries, files$, outputDir, options).then(() => {
+      const stream$ = metadataInDirectory(inputDir, options);
+      processQueries(queries, stream$, outputDir, options).then(() => {
         console.log('Done.\n');
       });
     } else {
@@ -199,8 +199,8 @@ function main() {
           .split('\n')
           .map(s => s.trim())
           .filter(s => s !== '');
-        const files$ = metadataForFiles(files, options);
-        processQueries(queries, files$, outputDir, options).then(() => {
+        const stream$ = metadataForFiles(files, options);
+        processQueries(queries, stream$, outputDir, options).then(() => {
           console.log('Done.\n');
         });
       });
@@ -213,18 +213,18 @@ function main() {
  * If running on a system supporting it, this function uses a temporary directory
  * for its working directory. See `processQueriesInTempDir()` for details.
  * @param queries an array of queries, e.g., `['*', 'foo bar']`
- * @param files$ an RxJS stream of metadata files
+ * @param stream$ an RxJS stream of metadata files
  * @param outputDir the directory to create symlinks in
  * @param [tempDir] the working directory, default `tmpDir`
  * @param [options] an options object
  * @see processQueriesInTempDir
  */
-function processQueries(queries, files$, outputDir, options) {
+function processQueries(queries, stream$, outputDir, options) {
   const hasTmpFileSupport = !isWindows(); // doesn't yet work on Windows
   if (!hasTmpFileSupport) {
-    return processQueriesInDir(queries, files$, outputDir, options);
+    return processQueriesInDir(queries, stream$, outputDir, options);
   }
-  return processQueriesInTempDir(queries, files$, outputDir, tmpDir, options);
+  return processQueriesInTempDir(queries, stream$, outputDir, tmpDir, options);
 }
 
 /**
@@ -232,15 +232,21 @@ function processQueries(queries, files$, outputDir, options) {
  * Note that this function does its work in a temporary directory, `tempDir`, and
  * then merges that directory into the output directory, `outputDir`.
  * @param queries an array of queries, e.g., `['*', 'foo bar']`
- * @param files$ an RxJS stream of metadata files
+ * @param stream$ an RxJS stream of metadata files
  * @param outputDir the directory to create symlinks in
  * @param [tempDir] the working directory, default `tmpDir`
  * @param [options] an options object
  */
-function processQueriesInTempDir(queries, files$, outputDir, tempDir, options) {
+function processQueriesInTempDir(
+  queries,
+  stream$,
+  outputDir,
+  tempDir,
+  options
+) {
   return makeTemporaryDirectory(tempDir || tmpDir, options).then(
     tempDirectory =>
-      processQueriesInDir(queries, files$, tempDirectory, options).then(() =>
+      processQueriesInDir(queries, stream$, tempDirectory, options).then(() =>
         mergeTmpDirAndOutputDir(tempDirectory, outputDir, {
           ...options,
           delete: true
@@ -394,20 +400,20 @@ function mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options) {
 /**
  * Process queries on a stream of files and create symlinks in a given directory.
  * @param queries an array of queries, e.g., `['*', 'foo bar']`
- * @param files$ an RxJS stream of metadata files
+ * @param stream$ an RxJS stream of metadata files
  * @param outputDir the directory to create symlinks in
  * @param [options] an options object
  * @return a Promise-wrapped array of return values,
  * resolved when execution has finished
  */
-function processQueriesInDir(queries, files$, outputDir, options) {
+function processQueriesInDir(queries, stream$, outputDir, options) {
   return new Promise((resolve, reject) => {
     const result = [];
     (queries || []).forEach(query => {
       result.push(
         iterateOverStream(
-          files$,
-          (file, opts) => processMetadataQuery(file, query, opts),
+          stream$,
+          (meta, opts) => processMetadataQuery(meta, query, opts),
           { cwd: outputDir, ...options }
         )
       );
@@ -418,19 +424,19 @@ function processQueriesInDir(queries, files$, outputDir, options) {
 
 /**
  * Iterate over all metadata files in a RxJS stream.
- * @param files$ a RxJS stream of metadata file paths
+ * @param stream$ a RxJS stream of metadata file paths
  * @param fn an iterator function, invoked as `fn(file, options)`
  * @param [options] an options object
  * @return a Promise-wrapped array of return values,
  * resolved when execution has finished
  */
-function iterateOverStream(files$, fn, options) {
+function iterateOverStream(stream$, fn, options) {
   return new Promise((resolve, reject) => {
     const files = [];
     const iterator = fn || (x => x);
-    const subscription = files$.subscribe(
-      file => {
-        files.push(iterator(file, options));
+    const subscription = stream$.subscribe(
+      obj => {
+        files.push(iterator(obj, options));
       },
       null,
       () => {
@@ -449,7 +455,7 @@ function iterateOverStream(files$, fn, options) {
  * @return a stream object, in the form of a RxJS observable
  */
 function metadataInDirectory(dir, options) {
-  const files$ = new Rx.Subject();
+  let stream$ = new Rx.Subject();
   const cwd = (options && options.cwd) || '.';
   const directory = joinPaths(cwd, dir);
   const stream = fg.stream([createGlobPattern()], {
@@ -459,10 +465,20 @@ function metadataInDirectory(dir, options) {
   });
   stream.on('data', entry => {
     const file = path.join(directory, entry);
-    files$.next(file);
+    stream$.next(file);
   });
-  stream.once('end', () => files$.complete());
-  return filterInvalidMetadata(files$).pipe(RxOp.share());
+  stream.once('end', () => stream$.complete());
+  stream$ = filterInvalidMetadata(stream$);
+  stream$ = stream$.pipe(
+    RxOp.mergeMap(file =>
+      readMetadataForFile(file, {
+        ...options,
+        print: true
+      })
+    ),
+    RxOp.share()
+  );
+  return stream$;
 }
 
 /**
@@ -473,32 +489,37 @@ function metadataInDirectory(dir, options) {
  * @return a stream object, in the form of a RxJS observable
  */
 function metadataForFiles(files, options) {
-  let files$ = new Rx.Subject();
+  let stream$ = new Rx.Subject();
   const cwd = (options && options.cwd) || '.';
   files.forEach(f => {
     const file = joinPaths(cwd, f);
     const isDirectory = fs.lstatSync(file).isDirectory();
     if (isDirectory) {
       const dir$ = metadataInDirectory(file);
-      files$ = files$.merge(dir$);
+      stream$ = stream$.merge(dir$);
     } else {
       const metaFile = getMetadataFilenameFromFilename(file);
       const metaFile$ = Rx.Observable.of(metaFile);
-      files$ = files$.merge(metaFile$);
+      stream$ = stream$.merge(metaFile$);
     }
   });
-  return filterInvalidMetadata(files$).pipe(RxOp.share());
+  stream$ = filterInvalidMetadata(stream$);
+  stream$ = stream$.pipe(
+    RxOp.mergeMap(file => readMetadataForFile(file, options))
+  );
+  stream$ = stream$.pipe(RxOp.share());
+  return stream$;
 }
 
 /**
  * Filter a RxJS observable for invalid metadata files. Metadata files
  * that reference non-existent files are regarded as invalid,
  * and a warning is displayed.
- * @param files$ a RxJS observable of file paths
+ * @param stream$ a RxJS observable of file paths
  * @return a filtered RxJS observable
  */
-function filterInvalidMetadata(files$) {
-  return files$.pipe(
+function filterInvalidMetadata(stream$) {
+  return stream$.pipe(
     RxOp.filter(metaFile => {
       const metaFileExists = fs.existsSync(metaFile);
       if (!metaFileExists) {
@@ -540,14 +561,9 @@ function createGlobPattern(mDir, mExt) {
  * @param query a query
  * @param [options] an options object
  */
-function processMetadataQuery(file, query, options) {
-  return readMetadataForFile(file, {
-    ...options,
-    print: true
-  }).then(meta => {
-    performQueryOnFile(meta, query, options);
-    return query;
-  });
+function processMetadataQuery(meta, query, options) {
+  performQueryOnFile(meta, query, options);
+  return query;
 }
 
 /**
