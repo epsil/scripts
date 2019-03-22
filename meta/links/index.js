@@ -3,10 +3,10 @@
 const childProcess = require('child_process');
 const fg = require('fast-glob');
 const fs = require('fs');
-const getStdin = require('get-stdin');
 const meow = require('meow');
 const os = require('os');
 const path = require('path');
+const readline = require('readline');
 const Rx = require('rxjs/Rx');
 const RxOp = require('rxjs/operators');
 const shell = require('shelljs');
@@ -190,31 +190,20 @@ function main() {
   console.log(`Queries: ${queries.join(', ')}\n`);
 
   return hasLink().then(link => {
+    let stream$;
     const options = {
       makeSymLinks: makeSymLinks && link
     };
     const hasStdin = !process.stdin.isTTY;
-    if (!hasStdin) {
-      const stream$ = metadataInDirectory(inputDir, options);
-      processQueries(queries, stream$, outputDir, options).then(() => {
-        console.log('Done.\n');
-      });
+    if (hasStdin) {
+      console.log('Reading from standard input ...\n');
+      stream$ = metadataForFiles(stdin(), options);
     } else {
-      getStdin().then(str => {
-        // TODO: create RxJS stream in terms of process.stdin.on(),
-        // so that input can processed as it arrives
-        console.log('Reading files from stdin ...');
-        const files = str
-          .trim()
-          .split('\n')
-          .map(s => s.trim())
-          .filter(s => s !== '');
-        const stream$ = metadataForFiles(files, options);
-        processQueries(queries, stream$, outputDir, options).then(() => {
-          console.log('Done.\n');
-        });
-      });
+      stream$ = metadataInDirectory(inputDir, options);
     }
+    processQueries(queries, stream$, outputDir, options).then(() => {
+      console.log('\nDone.\n');
+    });
   });
 }
 
@@ -480,11 +469,11 @@ function iterateOverStream(stream$, fn, options) {
 }
 
 /**
- * Create a RxJS observable to iterate over all metadata files
+ * Create a RxJS observable to iterate over all metadata
  * in the given directory.
  * @param dir the directory to look in
  * @param [options] an options object
- * @return a stream object, in the form of a RxJS observable
+ * @return a RxJS stream of metadata objects
  */
 function metadataInDirectory(dir, options) {
   let stream$ = new Rx.Subject();
@@ -514,33 +503,51 @@ function metadataInDirectory(dir, options) {
 }
 
 /**
- * Create a RxJS observable to iterate over all metadata files
- * belonging to a list of files.
- * @param files a list of files, e.g., `['foo.txt', 'bar.txt']`
+ * Create a RxJS observable to iterate over all metadata
+ * for a stream of files.
+ * @param stream$ a RxJS stream of file paths
  * @param [options] an options object
- * @return a stream object, in the form of a RxJS observable
+ * @return a RxJS stream of metadata objects
  */
-function metadataForFiles(files, options) {
-  let stream$ = new Rx.Subject();
+function metadataForFiles(stream$, options) {
   const cwd = (options && options.cwd) || '.';
-  files.forEach(f => {
-    const file = joinPaths(cwd, f);
-    const isDirectory = fs.lstatSync(file).isDirectory();
-    if (isDirectory) {
-      const dir$ = metadataInDirectory(file);
-      stream$ = stream$.merge(dir$);
-    } else {
+  let meta$ = stream$.pipe(
+    RxOp.mergeMap(f => {
+      const file = joinPaths(cwd, f);
+      const isDirectory = fs.lstatSync(file).isDirectory();
+      if (isDirectory) {
+        const dir$ = metadataInDirectory(file);
+        return dir$;
+      }
       const metaFile = getMetadataFilenameFromFilename(file);
       const metaFile$ = Rx.Observable.of(metaFile);
-      stream$ = stream$.merge(metaFile$);
-    }
-  });
-  stream$ = filterInvalidMetadata(stream$);
-  stream$ = stream$.pipe(
-    RxOp.mergeMap(file => readMetadataForFile(file, options))
+      return metaFile$;
+    })
   );
-  stream$ = stream$.pipe(RxOp.share());
-  return stream$;
+  meta$ = filterInvalidMetadata(meta$);
+  meta$ = meta$.pipe(
+    RxOp.mergeMap(file =>
+      readMetadataForFile(file, {
+        ...options,
+        print: true
+      })
+    )
+  );
+  meta$ = meta$.pipe(RxOp.share());
+  return meta$;
+}
+
+/**
+ * Return standard input line by line, as a RxJS observable.
+ * @return a RxJS stream
+ */
+function stdin() {
+  const rl = readline.createInterface({
+    input: process.stdin
+  });
+  return Rx.Observable.fromEvent(rl, 'line').takeUntil(
+    Rx.Observable.fromEvent(rl, 'close')
+  );
 }
 
 /**
