@@ -11,16 +11,16 @@ const Rx = require('rxjs/Rx');
 const RxOp = require('rxjs/operators');
 const shell = require('shelljs');
 const util = require('util');
-const yaml = require('js-yaml');
 const ws = require('windows-shortcuts');
+const yaml = require('js-yaml');
 const _ = require('lodash');
 
 /**
  * Help message to display when running with --help.
  */
 const help = `metalinks performs queries on files tagged with metatag.
-The files matching a query are returned as a folder
-containing symbolic links (or shortcuts if using Windows).
+The files matching a query are presented as a folder
+containing symbolic links (or shortcuts on Windows).
 
 Usage:
 
@@ -30,25 +30,26 @@ Examples:
 
     metalinks
     metalinks "*"
+
+These commands are identical. They create links for all tagged files
+in the current directory. The links are placed in the directory _q/_/.
+
     metalinks "foo bar"
+
+This command performs a query for files tagged with both "foo" and "bar".
+The links are placed in the directory _q/foo bar/.
+
     metalinks "*" "foo bar"
 
-The first and second commands create links for all the files
-in the current directory. The links are placed in _q/_.
-
-The third command performs a query for files tagged with both
-"foo" and "bar", creating links for the matches. The links are
-placed in _q/foo bar.
-
-The fourth command executes the second and third commands in one go,
-which is faster since the metadata is only read once. To split the
-queries across multiple lines, write:
+This command executes the above commands in one go, which is faster
+since the metadata is read only once. To split the queries across
+multiple lines, write:
 
     metalinks "*" \\
       "foo bar" \\
       "baz quux"
 
-One can use the --input and --output options to specify the input
+The --input and --output options can be used to specify the input
 and output directories explicitly:
 
     metalinks --input . --output _q "foo bar"
@@ -58,12 +59,13 @@ and the output directory is _q.
 
 Files can also be read from standard input. If files.txt is a
 text file containing a newline-separated list of files to process,
-then one can do:
+then it can be piped to metalinks:
 
     cat files.txt | metalinks "foo bar"
 
-This makes it possible to combine metalinks with other utilities,
-such as find and grep.
+metalinks is fully stream-enabled, and will begin processing input
+as soon as it arrives. This makes it easy to combine with other
+utilities, such as find and grep.
 
 Type metalinks --version to see the current version.
 
@@ -75,12 +77,12 @@ See also: metatag, yarch.`;
 const sourceDir = '.';
 
 /**
- * The directory to store symlinks in.
+ * The directory to store links in.
  */
 const destinationDir = '_q';
 
 /**
- * Temporary directory to generate symlinks in.
+ * Temporary directory to generate links in.
  */
 const tmpDir = '_tmp';
 
@@ -125,9 +127,9 @@ const defaultQuery = '*';
 const defaultCategory = '*';
 
 /**
- * Whether to make symbolic links or copies.
+ * Whether to make links or copies.
  */
-const makeSymLinks = true;
+const makeLinks = true;
 
 /**
  * Globbing pattern for directories to ignore.
@@ -192,7 +194,7 @@ function main() {
   return hasLink().then(link => {
     let stream$;
     const options = {
-      makeSymLinks: makeSymLinks && link
+      makeLinks: makeLinks && link
     };
     const hasStdin = !process.stdin.isTTY;
     if (hasStdin) {
@@ -230,12 +232,12 @@ http://www.optimumx.com/downloads.html#Shortcut`);
 }
 
 /**
- * Process queries on a stream of files and create symlinks in a given directory.
+ * Process queries on a metadata stream and create links in a given directory.
  * If running on a system supporting it, this function uses a temporary directory
  * for its working directory. See `processQueriesInTempDir()` for details.
  * @param queries an array of queries, e.g., `['*', 'foo bar']`
- * @param stream$ an RxJS stream of metadata files
- * @param outputDir the directory to create symlinks in
+ * @param stream$ an RxJS stream of metadata objects
+ * @param outputDir the directory to create links in
  * @param [tempDir] the working directory, default `tmpDir`
  * @param [options] an options object
  * @see processQueriesInTempDir
@@ -249,12 +251,12 @@ function processQueries(queries, stream$, outputDir, options) {
 }
 
 /**
- * Process queries on a stream of files and create symlinks in a given directory.
+ * Process queries on a metadata stream and create links in a given directory.
  * Note that this function does its work in a temporary directory, `tempDir`, and
  * then merges that directory into the output directory, `outputDir`.
  * @param queries an array of queries, e.g., `['*', 'foo bar']`
- * @param stream$ an RxJS stream of metadata files
- * @param outputDir the directory to create symlinks in
+ * @param stream$ an RxJS stream of metadata objects
+ * @param outputDir the directory to create links in
  * @param [tempDir] the working directory, default `tmpDir`
  * @param [options] an options object
  */
@@ -277,7 +279,7 @@ function processQueriesInTempDir(
 }
 
 /**
- * Merge a temporary directory, containing symlinks, into the target directory.
+ * Merge a temporary directory, containing links, into the target directory.
  * @param [tempDir] the temporary directory
  * @param [outputDir] the output directory
  * @param [options] an options object
@@ -419,23 +421,24 @@ function mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options) {
 }
 
 /**
- * Process queries on a stream of files and create symlinks in a given directory.
+ * Process queries on a metadata stream and create links in a given directory.
  * @param queries an array of queries, e.g., `['*', 'foo bar']`
- * @param stream$ an RxJS stream of metadata files
- * @param outputDir the directory to create symlinks in
+ * @param stream$ an RxJS stream of metadata objects
+ * @param outputDir the directory to create links in
  * @param [options] an options object
  * @return a Promise-wrapped array of return values,
  * resolved when execution has finished
  */
 function processQueriesInDir(queries, stream$, outputDir, options) {
   return new Promise((resolve, reject) => {
+    const opts = { cwd: outputDir, ...options };
     const result = [];
     (queries || []).forEach(query => {
       result.push(
         iterateOverStream(
           stream$,
-          (meta, opts) => processMetadataQuery(meta, query, opts),
-          { cwd: outputDir, ...options }
+          (meta, opt) => processMetadataQuery(meta, query, opt),
+          opts
         )
       );
     });
@@ -444,9 +447,9 @@ function processQueriesInDir(queries, stream$, outputDir, options) {
 }
 
 /**
- * Iterate over all metadata files in a RxJS stream.
- * @param stream$ a RxJS stream of metadata file paths
- * @param fn an iterator function, invoked as `fn(file, options)`
+ * Iterate over all metadata objects in a RxJS metadata stream.
+ * @param stream$ a RxJS stream of metadata objects
+ * @param fn an iterator function, invoked as `fn(meta, options)`
  * @param [options] an options object
  * @return a Promise-wrapped array of return values,
  * resolved when execution has finished
@@ -456,8 +459,8 @@ function iterateOverStream(stream$, fn, options) {
     const files = [];
     const iterator = fn || (x => x);
     const subscription = stream$.subscribe(
-      obj => {
-        files.push(iterator(obj, options));
+      meta => {
+        files.push(iterator(meta, options));
       },
       null,
       () => {
@@ -675,7 +678,7 @@ function makeTagLink(filePath, tag, options) {
 
 /**
  * Make a link to, or a copy of, a file.
- * If `makeSymLinks: true` is specified in `options`,
+ * If `makeLinks: true` is specified in `options`,
  * a link is made; otherwise, the function performs copying.
  * This function can be used to provide file copying as a fall-back
  * on systems that do not support links.
@@ -684,13 +687,24 @@ function makeTagLink(filePath, tag, options) {
  * @param [options] an options object
  */
 function makeLinkOrCopy(source, destination, options) {
-  if (options && options.makeSymLinks) {
-    if (isWindows()) {
-      return makeShortcut(source, destination, options);
-    }
+  if (options && options.makeLinks) {
     return makeLink(source, destination, options);
   }
   return makeCopy(source, destination, { ...options, force: true });
+}
+
+/**
+ * Make a symbolic link or a shortcut to a file.
+ * Does the former on Unix and the latter on Windows.
+ * @param source the file to link to
+ * @param destination the location of the link
+ * @param [options] an options object
+ */
+function makeLink(source, destination, options) {
+  if (isWindows()) {
+    return makeShortcut(source, destination, options);
+  }
+  return makeSymLink(source, destination, options);
 }
 
 /**
@@ -786,13 +800,13 @@ function makeDirectory(dir, options) {
 }
 
 /**
- * Make a link to a file.
+ * Make a symbolic link to a file.
  * Works similarly to the Unix command `ln`.
  * @param source the file to link to
  * @param destination the location of the link
  * @param [options] an options object
  */
-function makeLink(source, destination, options) {
+function makeSymLink(source, destination, options) {
   return new Promise((resolve, reject) => {
     const cwd = (options && options.cwd) || '.';
     const sourcePath = joinPaths(cwd, source);
