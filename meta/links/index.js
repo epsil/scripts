@@ -12,6 +12,7 @@ const RxOp = require('rxjs/operators');
 const shell = require('shelljs');
 const util = require('util');
 const yaml = require('js-yaml');
+const ws = require('windows-shortcuts');
 const _ = require('lodash');
 
 /**
@@ -143,6 +144,7 @@ const execAsync = util.promisify(childProcess.exec);
  * with Node.
  */
 function main() {
+  checkDependencies();
   const cli = meow(help, {
     flags: {
       input: {
@@ -179,9 +181,9 @@ function main() {
   console.log(`Output directory: ${outputDir}`);
   console.log(`Queries: ${queries.join(', ')}\n`);
 
-  return hasLn().then(ln => {
+  return hasLink().then(link => {
     const options = {
-      makeSymLinks: makeSymLinks && ln
+      makeSymLinks: makeSymLinks && link
     };
     const hasStdin = !process.stdin.isTTY;
     if (!hasStdin) {
@@ -206,6 +208,28 @@ function main() {
       });
     }
   });
+}
+
+/**
+ * Check if required libraries are available on the system.
+ * If not, display a warning and exit.
+ */
+function checkDependencies() {
+  if (isWindows()) {
+    checkShortcut();
+  }
+}
+
+/**
+ * Check if `Shortcut.exe` is available on the system.
+ * If not, display a warning and exit.
+ */
+function checkShortcut() {
+  if (!hasShortcut()) {
+    shell.echo(`Shortcut.exe is required on Windows. Get it from:
+http://www.optimumx.com/downloads.html#Shortcut`);
+    shell.exit(1);
+  }
 }
 
 /**
@@ -646,6 +670,9 @@ function makeTagLink(filePath, tag, options) {
  */
 function makeLinkOrCopy(source, destination, options) {
   if (options && options.makeSymLinks) {
+    if (isWindows()) {
+      return makeShortcut(source, destination, options);
+    }
     return makeLink(source, destination, options);
   }
   return makeCopy(source, destination, { ...options, force: true });
@@ -778,6 +805,24 @@ function makeLink(source, destination, options) {
 }
 
 /**
+ * Make a Windows shortcut to a file.
+ * This function requires `Shortcut.exe` to be in `PATH`:
+ * http://www.optimumx.com/downloads.html#Shortcut
+ * @param source the file to link to
+ * @param destination the location of the link
+ * @param [options] an options object
+ */
+function makeShortcut(source, destination, options) {
+  return new Promise((resolve, reject) => {
+    const cwd = (options && options.cwd) || '.';
+    const sourcePath = escapePath(joinPaths(cwd, source));
+    const destinationPath = escapePath(joinPaths(cwd, destination));
+    ws.create(destinationPath, sourcePath);
+    resolve(destination);
+  });
+}
+
+/**
  * Make a copy of a file.
  * Works similarly to the Unix command `cp`.
  * @param source the source file
@@ -890,6 +935,21 @@ function hasRsync(options) {
 }
 
 /**
+ * Whether some sort of linking capability -- symlinks or
+ * shortcuts -- is available on the system.
+ * @param [options] an options object
+ * @return `true` if linking is available, `false` otherwise
+ * @see hasLn
+ * @see hasShortcut
+ */
+function hasLink(options) {
+  if (isWindows()) {
+    return Promise.resolve(hasShortcut(options));
+  }
+  return hasLn(options);
+}
+
+/**
  * Whether `ln` is available on the system.
  * @param [options] an options object
  * @return `true` if `ln` is available, `false` otherwise
@@ -899,6 +959,15 @@ function hasLn(options) {
     return Promise.resolve(false);
   }
   return hasCmd('ln', options);
+}
+/**
+ * Whether `shortcut.exe` is available on the system.
+ * @param [options] an options object
+ * @return `true` if `rsync` is available, `false` otherwise
+ * @see invokeRsync
+ */
+function hasShortcut(options) {
+  return shell.which('Shortcut', options);
 }
 
 /**
@@ -1267,6 +1336,15 @@ function toFilename(str) {
   file = file.replace(/[/?=*:&]/gi, '_');
   file = file.replace(/[^-0-9a-z_.,' ]/gi, '');
   return file;
+}
+
+/**
+ * Escape a file path.
+ * @param str a file path
+ * @return an escaped file path
+ */
+function escapePath(str) {
+  return str.replace(/ /g, ' ');
 }
 
 // export functions for testing
