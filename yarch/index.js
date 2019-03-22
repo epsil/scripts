@@ -28,7 +28,11 @@ Each URL is saved to its own directory, named after the URL.
 Metadata is stored in the subdirectory .meta.
 
 yarch requires youtube-dl, AtomicParsley and wget.
-It will complain if these are missing.`;
+It will complain if these are missing.
+
+Type yarch --version to see the current version.
+
+See also: metalinks, metatag.`;
 
 /**
  * The "main" function.

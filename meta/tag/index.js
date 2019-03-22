@@ -28,7 +28,11 @@ FILE2 and FILE3.
 
     metatag --tag foo FILE1 FILE2 FILE3
 
-This adds the tag foo to FILE1, FILE2 and FILE3.`;
+This adds the tag foo to FILE1, FILE2 and FILE3.
+
+Type metatag --version to see the current version.
+
+See also: metalinks, yarch.`;
 
 /**
  * Text editor for editing metadata files.

@@ -18,7 +18,11 @@ const _ = require('lodash');
 /**
  * Help message to display when running with --help.
  */
-const help = `Usage:
+const help = `metalinks performs queries on files tagged with metatag.
+The files matching a query are returned as a folder
+containing symbolic links (or shortcuts if using Windows).
+
+Usage:
 
     metalinks [OPTIONS...] [QUERIES...]
 
@@ -29,14 +33,16 @@ Examples:
     metalinks "foo bar"
     metalinks "*" "foo bar"
 
-The first and second commands create symlinks for all the files
-in the current directory.
+The first and second commands create links for all the files
+in the current directory. The links are placed in _q/_.
 
 The third command performs a query for files tagged with both
-"foo" and "bar", creating symlinks for the matches.
+"foo" and "bar", creating links for the matches. The links are
+placed in _q/foo bar.
 
 The fourth command executes the second and third commands in one go,
-which is faster. To split the queries across multiple lines, write:
+which is faster since the metadata is only read once. To split the
+queries across multiple lines, write:
 
     metalinks "*" \\
       "foo bar" \\
@@ -59,7 +65,9 @@ then one can do:
 This makes it possible to combine metalinks with other utilities,
 such as find and grep.
 
-Type metalinks --version to see the current version.`;
+Type metalinks --version to see the current version.
+
+See also: metatag, yarch.`;
 
 /**
  * The directory to look for metadata in.
