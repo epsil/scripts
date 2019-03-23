@@ -142,6 +142,11 @@ const ignorePattern = 'node_modules/**';
 const normalize = false;
 
 /**
+ * Maximum number of files being processed concurrently.
+ */
+const concurrent = 10;
+
+/**
  * Promise wrapper for `childProcess.exec()`.
  * http://stackoverflow.com/questions/20643470/execute-a-command-line-binary-with-node-js#20643568
  */
@@ -481,6 +486,7 @@ function iterateOverStream(stream$, fn, options) {
 function metadataInDirectory(dir, options) {
   let stream$ = new Rx.Subject();
   const cwd = (options && options.cwd) || '.';
+  const concurrentFiles = (options && options.concurrent) || concurrent;
   const directory = joinPaths(cwd, dir);
   const stream = fg.stream([createGlobPattern()], {
     dot: true,
@@ -494,11 +500,13 @@ function metadataInDirectory(dir, options) {
   stream.once('end', () => stream$.complete());
   stream$ = filterInvalidMetadata(stream$);
   stream$ = stream$.pipe(
-    RxOp.mergeMap(file =>
-      readMetadataForFile(file, {
-        ...options,
-        print: true
-      })
+    RxOp.mergeMap(
+      file =>
+        readMetadataForFile(file, {
+          ...options,
+          print: true
+        }),
+      concurrentFiles
     ),
     RxOp.share()
   );
