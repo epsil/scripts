@@ -32,18 +32,31 @@ Examples:
     metalinks "*"
 
 These commands are identical. They create links for all tagged files
-in the current directory. The links are placed in the directory _q/_/.
+in the current directory. The links are placed in the directory _q/_/:
+
+    _q/
+      _/
+        file1.txt -> /path/to/file1.txt
+        file2.txt -> /path/to/file2.txt
+
+The next command performs a query for files tagged with both
+"foo" and "bar":
 
     metalinks "foo bar"
 
-This command performs a query for files tagged with both "foo" and "bar".
-The links are placed in the directory _q/foo bar/.
+The links are placed in the directory _q/foo bar/:
+
+    _q/
+      foo bar/
+        file3.txt -> /path/to/file3.txt
+        file4.txt -> /path/to/file4.txt
+
+The following command executes the above commands in one go,
+which is faster since the metadata is read only once:
 
     metalinks "*" "foo bar"
 
-This command executes the above commands in one go, which is faster
-since the metadata is read only once. To split the queries across
-multiple lines, write:
+To split the queries across multiple lines, write:
 
     metalinks "*" \\
       "foo bar" \\
@@ -63,7 +76,7 @@ then it can be piped to metalinks:
 
     cat files.txt | metalinks "foo bar"
 
-metalinks is fully stream-enabled, and will begin processing input
+metalinks is fully stream-enabled, so it will begin processing input
 as soon as it arrives. This makes it easy to combine with other
 utilities, such as find and grep.
 
