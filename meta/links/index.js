@@ -521,6 +521,7 @@ function metadataInDirectory(dir, options) {
         }),
       concurrentFiles
     ),
+    RxOp.filter(meta => _.size(meta) > 0),
     RxOp.share()
   );
   return stream$;
