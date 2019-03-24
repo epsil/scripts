@@ -32,12 +32,12 @@ Examples:
     metalinks "*"
 
 These commands are identical. They create links for all tagged files
-in the current directory. The links are placed in the directory _q/_/.
+in the current directory. The links are placed in the directory !q/_/.
 
     metalinks "foo bar"
 
 This command performs a query for files tagged with both "foo" and "bar".
-The links are placed in the directory _q/foo bar/.
+The links are placed in the directory !q/foo bar/.
 
     metalinks "*" "foo bar"
 
@@ -52,10 +52,10 @@ multiple lines, write:
 The --input and --output options can be used to specify the input
 and output directories explicitly:
 
-    metalinks --input . --output _q "foo bar"
+    metalinks --input . --output !q "foo bar"
 
 By default, the input directory is . (the current directory)
-and the output directory is _q.
+and the output directory is !q.
 
 Files can also be read from standard input. If files.txt is a
 text file containing a newline-separated list of files to process,
@@ -79,7 +79,7 @@ const sourceDir = '.';
 /**
  * The directory to store links in.
  */
-const destinationDir = '_q';
+const destinationDir = '!q';
 
 /**
  * Temporary directory to generate links in.
