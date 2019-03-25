@@ -117,7 +117,7 @@ const metaExt = '.yml';
 /**
  * Whether to output a "rich" YAML prefix.
  */
-const richHeader = false;
+const richHeader = true;
 
 /**
  * "Main" function.
@@ -416,7 +416,7 @@ function createMetadataFileFromTemplate(metaFile, str) {
   let tmp = str || '';
   if (richHeader) {
     const origFile = path.basename(getFilenameFromMetadataFilename(metaFile));
-    const ymlHeader = '---' + ' # ' + origFile + '\n';
+    const ymlHeader = '---' + '\n# ' + origFile + '\n';
     tmp = (str || '').replace(/^---\n/, ymlHeader);
   }
   return new Promise((resolve, reject) => {
@@ -503,7 +503,7 @@ function normalizeYamlFile(file) {
   let ymlHeader = '---' + '\n';
   if (richHeader) {
     const origFile = path.basename(getFilenameFromMetadataFilename(file));
-    ymlHeader = '---' + ' # ' + origFile + '\n';
+    ymlHeader = '---' + '\n# ' + origFile + '\n';
   }
   const ymlDoc = ymlHeader + yml.trim();
   fs.writeFileSync(file, ymlDoc);
