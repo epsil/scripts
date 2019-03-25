@@ -444,8 +444,10 @@ function normalizeYamlFile(file) {
   }
   let yml = fs.readFileSync(file) + '';
   yml = yml.trim();
-  const isEmpty = yml === '';
-  if (isEmpty) {
+  const isEmptyFile = yml === '';
+  const meta = parseYaml(yml);
+  const isEmptyObject = _.isEmpty(meta);
+  if (isEmptyFile || isEmptyObject) {
     shell.rm(file);
     const mDir = path.dirname(file);
     const metaDirIsEmpty = fs.readdirSync(mDir).length === 0;
@@ -454,7 +456,6 @@ function normalizeYamlFile(file) {
     }
     return;
   }
-  const meta = parseYaml(yml);
   if (meta.tags) {
     meta.tags = meta.tags.sort();
   }
