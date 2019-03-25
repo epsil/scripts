@@ -115,6 +115,11 @@ const metaPre = '.';
 const metaExt = '.yml';
 
 /**
+ * Whether to output a "rich" YAML prefix.
+ */
+const richHeader = false;
+
+/**
  * "Main" function.
  */
 function main() {
@@ -408,8 +413,14 @@ function createMetadataFile(metaFile, tmp) {
  * @param [str] the contents of the metadata file
  */
 function createMetadataFileFromTemplate(metaFile, str) {
+  let tmp = str || '';
+  if (richHeader) {
+    const origFile = path.basename(getFilenameFromMetadataFilename(metaFile));
+    const ymlHeader = '---' + ' # ' + origFile + '\n';
+    tmp = (str || '').replace(/^---\n/, ymlHeader);
+  }
   return new Promise((resolve, reject) => {
-    fs.writeFile(metaFile, str || '', function(err) {
+    fs.writeFile(metaFile, tmp, function(err) {
       if (err) {
         reject(err);
       } else {
@@ -489,7 +500,11 @@ function normalizeYamlFile(file) {
     meta.categories = meta.categories.sort();
   }
   yml = yaml.safeDump(meta);
-  const ymlHeader = '---' + '\n';
+  let ymlHeader = '---' + '\n';
+  if (richHeader) {
+    const origFile = path.basename(getFilenameFromMetadataFilename(file));
+    ymlHeader = '---' + ' # ' + origFile + '\n';
+  }
   const ymlDoc = ymlHeader + yml.trim();
   fs.writeFileSync(file, ymlDoc);
   // console.log('Normalized ' + file);
