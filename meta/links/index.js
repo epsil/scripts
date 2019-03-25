@@ -557,7 +557,10 @@ function metadataForFiles(stream$, options) {
       })
     )
   );
-  meta$ = meta$.pipe(RxOp.share());
+  meta$ = meta$.pipe(
+    RxOp.filter(meta => !_.isEmpty(meta)),
+    RxOp.share()
+  );
   return meta$;
 }
 
