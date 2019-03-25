@@ -76,7 +76,7 @@ then it can be piped to metalinks:
 
     cat files.txt | metalinks "foo bar"
 
-metalinks is fully stream-enabled, so it will begin processing input
+metalinks is fully stream-enabled and will begin processing input
 as soon as it arrives. This makes it easy to combine with other
 utilities, such as find and grep.
 

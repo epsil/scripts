@@ -449,10 +449,10 @@ function normalizeYamlFile(file) {
   const isEmptyObject = _.isEmpty(meta);
   if (isEmptyFile || isEmptyObject) {
     shell.rm(file);
-    const mDir = path.dirname(file);
-    const metaDirIsEmpty = fs.readdirSync(mDir).length === 0;
-    if (metaDirIsEmpty) {
-      shell.rm('-rf', mDir);
+    const metaDirectory = path.dirname(file);
+    const metaDirectoryIsEmpty = fs.readdirSync(metaDirectory).length === 0;
+    if (metaDirectoryIsEmpty) {
+      shell.rm('-rf', metaDirectory);
     }
     return;
   }
