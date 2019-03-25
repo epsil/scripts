@@ -312,6 +312,32 @@ function getMetadataFilenameFromFilename(filePath, options) {
 }
 
 /**
+ * Get the filename of the file that a metadata file is referring to,
+ * by looking at the metadata file's filename.
+ * @param filePath the filename of the metadata file
+ * @param [options] an options object
+ * @return the filename of the referenced file
+ * @see getMetadataFilenameFromFilename
+ */
+function getFilenameFromMetadataFilename(filePath, options) {
+  if (!isMetadataFile(filePath)) {
+    return filePath;
+  }
+  const metaDirectory = path.dirname(filePath);
+  const parentDir = '..';
+  const origDir = path.join(metaDirectory, parentDir);
+  const metaName = path.basename(filePath);
+  const origName = metaName
+    .replace(metadataPreRegExp(), '')
+    .replace(metadataPostRegExp(), '');
+  let origFile = path.join(origDir, origName);
+  if (options && options.unix) {
+    origFile = origFile.replace(/\\/g, '/'); // test
+  }
+  return origFile;
+}
+
+/**
  * Regexp for matching the `metaPre` part of a metadata filename.
  */
 function metadataPreRegExp() {
@@ -463,8 +489,9 @@ function normalizeYamlFile(file) {
     meta.categories = meta.categories.sort();
   }
   yml = yaml.safeDump(meta);
-  yml = '---\n' + yml.trim();
-  fs.writeFileSync(file, yml);
+  const ymlHeader = '---' + '\n';
+  const ymlDoc = ymlHeader + yml.trim();
+  fs.writeFileSync(file, ymlDoc);
   // console.log('Normalized ' + file);
 }
 
