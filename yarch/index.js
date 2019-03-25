@@ -318,6 +318,9 @@ function reorderProperties(obj) {
   // but shorthand property syntax results in `undefined` values
   // that are rejected by js-yaml's `safeDump()` method ...
   const result = {};
+  if (obj['_filename']) {
+    result['_filename'] = obj['_filename'];
+  }
   if (obj.title) {
     result.title = obj.title;
   }
