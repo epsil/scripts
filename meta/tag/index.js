@@ -446,17 +446,12 @@ function normalizeYamlFile(file) {
   yml = yml.trim();
   const isEmpty = yml === '';
   if (isEmpty) {
-    fs.unlink(file, err => {
-      if (err) {
-        console.log(err);
-        return;
-      }
-      const mDir = path.dirname(file);
-      const metaDirIsEmpty = fs.readdirSync(mDir).length === 0;
-      if (metaDirIsEmpty) {
-        shell.rm('-rf', mDir);
-      }
-    });
+    shell.rm(file);
+    const mDir = path.dirname(file);
+    const metaDirIsEmpty = fs.readdirSync(mDir).length === 0;
+    if (metaDirIsEmpty) {
+      shell.rm('-rf', mDir);
+    }
     return;
   }
   const meta = parseYaml(yml);
