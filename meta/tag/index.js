@@ -416,7 +416,7 @@ function createMetadataFileFromTemplate(metaFile, str) {
   let tmp = str || '';
   if (richHeader) {
     const origFile = path.basename(getFilenameFromMetadataFilename(metaFile));
-    const ymlHeader = '---' + '\n# ' + origFile + '\n';
+    const ymlHeader = '---' + ' # ' + origFile + '\n';
     tmp = (str || '').replace(/^---\n/, ymlHeader);
   }
   return new Promise((resolve, reject) => {
@@ -503,7 +503,7 @@ function normalizeYamlFile(file) {
   let ymlHeader = '---' + '\n';
   if (richHeader) {
     const origFile = path.basename(getFilenameFromMetadataFilename(file));
-    ymlHeader = '---' + '\n# ' + origFile + '\n';
+    ymlHeader = '---' + ' # ' + origFile + '\n';
   }
   const ymlDoc = ymlHeader + yml.trim();
   fs.writeFileSync(file, ymlDoc);
