@@ -184,8 +184,8 @@ const execAsync = util.promisify(childProcess.exec);
 /**
  * The "main" function.
  *
- * Execution begins here when the script is run from the command line
- * with Node.
+ * Execution begins here when the script is run
+ * from the command line with Node.
  */
 function main() {
   checkDependencies();
@@ -206,6 +206,10 @@ function main() {
       runBefore: {
         type: 'string',
         alias: 'rb'
+      },
+      runBeforeMerge: {
+        type: 'string',
+        alias: 'rm'
       },
       runAfter: {
         type: 'string',
@@ -314,12 +318,16 @@ http://www.optimumx.com/downloads.html#Shortcut`);
 function processDirectory(queries, inputDir, outputDir, options) {
   const { runBefore, runAfter } = options;
   if (runBefore) {
+    console.log(`Executing --run-before: ${runBefore}`);
     shell.exec(runBefore);
+    console.log();
   }
   const stream$ = metadataInDirectory(inputDir, options);
   return processQueries(queries, stream$, outputDir, options).then(() => {
     if (runAfter) {
+      console.log(`\nExecuting --run-after: ${runAfter}`);
       shell.exec(runAfter);
+      console.log();
     }
   });
 }
@@ -361,14 +369,20 @@ function processQueriesInTempDir(
   tempDir,
   options
 ) {
+  const { runBeforeMerge } = options;
   return makeTemporaryDirectory(tempDir || settings.tmpDir, options).then(
     tempDirectory =>
-      processQueriesInDir(queries, stream$, tempDirectory, options).then(() =>
-        mergeTmpDirAndOutputDir(tempDirectory, outputDir, {
+      processQueriesInDir(queries, stream$, tempDirectory, options).then(() => {
+        if (runBeforeMerge) {
+          console.log(`\nExecuting --run-before-merge: ${runBeforeMerge}`);
+          shell.exec(runBeforeMerge);
+          console.log();
+        }
+        return mergeTmpDirAndOutputDir(tempDirectory, outputDir, {
           ...options,
           delete: true
-        })
-      )
+        });
+      })
   );
 }
 
