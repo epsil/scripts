@@ -56,7 +56,7 @@ which is faster since the metadata is read only once:
 
     metalinks "*" "foo bar"
 
-To split the queries across multiple lines, write:
+To split a long list of queries across multiple lines, simply write:
 
     metalinks "*" \\
       "foo bar" \\
