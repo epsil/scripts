@@ -167,7 +167,7 @@ settings.concurrent = 10;
 /**
  * Number of seconds to wait when running with `--watch`.
  */
-settings.watchDelay = 5;
+settings.watchDelay = 60;
 
 /**
  * Promise wrapper for `childProcess.exec()`.
