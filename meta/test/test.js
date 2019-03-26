@@ -28,11 +28,11 @@ describe('makeCategoryContainer', () => {
       metalinks.makeCategoryContainer().then(directory => {
         dir = directory;
         const dirname = _.last(dir.split(/[\\/]/));
-        dirname.should.eql(metalinks.categoryDir);
       });
     } finally {
       if (dir) {
         rimraf.sync(dir);
+        dirname.should.eql(metalinks.settings.categoryDir);
       }
     }
   });
@@ -40,16 +40,16 @@ describe('makeCategoryContainer', () => {
 
 describe('makeTagContainer', () => {
   it('should make a tag container', async () => {
-    let dir;
+    let dir, dirname;
     try {
       metalinks.makeTagContainer().then(directory => {
         dir = directory;
-        const dirname = _.last(dir.split(/[\\/]/));
-        dirname.should.eql(metalinks.tagDir);
+        dirname = _.last(dir.split(/[\\/]/));
       });
     } finally {
       if (dir) {
         rimraf.sync(dir);
+        dirname.should.eql(metalinks.settings.tagDir);
       }
     }
   });

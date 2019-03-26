@@ -1470,7 +1470,6 @@ function escapePath(str) {
 
 // export functions for testing
 module.exports = {
-  categoryDir: settings.categoryDir,
   createGlobPattern,
   createTagDictionary,
   filterByTagList,
@@ -1482,12 +1481,10 @@ module.exports = {
   makeDirectory,
   makeTagContainer,
   mergeTmpDirAndOutputDirWithRsync,
-  metaDir: settings.metaDir,
-  metaExt: settings.metaExt,
   parseMetadata,
   parseQuery,
   parseYaml,
-  tagDir: settings.tagDir,
+  settings,
   validateDirectories
 };
 
