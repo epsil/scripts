@@ -77,8 +77,8 @@ and output directories explicitly:
 
     metalinks --input . --output _q "foo bar"
 
-By default, the input directory is . (the current directory)
-and the output directory is _q.
+By default, the input directory is . (the current directory).
+The output directory is _q (the q stands for "query").
 
 Files can also be read from standard input. If files.txt is a
 text file containing a newline-separated list of files to process,
@@ -269,11 +269,13 @@ function main() {
         )
       );
       timer$.subscribe(() => {
-        console.log('Running in watch mode, press Ctrl+C to quit\n');
+        console.log('\nRunning in watch mode, press Ctrl+C to quit\n');
       });
     } else {
       // process metadata in directory and exit
-      processDirectory(queries, inputDir, outputDir, options);
+      processDirectory(queries, inputDir, outputDir, options).then(() => {
+        console.log('\nDone.\n');
+      });
     }
   });
 }
@@ -319,7 +321,6 @@ function processDirectory(queries, inputDir, outputDir, options) {
     if (runAfter) {
       shell.exec(runAfter);
     }
-    console.log('\nDone.\n');
   });
 }
 
