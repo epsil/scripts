@@ -19,12 +19,11 @@ const _ = require('lodash');
  * Various user-adjustable parameters and default values
  * that determine the behavior of the program.
  */
-const settings = {};
-
-/**
- * Help message to display when running with --help.
- */
-settings.help = `metalinks performs queries on files tagged with metatag.
+const settings = {
+  /**
+   * Help message to display when running with `--help`.
+   */
+  help: `metalinks performs queries on files tagged with metatag.
 The files matching a query are presented as a folder
 containing symbolic links (or shortcuts on Windows).
 
@@ -93,87 +92,88 @@ utilities, such as find and grep.
 
 Type metalinks --version to see the current version.
 
-See also: metatag, yarch.`;
+See also: metatag, yarch.`,
 
-/**
- * The directory to look for metadata in.
- */
-settings.sourceDir = '.';
+  /**
+   * The directory to look for metadata in.
+   */
+  sourceDir: '.',
 
-/**
- * The directory to store links in.
- */
-settings.destinationDir = '_q';
+  /**
+   * The directory to store links in.
+   */
+  destinationDir: '_q',
 
-/**
- * Temporary directory to generate links in.
- */
-settings.tmpDir = '_tmp';
+  /**
+   * Temporary directory to generate links in.
+   */
+  tmpDir: '_tmp',
 
-/**
- * The subdirectory to store queries in.
- */
-settings.queryDir = '.';
+  /**
+   * The subdirectory to store queries in.
+   */
+  queryDir: '.',
 
-/**
- * The subdirectory to store categories in.
- */
-settings.categoryDir = 'cat';
+  /**
+   * The subdirectory to store categories in.
+   */
+  categoryDir: 'cat',
 
-/**
- * The subdirectory to store tags in.
- */
-settings.tagDir = 'tag';
+  /**
+   * The subdirectory to store tags in.
+   */
+  tagDir: 'tag',
 
-/**
- * The directory to look for a metadata file in.
- */
-settings.metaDir = '.meta';
+  /**
+   * The directory to look for a metadata file in.
+   */
+  metaDir: '.meta',
 
-/**
- * The dotfile prefix for a metadata file.
- */
-settings.metaPre = '.';
+  /**
+   * The dotfile prefix for a metadata file.
+   */
+  metaPre: '.',
 
-/**
- * The file extension for a metadata file.
- */
-settings.metaExt = '.yml';
+  /**
+   * The file extension for a metadata file.
+   */
+  metaExt: '.yml',
 
-/**
- * The default query.
- */
-settings.defaultQuery = '*';
+  /**
+   * The default query.
+   */
+  defaultQuery: '*',
 
-/**
- * The default category.
- */
-settings.defaultCategory = '*';
+  /**
+   * The default category.
+   */
+  defaultCategory: '*',
 
-/**
- * Whether to make links or copies.
- */
-settings.makeLinks = true;
+  /**
+   * Whether to make links or copies.
+   */
+  makeLinks: true,
 
-/**
- * Globbing pattern for directories to ignore.
- */
-settings.ignorePattern = 'node_modules/**';
+  /**
+   * Globbing pattern for directories to ignore.
+   */
+  ignorePattern: 'node_modules/**',
 
-/**
- * Whether to normalize YAML files.
- */
-settings.normalize = false;
+  /**
+   * Whether to normalize YAML files.
+   */
+  normalize: false,
 
-/**
- * Maximum number of files being processed concurrently.
- */
-settings.concurrent = 10;
+  /**
+   * Maximum number of files being processed concurrently.
+   */
+  concurrent: 10,
 
-/**
- * Number of seconds to wait when running with `--watch`.
- */
-settings.watchDelay = 60;
+  /**
+   * Number of seconds to pause when running with `--watch`.
+   */
+  watchDelay: 60
+};
 
 /**
  * Promise wrapper for `childProcess.exec()`.
