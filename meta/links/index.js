@@ -755,15 +755,16 @@ function readMetadataForFile(file, options) {
  */
 function processTagsAndCategories(meta, options) {
   return new Promise((resolve, reject) => {
+    const result = [];
     const tags = (meta && meta.tags) || [];
     const { defaultCategory } = options;
     const categories = (meta && meta.categories) || [defaultCategory];
     categories.forEach(category => {
       tags.forEach(tag => {
-        makeTagLinkInCategory(meta.file, category, tag, options);
+        result.push(makeTagLinkInCategory(meta.file, category, tag, options));
       });
     });
-    resolve(meta);
+    Promise.all(result).then(() => resolve(meta));
   });
 }
 
