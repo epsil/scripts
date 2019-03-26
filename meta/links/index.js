@@ -16,7 +16,8 @@ const yaml = require('js-yaml');
 const _ = require('lodash');
 
 /**
- * Various settings.
+ * Various user-adjustable parameters and default values
+ * that determine the behavior of the program.
  */
 const settings = {};
 
@@ -61,7 +62,12 @@ which is faster since the metadata is read only once:
 
     metalinks "*" "foo bar"
 
-To split a long list of queries across multiple lines, simply write:
+To continually monitor a directory for metadata changes, use --watch:
+
+    metalinks --watch "*" "foo bar"
+
+Also, to split a long list of queries across multiple lines,
+it is useful to escape newlines with a backslash:
 
     metalinks "*" \\
       "foo bar" \\
@@ -248,11 +254,13 @@ function main() {
     };
     const hasStdin = !process.stdin.isTTY;
     if (hasStdin) {
+      // read files from stdin
       console.log('Reading from standard input ...\n');
       const stream$ = metadataForFiles(stdin(), options);
+      processQueries(queries, stream$, outputDir, options);
     } else if (watch) {
-      // extremely simple watch-folder implementation
-      // for the time being
+      // watch directory for metadata changes
+      // (extremely simple implementation for the time being)
       const watchDelayMs = watchDelay * 1000;
       let timer$ = Rx.Observable.timer(0, watchDelayMs);
       timer$ = timer$.pipe(
@@ -264,6 +272,7 @@ function main() {
         console.log('Running in watch mode, press Ctrl+C to quit\n');
       });
     } else {
+      // process metadata in directory and exit
       processDirectory(queries, inputDir, outputDir, options);
     }
   });
