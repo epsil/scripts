@@ -27,6 +27,7 @@
     "js-yaml": "^3.12.2",
     "lodash": "^4.17.11",
     "meow": "^5.0.0",
+    "path": "^0.12.7",
     "shelljs": "^0.8.3"
   },
   "devDependencies": {

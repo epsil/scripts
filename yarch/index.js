@@ -3,6 +3,7 @@
 const fs = require('fs');
 const getStdin = require('get-stdin');
 const meow = require('meow');
+const path = require('path');
 const prompt = require('cli-input');
 const shell = require('shelljs');
 const yaml = require('js-yaml');
@@ -33,6 +34,26 @@ It will complain if these are missing.
 Type yarch --version to see the current version.
 
 See also: metalinks, metatag.`;
+
+/**
+ * The directory to store metadata files in.
+ */
+const metaDir = '.meta';
+
+/**
+ * The dotfile prefix for metadata files.
+ */
+const metaPre = '.';
+
+/**
+ * The file extension for metadata files.
+ */
+const metaExt = '.yml';
+
+/**
+ * Whether to output a "rich" YAML prefix.
+ */
+const richHeader = true;
 
 /**
  * The "main" function.
@@ -260,12 +281,12 @@ function fixMetadata(url) {
 function convertJSONFileToYAMLFile(file, url) {
   const metaDir = '.meta';
   const json = fs.readFileSync(file);
-  const yml = convertJSONtoYAML(json, url);
-  shell.mkdir('-p', metaDir);
   let ymlFileName = file;
   ymlFileName = ymlFileName.replace(/\.info\.json$/, '');
   ymlFileName = '.' + ymlFileName + '.mp4' + '.yml';
   const ymlPath = metaDir + '/' + ymlFileName;
+  const yml = convertJSONtoYAML(json, url, ymlFileName);
+  shell.mkdir('-p', metaDir);
   fs.writeFileSync(ymlPath, yml);
   shell.rm('-f', file);
 }
@@ -275,7 +296,7 @@ function convertJSONFileToYAMLFile(file, url) {
  * @param json a JSON string
  * @return a YAML string
  */
-function convertJSONtoYAML(json, url) {
+function convertJSONtoYAML(json, url, file) {
   let obj = JSON.parse(json);
   if (url) {
     const normUrl = normalizeUrl(url);
@@ -287,8 +308,84 @@ function convertJSONtoYAML(json, url) {
   }
   obj = reorderProperties(obj);
   let yml = yaml.safeDump(obj);
-  yml = '---\n' + yml.trim();
+  yml = addYAMLHeader(yml, file);
   return yml;
+}
+
+/**
+ * Add a YAML header to a YAML string.
+ * Any previous header is overwritten.
+ * @param yml a YAML string
+ * @param [metaFile] the file name of the YAML file
+ * @return a YAML document
+ */
+function addYAMLHeader(yml, metaFile) {
+  let ymlHeader = '---' + '\n';
+
+  if (richHeader && metaFile) {
+    const origFile = path.basename(getFilenameFromMetadataFilename(metaFile));
+    ymlHeader = '---' + ' # ' + origFile + '\n';
+  }
+
+  const hasHeader = yml.match(/^---\n/i);
+  if (hasHeader) {
+    return yml.replace(/^---.*\n/, ymlHeader);
+  }
+
+  const ymlDoc = ymlHeader + yml.trim();
+  return ymlDoc;
+}
+
+/**
+ * Get the filename of the file that a metadata file is referring to,
+ * by looking at the metadata file's filename.
+ * @param filePath the filename of the metadata file
+ * @param [options] an options object
+ * @return the filename of the referenced file
+ * @see getMetadataFilenameFromFilename
+ */
+function getFilenameFromMetadataFilename(filePath, options) {
+  if (!isMetadataFile(filePath)) {
+    return filePath;
+  }
+  const metaDirectory = path.dirname(filePath);
+  const parentDir = '..';
+  const origDir = path.join(metaDirectory, parentDir);
+  const metaName = path.basename(filePath);
+  const origName = metaName
+    .replace(metadataPreRegExp(), '')
+    .replace(metadataPostRegExp(), '');
+  let origFile = path.join(origDir, origName);
+  if (options && options.unix) {
+    origFile = origFile.replace(/\\/g, '/'); // test
+  }
+  return origFile;
+}
+
+/**
+ * Whether a file is a metadata file.
+ * @param file a file
+ * @return `true` if `file` is a metadata file, `false` otherwise
+ */
+function isMetadataFile(file) {
+  const fileName = path.basename(file);
+  return (
+    fileName.match(metadataPreRegExp()) && fileName.match(metadataPostRegExp())
+  );
+}
+
+/**
+ * Regexp for matching the `metaPre` part of a metadata filename.
+ */
+function metadataPreRegExp() {
+  return new RegExp('^' + _.escapeRegExp(metaPre));
+}
+
+/**
+ * Regexp for matching the `metaExt` part of a metadata filename.
+ */
+function metadataPostRegExp() {
+  return new RegExp(_.escapeRegExp(metaExt) + '$');
 }
 
 /**

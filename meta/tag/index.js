@@ -225,8 +225,8 @@ function setTagForFile(tag, file) {
     tags = _.uniq(tags.sort());
     meta.tags = tags;
     yml = yaml.safeDump(meta);
-    yml = '---\n' + yml.trim();
-    fs.writeFileSync(metaFile, yml);
+    const ymlDoc = addYAMLHeader(yml, metaFile);
+    fs.writeFileSync(metaFile, ymlDoc);
   };
   if (!fileAlreadyExist) {
     return createMetadataFile(metaFile, '').then(continuation);
@@ -413,12 +413,7 @@ function createMetadataFile(metaFile, tmp) {
  * @param [str] the contents of the metadata file
  */
 function createMetadataFileFromTemplate(metaFile, str) {
-  let tmp = str || '';
-  if (richHeader) {
-    const origFile = path.basename(getFilenameFromMetadataFilename(metaFile));
-    const ymlHeader = '---' + ' # ' + origFile + '\n';
-    tmp = (str || '').replace(/^---\n/, ymlHeader);
-  }
+  const tmp = addYAMLHeader(str || '', metaFile);
   return new Promise((resolve, reject) => {
     fs.writeFile(metaFile, tmp, function(err) {
       if (err) {
@@ -500,12 +495,7 @@ function normalizeYamlFile(file) {
     meta.categories = meta.categories.sort();
   }
   yml = yaml.safeDump(meta);
-  let ymlHeader = '---' + '\n';
-  if (richHeader) {
-    const origFile = path.basename(getFilenameFromMetadataFilename(file));
-    ymlHeader = '---' + ' # ' + origFile + '\n';
-  }
-  const ymlDoc = ymlHeader + yml.trim();
+  const ymlDoc = addYAMLHeader(yml, file);
   fs.writeFileSync(file, ymlDoc);
   // console.log('Normalized ' + file);
 }
@@ -525,6 +515,30 @@ function parseYaml(str) {
     return {};
   }
   return meta || {};
+}
+
+/**
+ * Add a YAML header to a YAML string.
+ * Any previous header is overwritten.
+ * @param yml a YAML string
+ * @param [metaFile] the file name of the YAML file
+ * @return a YAML document
+ */
+function addYAMLHeader(yml, metaFile) {
+  let ymlHeader = '---' + '\n';
+
+  if (richHeader && metaFile) {
+    const origFile = path.basename(getFilenameFromMetadataFilename(metaFile));
+    ymlHeader = '---' + ' # ' + origFile + '\n';
+  }
+
+  const hasHeader = yml.match(/^---\n/i);
+  if (hasHeader) {
+    return yml.replace(/^---.*\n/, ymlHeader);
+  }
+
+  const ymlDoc = ymlHeader + yml.trim();
+  return ymlDoc;
 }
 
 // invoke the "main" function
