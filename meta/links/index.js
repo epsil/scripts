@@ -16,9 +16,14 @@ const yaml = require('js-yaml');
 const _ = require('lodash');
 
 /**
+ * Various settings.
+ */
+const settings = {};
+
+/**
  * Help message to display when running with --help.
  */
-const help = `metalinks performs queries on files tagged with metatag.
+settings.help = `metalinks performs queries on files tagged with metatag.
 The files matching a query are presented as a folder
 containing symbolic links (or shortcuts on Windows).
 
@@ -87,82 +92,82 @@ See also: metatag, yarch.`;
 /**
  * The directory to look for metadata in.
  */
-const sourceDir = '.';
+settings.sourceDir = '.';
 
 /**
  * The directory to store links in.
  */
-const destinationDir = '_q';
+settings.destinationDir = '_q';
 
 /**
  * Temporary directory to generate links in.
  */
-const tmpDir = '_tmp';
+settings.tmpDir = '_tmp';
 
 /**
  * The subdirectory to store queries in.
  */
-const queryDir = '.';
+settings.queryDir = '.';
 
 /**
  * The subdirectory to store categories in.
  */
-const categoryDir = 'cat';
+settings.categoryDir = 'cat';
 
 /**
  * The subdirectory to store tags in.
  */
-const tagDir = 'tag';
+settings.tagDir = 'tag';
 
 /**
  * The directory to look for a metadata file in.
  */
-const metaDir = '.meta';
+settings.metaDir = '.meta';
 
 /**
  * The dotfile prefix for a metadata file.
  */
-const metaPre = '.';
+settings.metaPre = '.';
 
 /**
  * The file extension for a metadata file.
  */
-const metaExt = '.yml';
+settings.metaExt = '.yml';
 
 /**
  * The default query.
  */
-const defaultQuery = '*';
+settings.defaultQuery = '*';
 
 /**
  * The default category.
  */
-const defaultCategory = '*';
+settings.defaultCategory = '*';
 
 /**
  * Whether to make links or copies.
  */
-const makeLinks = true;
+settings.makeLinks = true;
 
 /**
  * Globbing pattern for directories to ignore.
  */
-const ignorePattern = 'node_modules/**';
+settings.ignorePattern = 'node_modules/**';
 
 /**
  * Whether to normalize YAML files.
  */
-const normalize = false;
+settings.normalize = false;
 
 /**
  * Maximum number of files being processed concurrently.
  */
-const concurrent = 10;
+settings.concurrent = 10;
 
 /**
  * Number of seconds to wait when running with `--watch`.
  */
-const watchDelay = 5;
+settings.watchDelay = 5;
 
 /**
  * Promise wrapper for `childProcess.exec()`.
@@ -178,7 +183,7 @@ const execAsync = util.promisify(childProcess.exec);
  */
 function main() {
   checkDependencies();
-  const cli = meow(help, {
+  const cli = meow(settings.help, {
     flags: {
       input: {
         type: 'string',
@@ -209,11 +214,20 @@ function main() {
 
   let queries = cli.input;
   if (queries.length === 0) {
-    queries = [defaultQuery];
+    queries = [settings.defaultQuery];
   }
 
-  let options = { ...cli.flags };
-  const { input, output, runBefore, runAfter, watch, clean } = options;
+  let options = { ...settings, ...cli.flags };
+  const {
+    input,
+    output,
+    watch,
+    clean,
+    sourceDir,
+    destinationDir,
+    makeLinks,
+    watchDelay
+  } = options;
   const inputDir = input || sourceDir;
   const outputDir = output || destinationDir;
   validateDirectories(inputDir, outputDir);
@@ -313,6 +327,7 @@ function processDirectory(queries, inputDir, outputDir, options) {
  */
 function processQueries(queries, stream$, outputDir, options) {
   const hasTmpFileSupport = !isWindows(); // doesn't yet work on Windows
+  const { tmpDir } = options;
   if (!hasTmpFileSupport) {
     return processQueriesInDir(queries, stream$, outputDir, options);
   }
@@ -336,7 +351,7 @@ function processQueriesInTempDir(
   tempDir,
   options
 ) {
-  return makeTemporaryDirectory(tempDir || tmpDir, options).then(
+  return makeTemporaryDirectory(tempDir || settings.tmpDir, options).then(
     tempDirectory =>
       processQueriesInDir(queries, stream$, tempDirectory, options).then(() =>
         mergeTmpDirAndOutputDir(tempDirectory, outputDir, {
@@ -549,12 +564,12 @@ function iterateOverStream(stream$, fn, options) {
  */
 function metadataInDirectory(dir, options) {
   let stream$ = new Rx.Subject();
+  const { concurrent } = options;
   const cwd = (options && options.cwd) || '.';
-  const concurrentFiles = (options && options.concurrent) || concurrent;
   const directory = joinPaths(cwd, dir);
   const stream = fg.stream([createGlobPattern()], {
     dot: true,
-    ignore: [ignorePattern],
+    ignore: [settings.ignorePattern],
     cwd: directory
   });
   stream.on('data', entry => {
@@ -562,7 +577,7 @@ function metadataInDirectory(dir, options) {
     stream$.next(file);
   });
   stream.once('end', () => stream$.complete());
-  stream$ = filterInvalidMetadata(stream$);
+  stream$ = filterInvalidMetadata(stream$, options);
   stream$ = stream$.pipe(
     RxOp.mergeMap(
       file =>
@@ -570,7 +585,7 @@ function metadataInDirectory(dir, options) {
           ...options,
           print: true
         }),
-      concurrentFiles
+      concurrent
     ),
     RxOp.share()
   );
@@ -599,7 +614,7 @@ function metadataForFiles(stream$, options) {
       return metaFile$;
     })
   );
-  meta$ = filterInvalidMetadata(meta$);
+  meta$ = filterInvalidMetadata(meta$, options);
   meta$ = meta$.pipe(
     RxOp.mergeMap(file =>
       readMetadataForFile(file, {
@@ -635,7 +650,8 @@ function stdin() {
  * @param stream$ a RxJS observable of file paths
  * @return a filtered RxJS observable
  */
-function filterInvalidMetadata(stream$) {
+function filterInvalidMetadata(stream$, options) {
+  const { normalize } = options;
   return stream$.pipe(
     RxOp.filter(metaFile => {
       const metaFileExists = fs.existsSync(metaFile);
@@ -667,8 +683,8 @@ function filterInvalidMetadata(stream$) {
  * @return a globbing pattern
  */
 function createGlobPattern(mDir, mExt) {
-  const metaDirStr = mDir || metaDir;
-  const metaExtStr = mExt || metaExt;
+  const metaDirStr = mDir || settings.metaDir;
+  const metaExtStr = mExt || settings.metaExt;
   return '**/' + metaDirStr + '/*' + metaExtStr;
 }
 
@@ -716,6 +732,7 @@ function readMetadataForFile(file, options) {
 function processTagsAndCategories(meta, options) {
   return new Promise((resolve, reject) => {
     const tags = (meta && meta.tags) || [];
+    const { defaultCategory } = options;
     const categories = (meta && meta.categories) || [defaultCategory];
     categories.forEach(category => {
       tags.forEach(tag => {
@@ -798,7 +815,7 @@ function makeCategoryDirectory(category, options) {
  * @param [options] an options object
  */
 function makeTagDirectory(tag, options) {
-  let dir = (options && options.tagDir) || tagDir;
+  let dir = (options && options.tagDir) || settings.tagDir;
   dir = toFilename(dir);
   const tDir = toFilename(tag);
   if (!dir) {
@@ -814,7 +831,7 @@ function makeTagDirectory(tag, options) {
  * @param [options] an options object
  */
 function makeCategoryContainer(options) {
-  const dir = (options && options.categoryDir) || categoryDir;
+  const dir = (options && options.categoryDir) || settings.categoryDir;
   return makeDirectory(dir, options);
 }
 
@@ -823,7 +840,7 @@ function makeCategoryContainer(options) {
  * @param [options] an options object
  */
 function makeTagContainer(options) {
-  const dir = (options && options.tagDir) || tagDir;
+  const dir = (options && options.tagDir) || settings.tagDir;
   return makeDirectory(dir, options);
 }
 
@@ -832,7 +849,7 @@ function makeTagContainer(options) {
  * @param [options] an options object
  */
 function makeQueryContainer(options) {
-  const dir = (options && options.queryDir) || queryDir;
+  const dir = (options && options.queryDir) || settings.queryDir;
   return makeDirectory(dir, options);
 }
 
@@ -1194,9 +1211,9 @@ function getMetadataFilenameFromFilename(filePath, options) {
     return filePath;
   }
   const origDir = path.dirname(filePath);
-  const metaDirectory = path.join(origDir, metaDir);
+  const metaDirectory = path.join(origDir, settings.metaDir);
   const origName = path.basename(filePath);
-  const metaName = metaPre + origName + metaExt;
+  const metaName = settings.metaPre + origName + settings.metaExt;
   let metaFile = path.join(metaDirectory, metaName);
   if (options && options.unix) {
     metaFile = metaFile.replace(/\\/g, '/'); // test
@@ -1220,14 +1237,14 @@ function isMetadataFile(file) {
  * Regular expression for matching the `metaPre` part of a metadata filename.
  */
 function metadataPreRegExp() {
-  return new RegExp('^' + _.escapeRegExp(metaPre));
+  return new RegExp('^' + _.escapeRegExp(settings.metaPre));
 }
 
 /**
  * Regular expression for matching the `metaExt` part of a metadata filename.
  */
 function metadataPostRegExp() {
-  return new RegExp(_.escapeRegExp(metaExt) + '$');
+  return new RegExp(_.escapeRegExp(settings.metaExt) + '$');
 }
 
 /**
@@ -1378,7 +1395,7 @@ function filterByQuery(metaArr, query) {
  */
 function performQuery(metaArr, query, options) {
   if (!query || query === '*') {
-    const qDir = (options && options.queryDir) || queryDir;
+    const qDir = (options && options.queryDir) || settings.queryDir;
     const cDir = toFilename('*');
     return makeDirectory(`${qDir}/${cDir}`, options).then(dir =>
       metaArr.forEach(meta =>
@@ -1453,7 +1470,7 @@ function escapePath(str) {
 
 // export functions for testing
 module.exports = {
-  categoryDir,
+  categoryDir: settings.categoryDir,
   createGlobPattern,
   createTagDictionary,
   filterByTagList,
@@ -1465,12 +1482,12 @@ module.exports = {
   makeDirectory,
   makeTagContainer,
   mergeTmpDirAndOutputDirWithRsync,
-  metaDir,
-  metaExt,
+  metaDir: settings.metaDir,
+  metaExt: settings.metaExt,
   parseMetadata,
   parseQuery,
   parseYaml,
-  tagDir,
+  tagDir: settings.tagDir,
   validateDirectories
 };
 
