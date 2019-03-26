@@ -160,6 +160,11 @@ const normalize = false;
 const concurrent = 10;
 
 /**
+ * Number of seconds to wait when running with `--watch`.
+ */
+const watchDelay = 5;
+
+/**
  * Promise wrapper for `childProcess.exec()`.
  * http://stackoverflow.com/questions/20643470/execute-a-command-line-binary-with-node-js#20643568
  */
@@ -187,6 +192,14 @@ function main() {
         type: 'boolean',
         alias: 'w'
       },
+      runBefore: {
+        type: 'string',
+        alias: 'rb'
+      },
+      runAfter: {
+        type: 'string',
+        alias: 'ra'
+      },
       clean: {
         type: 'boolean',
         alias: 'c'
@@ -199,7 +212,8 @@ function main() {
     queries = [defaultQuery];
   }
 
-  const { input, output, watch, clean } = cli.flags;
+  let options = { ...cli.flags };
+  const { input, output, runBefore, runAfter, watch, clean } = options;
   const inputDir = input || sourceDir;
   const outputDir = output || destinationDir;
   validateDirectories(inputDir, outputDir);
@@ -214,32 +228,29 @@ function main() {
   console.log(`Queries: ${queries.join(', ')}\n`);
 
   return hasLink().then(link => {
-    let stream$;
-    const options = {
+    options = {
+      ...options,
       makeLinks: makeLinks && link
     };
     const hasStdin = !process.stdin.isTTY;
     if (hasStdin) {
       console.log('Reading from standard input ...\n');
-      stream$ = metadataForFiles(stdin(), options);
+      const stream$ = metadataForFiles(stdin(), options);
     } else if (watch) {
       // extremely simple watch-folder implementation
       // for the time being
-      let timer$ = Rx.Observable.timer(0, 5000);
+      const watchDelayMs = watchDelay * 1000;
+      let timer$ = Rx.Observable.timer(0, watchDelayMs);
       timer$ = timer$.pipe(
-        RxOp.switchMap(() => {
-          stream$ = metadataInDirectory(inputDir, options);
-          return processQueries(queries, stream$, outputDir, options);
-        })
+        RxOp.switchMap(() =>
+          processDirectory(queries, inputDir, outputDir, options)
+        )
       );
       timer$.subscribe(() => {
-        console.log('\nRunning in watch mode, press Ctrl+C to quit\n');
+        console.log('Running in watch mode, press Ctrl+C to quit\n');
       });
     } else {
-      stream$ = metadataInDirectory(inputDir, options);
-      processQueries(queries, stream$, outputDir, options).then(() => {
-        console.log('\nDone.\n');
-      });
+      processDirectory(queries, inputDir, outputDir, options);
     }
   });
 }
@@ -264,6 +275,29 @@ function checkShortcut() {
 http://www.optimumx.com/downloads.html#Shortcut`);
     shell.exit(1);
   }
+}
+
+/**
+ * Process queries on a metadata stream and create links in a given directory.
+ * Also runs the `--run-before` and `--run-after` commands, if specified.
+ * @param queries an array of queries, e.g., `['*', 'foo bar']`
+ * @param stream$ an RxJS stream of metadata objects
+ * @param inputDir the directory to look for metadata in
+ * @param outputDir the directory to create links in
+ * @param [options] an options object
+ */
+function processDirectory(queries, inputDir, outputDir, options) {
+  const { runBefore, runAfter } = options;
+  if (runBefore) {
+    shell.exec(runBefore);
+  }
+  const stream$ = metadataInDirectory(inputDir, options);
+  return processQueries(queries, stream$, outputDir, options).then(() => {
+    if (runAfter) {
+      shell.exec(runAfter);
+    }
+    console.log('\nDone.\n');
+  });
 }
 
 /**
