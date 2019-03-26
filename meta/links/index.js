@@ -16,14 +16,9 @@ const yaml = require('js-yaml');
 const _ = require('lodash');
 
 /**
- * Various user-adjustable parameters and default values
- * that determine the behavior of the program.
+ * Help message to display when running with `--help`.
  */
-const settings = {
-  /**
-   * Help message to display when running with `--help`.
-   */
-  help: `metalinks performs queries on files tagged with metatag.
+const help = `metalinks performs queries on files tagged with metatag.
 The files matching a query are presented as a folder
 containing symbolic links (or shortcuts on Windows).
 
@@ -92,8 +87,13 @@ utilities, such as find and grep.
 
 Type metalinks --version to see the current version.
 
-See also: metatag, yarch.`,
+See also: metatag, yarch.`;
 
+/**
+ * Various user-adjustable parameters and default values
+ * that determine the behavior of the program.
+ */
+const settings = {
   /**
    * The directory to look for metadata in.
    */
@@ -189,7 +189,7 @@ const execAsync = util.promisify(childProcess.exec);
  */
 function main() {
   checkDependencies();
-  const cli = meow(settings.help, {
+  const cli = meow(help, {
     flags: {
       input: {
         type: 'string',
