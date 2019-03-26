@@ -183,6 +183,10 @@ function main() {
         type: 'string',
         alias: 'o'
       },
+      watch: {
+        type: 'boolean',
+        alias: 'w'
+      },
       clean: {
         type: 'boolean',
         alias: 'c'
@@ -195,7 +199,7 @@ function main() {
     queries = [defaultQuery];
   }
 
-  const { input, output, clean } = cli.flags;
+  const { input, output, watch, clean } = cli.flags;
   const inputDir = input || sourceDir;
   const outputDir = output || destinationDir;
   validateDirectories(inputDir, outputDir);
@@ -218,12 +222,25 @@ function main() {
     if (hasStdin) {
       console.log('Reading from standard input ...\n');
       stream$ = metadataForFiles(stdin(), options);
+    } else if (watch) {
+      // extremely simple watch-folder implementation
+      // for the time being
+      let timer$ = Rx.Observable.timer(0, 5000);
+      timer$ = timer$.pipe(
+        RxOp.switchMap(() => {
+          stream$ = metadataInDirectory(inputDir, options);
+          return processQueries(queries, stream$, outputDir, options);
+        })
+      );
+      timer$.subscribe(() => {
+        console.log('\nRunning in watch mode, press Ctrl+C to quit\n');
+      });
     } else {
       stream$ = metadataInDirectory(inputDir, options);
+      processQueries(queries, stream$, outputDir, options).then(() => {
+        console.log('\nDone.\n');
+      });
     }
-    processQueries(queries, stream$, outputDir, options).then(() => {
-      console.log('\nDone.\n');
-    });
   });
 }
 
