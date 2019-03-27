@@ -176,12 +176,6 @@ const settings = {
 };
 
 /**
- * Promise wrapper for `childProcess.exec()`.
- * http://stackoverflow.com/questions/20643470/execute-a-command-line-binary-with-node-js#20643568
- */
-const execAsync = util.promisify(childProcess.exec);
-
-/**
  * The "main" function.
  *
  * Execution begins here when the script is run
@@ -1069,6 +1063,12 @@ function invokeCmd(cmd, options) {
   }
   return promise;
 }
+
+/**
+ * Promise wrapper for `childProcess.exec()`.
+ * http://stackoverflow.com/questions/20643470/execute-a-command-line-binary-with-node-js#20643568
+ */
+const execAsync = util.promisify(childProcess.exec);
 
 /**
  * Whether `rsync` is available on the system.
