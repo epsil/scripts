@@ -7,7 +7,7 @@
     "metalinks": "index.js"
   },
   "scripts": {
-    "clean": "rm -rf doc lib cat q tmp tmp2 trash _q _meta _tmp _tmp2 .meta && cp -r ../test/fixtures/lib .",
+    "clean": "rm -rf doc lib cat q tmp tmp2 trash _q _meta _tmp _tmp2 .meta",
     "start": "npm run clean && node index.js",
     "query": "node index.js lib . \"foo bar\"",
     "uninstall": "rm -rf node_modules && npm run clean",
