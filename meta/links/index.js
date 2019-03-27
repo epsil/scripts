@@ -752,8 +752,7 @@ function createGlobPattern(mDir, mExt) {
  * @param [options] an options object
  */
 function processMetadataQuery(meta, query, options) {
-  performQueryOnFile(meta, query, options);
-  return query;
+  return performQueryOnFile(meta, query, options).then(() => query);
 }
 
 /**
@@ -1464,16 +1463,20 @@ function performQuery(metaArr, query, options) {
     const qDir = (options && options.queryDir) || settings.queryDir;
     const cDir = toFilename('*');
     return makeDirectory(`${qDir}/${cDir}`, options).then(dir =>
-      metaArr.forEach(meta =>
-        processTagsAndCategories(meta, {
-          ...options,
-          categoryDir: dir
-        })
+      Promise.all(
+        metaArr.map(meta =>
+          processTagsAndCategories(meta, {
+            ...options,
+            categoryDir: dir
+          })
+        )
       )
     );
   }
   const matches = filterByQuery(metaArr, query);
-  return matches.forEach(match => makeQueryLink(match, query, options));
+  return Promise.all(
+    matches.map(match => makeQueryLink(match, query, options))
+  );
 }
 
 /**
