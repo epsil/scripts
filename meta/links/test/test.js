@@ -7,9 +7,9 @@ chai.use(chaiAsPromised);
 chai.should();
 
 const fs = require('fs');
-const rimraf = require('rimraf');
+const shell = require('shelljs');
 const _ = require('lodash');
-const metalinks = require('../links');
+const metalinks = require('..');
 
 process.chdir('test'); // working directory
 
@@ -24,14 +24,15 @@ describe('createGlobPattern', () => {
 describe('makeCategoryContainer', () => {
   it('should make a category container', async () => {
     let dir;
+    let dirname;
     try {
       metalinks.makeCategoryContainer().then(directory => {
         dir = directory;
-        const dirname = _.last(dir.split(/[\\/]/));
+        dirname = _.last(dir.split(/[\\/]/));
       });
     } finally {
       if (dir) {
-        rimraf.sync(dir);
+        shell.rm('-rf', dir);
         dirname.should.eql(metalinks.settings.categoryDir);
       }
     }
@@ -40,7 +41,8 @@ describe('makeCategoryContainer', () => {
 
 describe('makeTagContainer', () => {
   it('should make a tag container', async () => {
-    let dir, dirname;
+    let dir;
+    let dirname;
     try {
       metalinks.makeTagContainer().then(directory => {
         dir = directory;
@@ -48,7 +50,7 @@ describe('makeTagContainer', () => {
       });
     } finally {
       if (dir) {
-        rimraf.sync(dir);
+        shell.rm('-rf', dir);
         dirname.should.eql(metalinks.settings.tagDir);
       }
     }
@@ -67,7 +69,7 @@ describe('makeTagContainer', () => {
 //         isDirectory = fs.lstatSync(dir).isDirectory();
 //       });
 //     } finally {
-//       rimraf.sync(dir);
+//       shell.rm('-rf', dir);
 //     }
 //     directoryExists.should.eql(true);
 //     isDirectory.should.eql(true);
