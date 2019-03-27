@@ -90,8 +90,7 @@ Type metalinks --version to see the current version.
 See also: metatag, yarch.`;
 
 /**
- * Various user-adjustable parameters and default values
- * that determine the behavior of the program.
+ * Default values that determine the behavior of the program.
  */
 const settings = {
   /**
@@ -176,6 +175,77 @@ const settings = {
 };
 
 /**
+ * User-adjustable settings. `input` corresponds to `--input`,
+ * `runBefore` corresponds to `--run-before`, etc.
+ */
+const flags = {
+  flags: {
+    /**
+     * The directory to look for metadata in.
+     * The default value is `settings.sourceDir`.
+     */
+    input: {
+      type: 'string',
+      alias: 'i'
+    },
+
+    /**
+     * The directory to store links in.
+     * The default value is `settings.destinationDir`.
+     */
+    output: {
+      type: 'string',
+      alias: 'o'
+    },
+
+    /**
+     * Whether to run in watch mode.
+     * The default value is `false`.
+     */
+    watch: {
+      type: 'boolean',
+      alias: 'w'
+    },
+
+    /**
+     * Optional script to run before creating links.
+     */
+    runBefore: {
+      type: 'string',
+      alias: 'rb'
+    },
+
+    /**
+     * Optional script to run before merging the temporary
+     * directory (`settings.tmpDir`) into the destination directory
+     * (`settings.destinationDir`).
+     */
+    runBeforeMerge: {
+      type: 'string',
+      alias: 'rm'
+    },
+
+    /**
+     * Optional script to run after creating links.
+     */
+    runAfter: {
+      type: 'string',
+      alias: 'ra'
+    },
+
+    /**
+     * Whether to delete any pre-existing source directory
+     * (`settings.sourceDir`) before creating links.
+     * The default value is `false`.
+     */
+    clean: {
+      type: 'boolean',
+      alias: 'c'
+    }
+  }
+};
+
+/**
  * The "main" function.
  *
  * Execution begins here when the script is run
@@ -183,38 +253,7 @@ const settings = {
  */
 function main() {
   checkDependencies();
-  const cli = meow(help, {
-    flags: {
-      input: {
-        type: 'string',
-        alias: 'i'
-      },
-      output: {
-        type: 'string',
-        alias: 'o'
-      },
-      watch: {
-        type: 'boolean',
-        alias: 'w'
-      },
-      runBefore: {
-        type: 'string',
-        alias: 'rb'
-      },
-      runBeforeMerge: {
-        type: 'string',
-        alias: 'rm'
-      },
-      runAfter: {
-        type: 'string',
-        alias: 'ra'
-      },
-      clean: {
-        type: 'boolean',
-        alias: 'c'
-      }
-    }
-  });
+  const cli = meow(help, flags);
 
   let queries = cli.input;
   if (queries.length === 0) {
@@ -1259,14 +1298,16 @@ function isMetadataFile(file) {
 }
 
 /**
- * Regular expression for matching the `metaPre` part of a metadata filename.
+ * Regular expression for matching the `settings.metaPre` part
+ * of a metadata filename.
  */
 function metadataPreRegExp() {
   return new RegExp('^' + _.escapeRegExp(settings.metaPre));
 }
 
 /**
- * Regular expression for matching the `metaExt` part of a metadata filename.
+ * Regular expression for matching the `settings.metaExt` part
+ * of a metadata filename.
  */
 function metadataPostRegExp() {
   return new RegExp(_.escapeRegExp(settings.metaExt) + '$');
