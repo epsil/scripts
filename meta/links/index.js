@@ -351,14 +351,14 @@ http://www.optimumx.com/downloads.html#Shortcut`);
 function processDirectory(queries, inputDir, outputDir, options) {
   const { runBefore, runAfter } = options;
   if (runBefore) {
-    console.log(`Executing --run-before: ${runBefore}`);
+    console.log(`Executing --run-before: ${runBefore}\n`);
     shell.exec(runBefore);
     console.log();
   }
   const stream$ = metadataInDirectory(inputDir, options);
   return processQueries(queries, stream$, outputDir, options).then(() => {
     if (runAfter) {
-      console.log(`\nExecuting --run-after: ${runAfter}`);
+      console.log(`\nExecuting --run-after: ${runAfter}\n`);
       shell.exec(runAfter);
       console.log();
     }
@@ -407,7 +407,7 @@ function processQueriesInTempDir(
     tempDirectory =>
       processQueriesInDir(queries, stream$, tempDirectory, options).then(() => {
         if (runBeforeMerge) {
-          console.log(`\nExecuting --run-before-merge: ${runBeforeMerge}`);
+          console.log(`\nExecuting --run-before-merge: ${runBeforeMerge}\n`);
           shell.exec(runBeforeMerge);
           console.log();
         }
