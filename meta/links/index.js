@@ -303,11 +303,15 @@ function main() {
         console.log('\nRunning in watch mode, press Ctrl+C to quit\n');
       });
       const stream$ = metadataChangesInDirectory(inputDir, options);
-      stream$.subscribe((evt, name) => {
-        processDirectory(queries, inputDir, outputDir, options).then(() => {
+      stream$
+        .pipe(
+          RxOp.switchMap(() =>
+            processDirectory(queries, inputDir, outputDir, options)
+          )
+        )
+        .subscribe(() => {
           console.log('\nRunning in watch mode, press Ctrl+C to quit\n');
         });
-      });
     } else {
       // process metadata in directory and exit
       processDirectory(queries, inputDir, outputDir, options).then(() => {
