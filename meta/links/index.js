@@ -4,6 +4,7 @@ const childProcess = require('child_process');
 const fg = require('fast-glob');
 const fs = require('fs');
 const meow = require('meow');
+const nodeWatch = require('node-watch');
 const os = require('os');
 const path = require('path');
 const readline = require('readline');
@@ -19,7 +20,7 @@ const _ = require('lodash');
  * Help message to display when running with `--help`.
  */
 const help = `metalinks performs queries on files tagged with metatag.
-The files matching a query are presented as a folder
+The files matching a query are listed in a "smart folder"
 containing symbolic links (or shortcuts on Windows).
 
 Usage:
@@ -39,8 +40,16 @@ in the current directory. The links are placed in the directory _q/_/:
         file1.txt -> /path/to/file1.txt
         file2.txt -> /path/to/file2.txt
 
-The next command performs a query for files tagged with both
-"foo" and "bar":
+By default, the input directory is . (the current directory).
+The output directory is _q (the q stands for "query").
+
+The --input and --output options can be used to specify
+the input and output directories explicitly:
+
+    metalinks --input . --output _q "*"
+
+The following command performs a query for files tagged with
+both "foo" and "bar":
 
     metalinks "foo bar"
 
@@ -51,7 +60,7 @@ The links are placed in the directory _q/foo bar/:
         file3.txt -> /path/to/file3.txt
         file4.txt -> /path/to/file4.txt
 
-The following command executes the above commands in one go,
+The next command executes multiple queries in one go,
 which is faster since the metadata is read only once:
 
     metalinks "*" "foo bar"
@@ -63,17 +72,10 @@ To continually monitor a directory for metadata changes, use --watch:
 Also, to split a long list of queries across multiple lines,
 it is useful to escape newlines with a backslash:
 
-    metalinks "*" \\
+    metalinks --watch \\
+      "*" \\
       "foo bar" \\
       "baz quux"
-
-The --input and --output options can be used to specify the input
-and output directories explicitly:
-
-    metalinks --input . --output _q "foo bar"
-
-By default, the input directory is . (the current directory).
-The output directory is _q (the q stands for "query").
 
 Files can also be read from standard input. If files.txt is a
 text file containing a newline-separated list of files to process,
@@ -268,8 +270,7 @@ function main() {
     clean,
     sourceDir,
     destinationDir,
-    makeLinks,
-    watchDelay
+    makeLinks
   } = options;
   const inputDir = input || sourceDir;
   const outputDir = output || destinationDir;
@@ -298,15 +299,14 @@ function main() {
     } else if (watch) {
       // watch directory for metadata changes
       // (extremely simple implementation for the time being)
-      const watchDelayMs = watchDelay * 1000;
-      let timer$ = Rx.Observable.timer(0, watchDelayMs);
-      timer$ = timer$.pipe(
-        RxOp.switchMap(() =>
-          processDirectory(queries, inputDir, outputDir, options)
-        )
-      );
-      timer$.subscribe(() => {
+      processDirectory(queries, inputDir, outputDir, options).then(() => {
         console.log('\nRunning in watch mode, press Ctrl+C to quit\n');
+      });
+      const stream$ = metadataChangesInDirectory(inputDir, options);
+      stream$.subscribe((evt, name) => {
+        processDirectory(queries, inputDir, outputDir, options).then(() => {
+          console.log('\nRunning in watch mode, press Ctrl+C to quit\n');
+        });
       });
     } else {
       // process metadata in directory and exit
@@ -688,7 +688,32 @@ function metadataForFiles(stream$, options) {
 }
 
 /**
- * Return standard input line by line, as a RxJS observable.
+ * Create a RxJS observable for changes to metadata files
+ * in a directory. Returns a stream of event objects on
+ * the form `{ evt: 'update', name: '/path/to/file' }`.
+ * @param dir the directory to look in
+ * @param [options] an options object
+ * @return a RxJS stream of event objects
+ */
+function metadataChangesInDirectory(dir, options) {
+  const stream$ = new Rx.Subject();
+  const cwd = (options && options.cwd) || '.';
+  const directory = joinPaths(cwd, dir);
+  const watcher = nodeWatch(dir, {
+    ...options,
+    filter: isMetadataFile,
+    recursive: true
+  });
+  watcher.on('change', function(evt, name) {
+    const file = path.join(directory, name);
+    stream$.next({ evt, name: file });
+  });
+  return stream$;
+}
+
+/**
+ * Get standard input line by line, as a RxJS observable.
+ * Returns data as soon as it arrives.
  * @return a RxJS stream
  */
 function stdin() {

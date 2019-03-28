@@ -208,6 +208,8 @@ function setTagForFile(tag, file) {
     return null;
   }
   console.log(`Setting tag ${tag} for ${file} ...`);
+  // If we are tagging a symlink, dereference it.
+  // TODO: dereference Windows shortcuts.
   const realFile = fs.realpathSync(file);
   const metaFile = getMetadataFilenameFromFilename(realFile);
   const fileAlreadyExist = fs.existsSync(metaFile);
