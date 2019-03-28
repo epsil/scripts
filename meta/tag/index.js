@@ -468,7 +468,8 @@ function normalizeYamlFile(file) {
   if (!fileExists) {
     return;
   }
-  let yml = fs.readFileSync(file) + '';
+  const data = fs.readFileSync(file) + '';
+  let yml = data;
   yml = yml.trim();
   const isEmptyFile = yml === '';
   const meta = parseYaml(yml);
@@ -490,7 +491,9 @@ function normalizeYamlFile(file) {
   }
   yml = yaml.safeDump(meta);
   const ymlDoc = addYAMLHeader(yml, file);
-  fs.writeFileSync(file, ymlDoc);
+  if (ymlDoc !== data) {
+    fs.writeFileSync(file, ymlDoc);
+  }
   // console.log('Normalized ' + file);
 }
 
