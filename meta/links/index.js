@@ -40,13 +40,12 @@ in the current directory. The links are placed in the directory _q/_/:
         file1.txt -> /path/to/file1.txt
         file2.txt -> /path/to/file2.txt
 
-By default, the input directory is . (the current directory).
-The output directory is _q (the q stands for "query").
+The default input directory is . (meaning the current directory).
+The default output directory is _q (where the q stands for "query").
+If necessary, the --input and --output options can be used to specify
+different directories:
 
-The --input and --output options can be used to specify
-the input and output directories explicitly:
-
-    metalinks --input . --output _q "*"
+    metalinks --input "download" --output "_links" "*"
 
 The following command performs a query for files tagged with
 both "foo" and "bar":
