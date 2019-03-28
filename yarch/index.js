@@ -10,7 +10,7 @@ const yaml = require('js-yaml');
 const _ = require('lodash');
 
 /**
- * Help message to display when running with --help.
+ * Help message to display when running with `--help`.
  */
 const help = `Usage:
 
@@ -36,24 +36,29 @@ Type yarch --version to see the current version.
 See also: metalinks, metatag.`;
 
 /**
- * The directory to store metadata files in.
+ * Default values that determine the behavior of the program.
  */
-const metaDir = '.meta';
+const settings = {
+  /**
+   * The directory to store metadata files in.
+   */
+  metaDir: '.meta',
 
-/**
- * The dotfile prefix for metadata files.
- */
-const metaPre = '.';
+  /**
+   * The dotfile prefix for metadata files.
+   */
+  metaPre: '.',
 
-/**
- * The file extension for metadata files.
- */
-const metaExt = '.yml';
+  /**
+   * The file extension for metadata files.
+   */
+  metaExt: '.yml',
 
-/**
- * Whether to output a "rich" YAML prefix.
- */
-const richHeader = true;
+  /**
+   * Whether to output a "rich" YAML prefix.
+   */
+  richHeader: true
+};
 
 /**
  * The "main" function.
@@ -279,14 +284,13 @@ function fixMetadata(url) {
  * @param file a JSON file
  */
 function convertJSONFileToYAMLFile(file, url) {
-  const metaDir = '.meta';
   const json = fs.readFileSync(file);
   let ymlFileName = file;
   ymlFileName = ymlFileName.replace(/\.info\.json$/, '');
   ymlFileName = '.' + ymlFileName + '.mp4' + '.yml';
-  const ymlPath = metaDir + '/' + ymlFileName;
+  const ymlPath = settings.metaDir + '/' + ymlFileName;
   const yml = convertJSONtoYAML(json, url, ymlFileName);
-  shell.mkdir('-p', metaDir);
+  shell.mkdir('-p', settings.metaDir);
   fs.writeFileSync(ymlPath, yml);
   shell.rm('-f', file);
 }
@@ -322,7 +326,7 @@ function convertJSONtoYAML(json, url, file) {
 function addYAMLHeader(yml, metaFile) {
   let ymlHeader = '---' + '\n';
 
-  if (richHeader && metaFile) {
+  if (settings.richHeader && metaFile) {
     const origFile = path.basename(getFilenameFromMetadataFilename(metaFile));
     ymlHeader = '---' + ' # ' + origFile + '\n';
   }
@@ -378,14 +382,14 @@ function isMetadataFile(file) {
  * Regexp for matching the `metaPre` part of a metadata filename.
  */
 function metadataPreRegExp() {
-  return new RegExp('^' + _.escapeRegExp(metaPre));
+  return new RegExp('^' + _.escapeRegExp(settings.metaPre));
 }
 
 /**
  * Regexp for matching the `metaExt` part of a metadata filename.
  */
 function metadataPostRegExp() {
-  return new RegExp(_.escapeRegExp(metaExt) + '$');
+  return new RegExp(_.escapeRegExp(settings.metaExt) + '$');
 }
 
 /**

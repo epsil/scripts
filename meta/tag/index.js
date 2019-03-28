@@ -9,7 +9,7 @@ const yaml = require('js-yaml');
 const _ = require('lodash');
 
 /**
- * Help message to display when running with --help.
+ * Help message to display when running with `--help`.
  */
 const help = `Usage:
 
@@ -35,102 +35,96 @@ Type metatag --version to see the current version.
 See also: metalinks, yarch.`;
 
 /**
- * Text editor for editing metadata files.
+ * Default values that determine the behavior of the program.
  */
-const editor = 'gvim'; // or emacs?
+const settings = {
+  /**
+   * Text editor for editing metadata files.
+   */
+  editor: 'gvim', // or emacs?
 
-/**
- * Template string for audio metadata.
- */
-const audioTemplate =
-  `---
+  /**
+   * Template string for audio metadata.
+   */
+  audioTemplate:
+    `---
 tags:
   - ` + // whitespace
-  `
+    `
 categories:
-  - audio`;
+  - audio`,
 
-/**
- * Template string for image metadata.
- */
-const imgTemplate =
-  `---
+  /**
+   * Template string for image metadata.
+   */
+  imgTemplate:
+    `---
 tags:
   - ` + // whitespace
-  `
+    `
 categories:
-  - img`;
+  - img`,
 
-/**
- * Template string for general metadata.
- */
-const defTemplate = `---
+  /**
+   * Template string for general metadata.
+   */
+  defTemplate: `---
 tags:
-  - `;
+  - `,
+
+  /**
+   * File extensions for audio files.
+   */
+  audioExtensions: ['.wav', '.mp3', '.ogg', '.aiff', '.m4a', '.flac', '.ape'],
+
+  /**
+   * File extensions for image files.
+   */
+  imgExtensions: ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.heif', '.heic'],
+
+  /**
+   * File extensions for YAML files.
+   */
+  yamlExtensions: ['.yml', '.yaml'],
+
+  /**
+   * The directory to store metadata files in.
+   */
+  metaDir: '.meta',
+
+  /**
+   * The dotfile prefix for metadata files.
+   */
+  metaPre: '.',
+
+  /**
+   * The file extension for metadata files.
+   */
+  metaExt: '.yml',
+
+  /**
+   * Whether to output a "rich" YAML prefix.
+   */
+  richHeader: true
+};
 
 /**
- * File extensions for audio files.
+ * User-adjustable settings.
  */
-const audioExtensions = [
-  '.wav',
-  '.mp3',
-  '.ogg',
-  '.aiff',
-  '.m4a',
-  '.flac',
-  '.ape'
-];
-
-/**
- * File extensions for image files.
- */
-const imgExtensions = [
-  '.jpg',
-  '.jpeg',
-  '.png',
-  '.bmp',
-  '.gif',
-  '.heif',
-  '.heic'
-];
-
-/**
- * File extensions for YAML files.
- */
-const yamlExtensions = ['.yml', '.yaml'];
-
-/**
- * The directory to store metadata files in.
- */
-const metaDir = '.meta';
-
-/**
- * The dotfile prefix for metadata files.
- */
-const metaPre = '.';
-
-/**
- * The file extension for metadata files.
- */
-const metaExt = '.yml';
-
-/**
- * Whether to output a "rich" YAML prefix.
- */
-const richHeader = true;
+const flags = {
+  flags: {
+    tag: {
+      type: 'string',
+      alias: 't'
+    }
+  }
+};
 
 /**
  * "Main" function.
  */
 function main() {
-  const cli = meow(help, {
-    flags: {
-      tag: {
-        type: 'string',
-        alias: 't'
-      }
-    }
-  });
+  const cli = meow(help, flags);
   let files = cli.input;
   const tag = cli.flags.tag;
   const hasStdin = !process.stdin.isTTY && !files;
@@ -167,7 +161,7 @@ function processFiles(files, tag) {
  */
 function isAudioFile(file) {
   const ext = path.extname(file).toLowerCase();
-  return _.includes(audioExtensions, ext);
+  return _.includes(settings.audioExtensions, ext);
 }
 
 /**
@@ -177,7 +171,7 @@ function isAudioFile(file) {
  */
 function isImageFile(file) {
   const ext = path.extname(file).toLowerCase();
-  return _.includes(imgExtensions, ext);
+  return _.includes(settings.imgExtensions, ext);
 }
 
 /**
@@ -187,7 +181,7 @@ function isImageFile(file) {
  */
 function isYamlFile(file) {
   const ext = path.extname(file).toLowerCase();
-  return _.includes(yamlExtensions, ext);
+  return _.includes(settings.yamlExtensions, ext);
 }
 
 /**
@@ -272,12 +266,12 @@ function editMetadataFileForFile(file, tmp) {
  */
 function getTemplateForFile(file) {
   if (isAudioFile(file)) {
-    return audioTemplate;
+    return settings.audioTemplate;
   }
   if (isImageFile(file)) {
-    return imgTemplate;
+    return settings.imgTemplate;
   }
-  return defTemplate;
+  return settings.defTemplate;
 }
 
 /**
@@ -287,7 +281,7 @@ function getTemplateForFile(file) {
  */
 function editMetadataForFileWithEditor(file, tmp) {
   if (isYamlFile(file)) {
-    return launchEditor(file, editor);
+    return launchEditor(file, settings.editor);
   }
   const realFile = fs.realpathSync(file);
   const metaFile = getMetadataFilenameFromFilename(realFile);
@@ -306,9 +300,9 @@ function getMetadataFilenameFromFilename(filePath, options) {
     return filePath;
   }
   const origDir = path.dirname(filePath);
-  const metaDirectory = path.join(origDir, metaDir);
+  const metaDirectory = path.join(origDir, settings.metaDir);
   const origName = path.basename(filePath);
-  const metaName = metaPre + origName + metaExt;
+  const metaName = settings.metaPre + origName + settings.metaExt;
   let metaFile = path.join(metaDirectory, metaName);
   if (options && options.unix) {
     metaFile = metaFile.replace(/\\/g, '/'); // test
@@ -346,14 +340,14 @@ function getFilenameFromMetadataFilename(filePath, options) {
  * Regexp for matching the `metaPre` part of a metadata filename.
  */
 function metadataPreRegExp() {
-  return new RegExp('^' + _.escapeRegExp(metaPre));
+  return new RegExp('^' + _.escapeRegExp(settings.metaPre));
 }
 
 /**
  * Regexp for matching the `metaExt` part of a metadata filename.
  */
 function metadataPostRegExp() {
-  return new RegExp(_.escapeRegExp(metaExt) + '$');
+  return new RegExp(_.escapeRegExp(settings.metaExt) + '$');
 }
 
 /**
@@ -365,12 +359,12 @@ function editMetadataFile(metaFile, tmp) {
   const fileAlreadyExist = fs.existsSync(metaFile);
   if (fileAlreadyExist) {
     normalizeYamlFile(metaFile);
-    return launchEditor(metaFile, editor).then(() =>
+    return launchEditor(metaFile, settings.editor).then(() =>
       normalizeYamlFile(metaFile)
     );
   }
   return createMetadataFile(metaFile, tmp)
-    .then(() => launchEditor(metaFile, editor))
+    .then(() => launchEditor(metaFile, settings.editor))
     .then(() => normalizeYamlFile(metaFile));
 }
 
@@ -527,7 +521,7 @@ function parseYaml(str) {
 function addYAMLHeader(yml, metaFile) {
   let ymlHeader = '---' + '\n';
 
-  if (richHeader && metaFile) {
+  if (settings.richHeader && metaFile) {
     const origFile = path.basename(getFilenameFromMetadataFilename(metaFile));
     ymlHeader = '---' + ' # ' + origFile + '\n';
   }
