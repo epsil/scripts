@@ -1023,8 +1023,8 @@ function makeSymLink(source, destination, options) {
 function makeShortcut(source, destination, options) {
   return new Promise((resolve, reject) => {
     const cwd = (options && options.cwd) || '.';
-    const sourcePath = escapePath(joinPaths(cwd, source));
-    const destinationPath = escapePath(joinPaths(cwd, destination));
+    const sourcePath = joinPaths(cwd, source);
+    const destinationPath = joinPaths(cwd, destination);
     ws.create(destinationPath, sourcePath);
     resolve(destination);
   });
@@ -1556,15 +1556,6 @@ function toFilename(str) {
   file = file.replace(/[/?=*:&]/gi, '_');
   file = file.replace(/[^-0-9a-z_.,' ]/gi, '');
   return file;
-}
-
-/**
- * Escape a file path.
- * @param str a file path
- * @return an escaped file path
- */
-function escapePath(str) {
-  return str.replace(/ /g, ' ');
 }
 
 // export functions for testing
