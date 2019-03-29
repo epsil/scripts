@@ -25,7 +25,7 @@ describe('makeCategoryContainer', function() {
   afterEach(function() {
     shell.rm('-rf', metalinks.settings.categoryDir);
   });
-  it('should make a category container', async function() {
+  it('should make a category container', function() {
     return metalinks.makeCategoryContainer().then(dir => {
       const dirname = _.last(dir.split(/[\\/]/));
       dirname.should.eql(metalinks.settings.categoryDir);
@@ -34,41 +34,31 @@ describe('makeCategoryContainer', function() {
 });
 
 describe('makeTagContainer', function() {
-  it('should make a tag container', async function() {
-    let dir;
-    let dirname;
-    try {
-      metalinks.makeTagContainer().then(directory => {
-        dir = directory;
-        dirname = _.last(dir.split(/[\\/]/));
-      });
-    } finally {
-      if (dir) {
-        shell.rm('-rf', dir);
-        dirname.should.eql(metalinks.settings.tagDir);
-      }
-    }
+  afterEach(function() {
+    shell.rm('-rf', metalinks.settings.tagDir);
+  });
+  it('should make a tag container', function() {
+    return metalinks.makeTagContainer().then(dir => {
+      const dirname = _.last(dir.split(/[\\/]/));
+      dirname.should.eql(metalinks.settings.tagDir);
+    });
   });
 });
 
-// describe('makeDirectory', function() {
-//   it('should make a directory', async function() {
-//     let dir = 'foodir';
-//     let directoryExists = false;
-//     let isDirectory = false;
-//     try {
-//       metalinks.makeDirectory(dir).then(directory => {
-//         dir = directory;
-//         directoryExists = fs.existsSync(dir);
-//         isDirectory = fs.lstatSync(dir).isDirectory();
-//       });
-//     } finally {
-//       shell.rm('-rf', dir);
-//     }
-//     directoryExists.should.eql(true);
-//     isDirectory.should.eql(true);
-//   });
-// });
+describe('makeDirectory', function() {
+  const dir = 'foodir';
+  afterEach(function() {
+    shell.rm('-rf', dir);
+  });
+  it('should make a directory', function() {
+    return metalinks.makeDirectory('foodir').then(directory => {
+      const directoryExists = fs.existsSync(directory);
+      const isDirectory = fs.lstatSync(directory).isDirectory();
+      directoryExists.should.eql(true);
+      isDirectory.should.eql(true);
+    });
+  });
+});
 
 describe('invokeRsync', function() {
   it('should invoke rsync', function() {
