@@ -1575,6 +1575,7 @@ module.exports = {
   parseQuery,
   parseYaml,
   settings,
+  toFilename,
   validateDirectories
 };
 

@@ -486,3 +486,19 @@ describe('validateDirectories', () => {
     error.should.equal('Output directory cannot be the current directory');
   });
 });
+
+describe('toFilename', () => {
+  it('should leave valid file paths unchanged', () => {
+    metalinks.toFilename('file.txt').should.eql('file.txt');
+  });
+
+  it('should replace invalid characters', () => {
+    metalinks.toFilename('*').should.eql('_');
+    metalinks.toFilename('A & B').should.eql('A and B');
+  });
+
+  it('should remove URL prefixes', () => {
+    metalinks.toFilename('http://foo.com/').should.eql('foo.com');
+    metalinks.toFilename('http://www.foo.com/').should.eql('foo.com');
+  });
+});
