@@ -1,10 +1,12 @@
 /* global describe, it, afterEach */
+/* eslint no-unused-expressions: 0 */
 
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 
 chai.use(chaiAsPromised);
-chai.should();
+const should = chai.should();
+const expect = chai.expect;
 
 const fs = require('fs');
 const shell = require('shelljs');
@@ -54,8 +56,8 @@ describe('makeDirectory', function() {
     return metalinks.makeDirectory('foodir').then(directory => {
       const directoryExists = fs.existsSync(directory);
       const isDirectory = fs.lstatSync(directory).isDirectory();
-      directoryExists.should.eql(true);
-      isDirectory.should.eql(true);
+      expect(directoryExists).to.be.true;
+      expect(isDirectory).to.be.true;
     });
   });
 });
