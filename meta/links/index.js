@@ -815,10 +815,12 @@ function readMetadataForFile(file, options) {
  */
 function processTagsAndCategories(meta, options) {
   return new Promise((resolve, reject) => {
-    const result = [];
-    const tags = (meta && meta.tags) || [];
     const { defaultCategory } = options;
-    const categories = (meta && meta.categories) || [defaultCategory];
+    const result = [];
+    let tags = (meta && meta.tags) || [];
+    tags = tags.filter(tag => typeof tag === 'string');
+    let categories = (meta && meta.categories) || [defaultCategory];
+    categories = categories.filter(category => typeof category === 'string');
     categories.forEach(category => {
       tags.forEach(tag => {
         result.push(makeTagLinkInCategory(meta.file, category, tag, options));
