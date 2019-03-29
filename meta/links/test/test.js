@@ -1,4 +1,4 @@
-/* global describe, it */
+/* global describe, it, afterEach */
 
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
@@ -22,21 +22,13 @@ describe('createGlobPattern', () => {
 });
 
 describe('makeCategoryContainer', () => {
-  it('should make a category container', async () => {
-    let dir;
-    let dirname;
-    try {
-      metalinks.makeCategoryContainer().then(directory => {
-        dir = directory;
-        dirname = _.last(dir.split(/[\\/]/));
-      });
-    } finally {
-      if (dir) {
-        shell.rm('-rf', dir);
-        dirname.should.eql(metalinks.settings.categoryDir);
-      }
-    }
+  afterEach(() => {
+    shell.rm('-rf', metalinks.settings.categoryDir);
   });
+  it('should make a category container', async () => metalinks.makeCategoryContainer().then(dir => {
+      const dirname = _.last(dir.split(/[\\/]/));
+      dirname.should.eql(metalinks.settings.categoryDir);
+    }));
 });
 
 describe('makeTagContainer', () => {
