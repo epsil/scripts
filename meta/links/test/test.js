@@ -13,26 +13,28 @@ const metalinks = require('..');
 
 process.chdir('test'); // working directory
 
-describe('createGlobPattern', () => {
-  it('should create a glob string for matching metadata files', () => {
+describe('createGlobPattern', function() {
+  it('should create a glob string for matching metadata files', function() {
     metalinks
       .createGlobPattern(metalinks.metaDir, metalinks.metaExt)
       .should.eql('**/.meta/*.yml');
   });
 });
 
-describe('makeCategoryContainer', () => {
-  afterEach(() => {
+describe('makeCategoryContainer', function() {
+  afterEach(function() {
     shell.rm('-rf', metalinks.settings.categoryDir);
   });
-  it('should make a category container', async () => metalinks.makeCategoryContainer().then(dir => {
+  it('should make a category container', async function() {
+    return metalinks.makeCategoryContainer().then(dir => {
       const dirname = _.last(dir.split(/[\\/]/));
       dirname.should.eql(metalinks.settings.categoryDir);
-    }));
+    });
+  });
 });
 
-describe('makeTagContainer', () => {
-  it('should make a tag container', async () => {
+describe('makeTagContainer', function() {
+  it('should make a tag container', async function() {
     let dir;
     let dirname;
     try {
@@ -49,8 +51,8 @@ describe('makeTagContainer', () => {
   });
 });
 
-// describe('makeDirectory', () => {
-//   it('should make a directory', async () => {
+// describe('makeDirectory', function() {
+//   it('should make a directory', async function() {
 //     let dir = 'foodir';
 //     let directoryExists = false;
 //     let isDirectory = false;
@@ -68,8 +70,8 @@ describe('makeTagContainer', () => {
 //   });
 // });
 
-describe('invokeRsync', () => {
-  it('should invoke rsync', () => {
+describe('invokeRsync', function() {
+  it('should invoke rsync', function() {
     metalinks
       .invokeRsync('foo', 'bar', {
         debug: true
@@ -78,8 +80,8 @@ describe('invokeRsync', () => {
   });
 });
 
-describe('hasCmd', () => {
-  it('should invoke a command with --version', () => {
+describe('hasCmd', function() {
+  it('should invoke a command with --version', function() {
     metalinks
       .hasCmd('foo', {
         debug: true
@@ -88,8 +90,8 @@ describe('hasCmd', () => {
   });
 });
 
-describe('parseMetadata', () => {
-  it('should create a metadata object from a YAML string', () => {
+describe('parseMetadata', function() {
+  it('should create a metadata object from a YAML string', function() {
     metalinks
       .parseMetadata(
         `---
@@ -112,8 +114,8 @@ tags:
   });
 });
 
-describe('parseYaml', () => {
-  it('should parse fenced YAML', () => {
+describe('parseYaml', function() {
+  it('should parse fenced YAML', function() {
     metalinks
       .parseYaml(
         `---
@@ -128,7 +130,7 @@ tags:
       });
   });
 
-  it('should parse the same YAML multiple times', () => {
+  it('should parse the same YAML multiple times', function() {
     // there is a weird caching bug in gray-matter
     // which is prevented if one provides an options object
     metalinks
@@ -157,7 +159,7 @@ tags:
       });
   });
 
-  it('should parse unfenced YAML', () => {
+  it('should parse unfenced YAML', function() {
     metalinks
       .parseYaml(
         `tags:
@@ -170,14 +172,14 @@ tags:
   });
 });
 
-describe('getFilenameFromMetadataFilename', () => {
-  it('should translate a dotfile YAML file name to a regular file name', () => {
+describe('getFilenameFromMetadataFilename', function() {
+  it('should translate a dotfile YAML file name to a regular file name', function() {
     metalinks
       .getFilenameFromMetadataFilename('.file.txt.yml', { unix: true })
       .should.eql('../file.txt');
   });
 
-  it('should not translate non-metadata file names', () => {
+  it('should not translate non-metadata file names', function() {
     metalinks
       .getFilenameFromMetadataFilename('file.txt', { unix: true })
       .should.eql('file.txt');
@@ -191,7 +193,7 @@ describe('getFilenameFromMetadataFilename', () => {
       .should.eql('.file');
   });
 
-  it('should handle directories correctly', () => {
+  it('should handle directories correctly', function() {
     metalinks
       .getFilenameFromMetadataFilename('lib/.meta/.file.txt.yml', {
         unix: true
@@ -200,26 +202,26 @@ describe('getFilenameFromMetadataFilename', () => {
   });
 });
 
-describe('getMetadataFilenameFromFilename', () => {
-  it('should translate a regular file name to a metadata file name', () => {
+describe('getMetadataFilenameFromFilename', function() {
+  it('should translate a regular file name to a metadata file name', function() {
     metalinks
       .getMetadataFilenameFromFilename('file.txt', { unix: true })
       .should.eql('.meta/.file.txt.yml');
   });
 
-  it('should handle directories correctly', () => {
+  it('should handle directories correctly', function() {
     metalinks
       .getMetadataFilenameFromFilename('lib/file.txt', { unix: true })
       .should.eql('lib/.meta/.file.txt.yml');
   });
 });
 
-describe('createTagDictionary', () => {
-  it('should handle an empty array', () => {
+describe('createTagDictionary', function() {
+  it('should handle an empty array', function() {
     metalinks.createTagDictionary([]).should.eql({});
   });
 
-  it('should handle a single metadata object with no tags', () => {
+  it('should handle a single metadata object with no tags', function() {
     metalinks
       .createTagDictionary([
         {
@@ -230,7 +232,7 @@ describe('createTagDictionary', () => {
       .should.eql({});
   });
 
-  it('should handle a single metadata object with a single tag', () => {
+  it('should handle a single metadata object with a single tag', function() {
     metalinks
       .createTagDictionary([
         {
@@ -250,7 +252,7 @@ describe('createTagDictionary', () => {
       });
   });
 
-  it('should handle a single metadata object with multiple tags', () => {
+  it('should handle a single metadata object with multiple tags', function() {
     metalinks
       .createTagDictionary([
         {
@@ -277,7 +279,7 @@ describe('createTagDictionary', () => {
       });
   });
 
-  it('should handle multiple metadata objects with multiple tags', () => {
+  it('should handle multiple metadata objects with multiple tags', function() {
     metalinks
       .createTagDictionary([
         {
@@ -321,7 +323,7 @@ describe('createTagDictionary', () => {
       });
   });
 
-  it('should return a sorted dictionary', () => {
+  it('should return a sorted dictionary', function() {
     metalinks
       .createTagDictionary([
         {
@@ -348,7 +350,7 @@ describe('createTagDictionary', () => {
       });
   });
 
-  it('should filter tags', () => {
+  it('should filter tags', function() {
     metalinks
       .createTagDictionary(
         [
@@ -372,39 +374,39 @@ describe('createTagDictionary', () => {
   });
 });
 
-describe('parseQuery', () => {
-  it('should handle empty strings', () => {
+describe('parseQuery', function() {
+  it('should handle empty strings', function() {
     metalinks.parseQuery('').should.eql([]);
   });
 
-  it('should handle singleton strings', () => {
+  it('should handle singleton strings', function() {
     metalinks.parseQuery('foo').should.eql(['foo']);
   });
 
-  it('should create create a tag array from a tag list string', () => {
+  it('should create create a tag array from a tag list string', function() {
     metalinks.parseQuery('bar foo').should.eql(['bar', 'foo']);
   });
 
-  it('should sort the list', () => {
+  it('should sort the list', function() {
     metalinks.parseQuery('foo bar').should.eql(['bar', 'foo']);
   });
 
-  it('should remove duplicates', () => {
+  it('should remove duplicates', function() {
     metalinks.parseQuery('foo foo bar').should.eql(['bar', 'foo']);
   });
 });
 
-describe('filterByTagList', () => {
-  it('should handle empty lists', () => {
+describe('filterByTagList', function() {
+  it('should handle empty lists', function() {
     metalinks.filterByTagList([], []).should.eql([]);
   });
 
-  it('should handle singleton lists', () => {
+  it('should handle singleton lists', function() {
     metalinks.filterByTagList([], ['foo']).should.eql([]);
     metalinks.filterByTagList(['foo'], []).should.eql(['foo']);
   });
 
-  it('should filter metadata objects', () => {
+  it('should filter metadata objects', function() {
     metalinks
       .filterByTagList(
         [
@@ -431,8 +433,8 @@ describe('filterByTagList', () => {
   });
 });
 
-describe('mergeTmpDirAndOutputDirWithRsync', () => {
-  it('should throw an error if the working directory is the current directory', () => {
+describe('mergeTmpDirAndOutputDirWithRsync', function() {
+  it('should throw an error if the working directory is the current directory', function() {
     let error = '';
     try {
       metalinks.mergeTmpDirAndOutputDirWithRsync('.', '.');
@@ -442,7 +444,7 @@ describe('mergeTmpDirAndOutputDirWithRsync', () => {
     error.should.equal('The working directory cannot be the current directory');
   });
 
-  it('should throw an error if the working directory is equivalent to the output directory', () => {
+  it('should throw an error if the working directory is equivalent to the output directory', function() {
     let error = '';
     try {
       metalinks.mergeTmpDirAndOutputDirWithRsync('foo', 'foo');
@@ -454,7 +456,7 @@ describe('mergeTmpDirAndOutputDirWithRsync', () => {
     );
   });
 
-  it('should throw an error if the output directory is a parent of the working directory', () => {
+  it('should throw an error if the output directory is a parent of the working directory', function() {
     let error = '';
     try {
       metalinks.mergeTmpDirAndOutputDirWithRsync('foo/bar', 'foo');
@@ -467,8 +469,8 @@ describe('mergeTmpDirAndOutputDirWithRsync', () => {
   });
 });
 
-describe('validateDirectories', () => {
-  it('should throw an error if the output directory is equivalent to the current directory', () => {
+describe('validateDirectories', function() {
+  it('should throw an error if the output directory is equivalent to the current directory', function() {
     let error = '';
     try {
       metalinks.validateDirectories('.', '.');
@@ -479,17 +481,17 @@ describe('validateDirectories', () => {
   });
 });
 
-describe('toFilename', () => {
-  it('should leave valid file paths unchanged', () => {
+describe('toFilename', function() {
+  it('should leave valid file paths unchanged', function() {
     metalinks.toFilename('file.txt').should.eql('file.txt');
   });
 
-  it('should replace invalid characters', () => {
+  it('should replace invalid characters', function() {
     metalinks.toFilename('*').should.eql('_');
     metalinks.toFilename('A & B').should.eql('A and B');
   });
 
-  it('should remove URL prefixes', () => {
+  it('should remove URL prefixes', function() {
     metalinks.toFilename('http://foo.com/').should.eql('foo.com');
     metalinks.toFilename('http://www.foo.com/').should.eql('foo.com');
   });
