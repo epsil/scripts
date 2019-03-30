@@ -145,6 +145,11 @@ const settings = {
   defaultQuery: '*',
 
   /**
+   * The default query.
+   */
+  allQuery: '+',
+
+  /**
    * The default category.
    */
   defaultCategory: '*',
@@ -831,6 +836,23 @@ function processTagsAndCategories(meta, options) {
 }
 
 /**
+ * Process the `tags` properties of a metadata object.
+ * @param meta a metadata object
+ * @param [options] an options object
+ */
+function processTags(meta, options) {
+  return new Promise((resolve, reject) => {
+    const result = [];
+    let tags = (meta && meta.tags) || [];
+    tags = tags.filter(tag => typeof tag === 'string');
+    tags.forEach(tag => {
+      result.push(makeTagLink(meta.file, tag, options));
+    });
+    Promise.all(result).then(() => resolve(meta));
+  });
+}
+
+/**
  * Make a tag link within a category.
  * @param filePath the file path of the referenced file
  * @param category the category to create a link within
@@ -902,8 +924,8 @@ function makeCategoryDirectory(category, options) {
  * @param [options] an options object
  */
 function makeTagDirectory(tag, options) {
-  let dir = (options && options.tagDir) || settings.tagDir;
-  dir = toFilename(dir);
+  const tagDir = { options };
+  const dir = (options && options.tagDir) || toFilename(tagDir);
   const tDir = toFilename(tag);
   if (!dir) {
     return makeTagContainer(options).then(directory =>
@@ -1489,15 +1511,29 @@ function filterByQuery(metaArr, query) {
  * @param [options] an options object
  */
 function performQuery(metaArr, query, options) {
-  if (!query || query === '*') {
+  const { allQuery, defaultQuery } = options;
+  if (!query || query === defaultQuery) {
     const qDir = (options && options.queryDir) || settings.queryDir;
-    const cDir = toFilename('*');
+    const cDir = toFilename(defaultQuery);
     return makeDirectory(`${qDir}/${cDir}`, options).then(dir =>
       Promise.all(
         metaArr.map(meta =>
           processTagsAndCategories(meta, {
             ...options,
             categoryDir: dir
+          })
+        )
+      )
+    );
+  }
+  if (query === allQuery) {
+    const aDir = toFilename(allQuery);
+    return makeDirectory(aDir, options).then(dir =>
+      Promise.all(
+        metaArr.map(meta =>
+          processTags(meta, {
+            ...options,
+            tagDir: dir
           })
         )
       )
@@ -1549,6 +1585,9 @@ function makeQueryLink(meta, query, options) {
  */
 function toFilename(str, options) {
   let file = str;
+  if (file === '+') {
+    return file;
+  }
   file = file.replace(/^https?:\/\//i, '');
   file = file.replace(/^www\./i, '');
   file = file.replace(/\/+$/i, '');

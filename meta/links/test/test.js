@@ -480,6 +480,7 @@ describe('toFilename', function() {
 
   it('should replace invalid characters', function() {
     metalinks.toFilename('*').should.eql('_');
+    metalinks.toFilename('+').should.eql('+');
     metalinks.toFilename('A & B').should.eql('A and B');
   });
 
