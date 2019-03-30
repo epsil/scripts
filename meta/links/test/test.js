@@ -487,4 +487,14 @@ describe('toFilename', function() {
     metalinks.toFilename('http://foo.com/').should.eql('foo.com');
     metalinks.toFilename('http://www.foo.com/').should.eql('foo.com');
   });
+
+  it('should truncate long strings', function() {
+    metalinks
+      .toFilename(
+        'very long string very long string very long string very long string very long string very long string very long string very long string very long string '
+      )
+      .should.eql(
+        'very long string very long string very long string very long string very long string very long strin'
+      );
+  });
 });

@@ -1537,6 +1537,7 @@ function makeQueryLink(meta, query, options) {
  * Convert a string to a filename-safe string. This function returns
  * a pure ASCII string stripped of unsafe characters.
  * @param str a string
+ * @param [options] an options object
  * @return a filename
  * @example
  *
@@ -1546,7 +1547,7 @@ function makeQueryLink(meta, query, options) {
  * toFilename('foo:bar');
  * // => 'foo_bar'
  */
-function toFilename(str) {
+function toFilename(str, options) {
   let file = str;
   file = file.replace(/^https?:\/\//i, '');
   file = file.replace(/^www\./i, '');
@@ -1555,6 +1556,7 @@ function toFilename(str) {
   file = _.deburr(file);
   file = file.replace(/[/?=*:&]/gi, '_');
   file = file.replace(/[^-0-9a-z_.,' ]/gi, '');
+  file = _.truncate(file, { length: 100, omission: '', ...options });
   return file;
 }
 
