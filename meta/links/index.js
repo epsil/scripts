@@ -263,7 +263,7 @@ function main() {
 
   let queries = cli.input;
   if (queries.length === 0) {
-    queries = [settings.defaultQuery];
+    queries = [settings.defaultQuery, settings.allQuery];
   }
 
   let options = { ...settings, ...cli.flags };
