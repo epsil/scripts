@@ -147,7 +147,7 @@ const settings = {
   /**
    * The default query.
    */
-  allQuery: '+',
+  allQuery: '#',
 
   /**
    * The default category.
@@ -1585,7 +1585,7 @@ function makeQueryLink(meta, query, options) {
  */
 function toFilename(str, options) {
   let file = str;
-  if (file === '+') {
+  if (file === '#' || file === '+') {
     return file;
   }
   file = file.replace(/^https?:\/\//i, '');
