@@ -145,6 +145,11 @@ const settings = {
   defaultQuery: '*',
 
   /**
+   * The default queries.
+   */
+  defaultQueries: ['#', '*'],
+
+  /**
    * The default query.
    */
   allQuery: '#',
@@ -262,8 +267,8 @@ function main() {
   const cli = meow(help, flags);
 
   let queries = cli.input;
-  if (queries.length === 0) {
-    queries = [settings.defaultQuery, settings.allQuery];
+  if (_.isEmpty(queries)) {
+    queries = settings.defaultQueries;
   }
 
   let options = { ...settings, ...cli.flags };
@@ -509,7 +514,7 @@ function validateRsyncParams(tempDir, outputDir, options) {
   if (tempDirDoesNotExist) {
     throw new Error('The working directory does not exist');
   }
-  const tempDirIsEmpty = fs.readdirSync(tempDir).length === 0;
+  const tempDirIsEmpty = _.isEmpty(fs.readdirSync(tempDir));
   if (tempDirIsEmpty) {
     console.log('Working directory is empty, aborting merge.');
     if (options && options.delete) {
