@@ -142,7 +142,7 @@ const settings = {
   /**
    * The default query.
    */
-  defaultQuery: '*',
+  categoriesQuery: '*',
 
   /**
    * The default queries.
@@ -152,7 +152,7 @@ const settings = {
   /**
    * The default query.
    */
-  allQuery: '#',
+  tagsQuery: '#',
 
   /**
    * The default category.
@@ -1516,10 +1516,10 @@ function filterByQuery(metaArr, query) {
  * @param [options] an options object
  */
 function performQuery(metaArr, query, options) {
-  const { allQuery, defaultQuery } = options;
-  if (!query || query === defaultQuery) {
+  const { tagsQuery, categoriesQuery } = options;
+  if (!query || query === categoriesQuery) {
     const qDir = (options && options.queryDir) || settings.queryDir;
-    const cDir = toFilename(defaultQuery);
+    const cDir = toFilename(categoriesQuery);
     return makeDirectory(`${qDir}/${cDir}`, options).then(dir =>
       Promise.all(
         metaArr.map(meta =>
@@ -1531,8 +1531,8 @@ function performQuery(metaArr, query, options) {
       )
     );
   }
-  if (query === allQuery) {
-    const aDir = toFilename(allQuery);
+  if (query === tagsQuery) {
+    const aDir = toFilename(tagsQuery);
     return makeDirectory(aDir, options).then(dir =>
       Promise.all(
         metaArr.map(meta =>
