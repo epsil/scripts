@@ -293,6 +293,8 @@ function main() {
 
   if (clean) {
     cleanUp(outputDir);
+  } else if (isWindows()) {
+    console.log('On Windows, --clean should be specified.\n');
   }
 
   printParameters(queries, inputDir, outputDir);
