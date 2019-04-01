@@ -269,8 +269,8 @@ const flags = {
  */
 function main() {
   checkDependencies();
-  const cli = meow(help, flags);
 
+  const cli = meow(help, flags);
   let queries = cli.input;
   if (_.isEmpty(queries)) {
     queries = settings.defaultQueries;
@@ -288,16 +288,14 @@ function main() {
   } = options;
   const inputDir = input || sourceDir;
   const outputDir = output || destinationDir;
+
   validateDirectories(inputDir, outputDir);
 
   if (clean) {
-    console.log(`Deleting ${outputDir} ...\n`);
-    deleteDirectory(outputDir);
+    cleanUp(outputDir);
   }
 
-  console.log(`Input directory: ${inputDir}`);
-  console.log(`Output directory: ${outputDir}`);
-  console.log(`Queries: ${queries.join(', ')}\n`);
+  printParameters(queries, inputDir, outputDir);
 
   return hasLink().then(link => {
     options = {
@@ -306,26 +304,9 @@ function main() {
     };
     const hasStdin = !process.stdin.isTTY;
     if (hasStdin) {
-      // read files from stdin
-      console.log('Reading from standard input ...\n');
-      const stream$ = metadataForFiles(stdin(), options);
-      processQueries(queries, stream$, outputDir, options);
+      processStdin(queries, outputDir, options);
     } else if (watch) {
-      // watch directory for metadata changes
-      // (extremely simple implementation for the time being)
-      processDirectory(queries, inputDir, outputDir, options).then(() => {
-        console.log('\nRunning in watch mode, press Ctrl+C to quit\n');
-      });
-      const stream$ = metadataChangesInDirectory(inputDir, options);
-      stream$
-        .pipe(
-          RxOp.switchMap(() =>
-            processDirectory(queries, inputDir, outputDir, options)
-          )
-        )
-        .subscribe(() => {
-          console.log('\nRunning in watch mode, press Ctrl+C to quit\n');
-        });
+      watchDirectory(queries, inputDir, outputDir, options);
     } else {
       // process metadata in directory and exit
       processDirectory(queries, inputDir, outputDir, options).then(() => {
@@ -355,6 +336,64 @@ function checkShortcut() {
 http://www.optimumx.com/downloads.html#Shortcut`);
     shell.exit(1);
   }
+}
+
+/**
+ * Delete the output directory.
+ * @param outputDir the output directory
+ */
+function cleanUp(outputDir) {
+  console.log(`Deleting ${outputDir} ...\n`);
+  deleteDirectory(outputDir);
+}
+
+/**
+ * Print the input parameters to the console.
+ * @param queries an array of queries
+ * @param inputDir the directory to look for metadata in
+ * @param outputDir the directory to create links in
+ */
+function printParameters(queries, inputDir, outputDir) {
+  console.log(`Input directory: ${inputDir}`);
+  console.log(`Output directory: ${outputDir}`);
+  console.log(`Queries: ${queries.join(', ')}\n`);
+}
+
+/**
+ * Watch a directory for metadata changes and process queries on them.
+ * (Extremely simple implementation for the time being.)
+ * @param queries an array of queries
+ * @param inputDir the directory to look for metadata in
+ * @param outputDir the directory to create links in
+ * @param [options] an options object
+ */
+function watchDirectory(queries, inputDir, outputDir, options) {
+  processDirectory(queries, inputDir, outputDir, options).then(() => {
+    console.log('\nRunning in watch mode, press Ctrl+C to quit\n');
+  });
+  const stream$ = metadataChangesInDirectory(inputDir, options);
+  stream$
+    .pipe(
+      RxOp.switchMap(() =>
+        processDirectory(queries, inputDir, outputDir, options)
+      )
+    )
+    .subscribe(() => {
+      console.log('\nRunning in watch mode, press Ctrl+C to quit\n');
+    });
+}
+
+/**
+ * Process queries on files read from standard input.
+ * @param queries an array of queries
+ * @param inputDir the directory to look for metadata in
+ * @param outputDir the directory to create links in
+ * @param [options] an options object
+ */
+function processStdin(queries, outputDir, options) {
+  console.log('Reading from standard input ...\n');
+  const stream$ = metadataForFiles(stdin(), options);
+  processQueries(queries, stream$, outputDir, options);
 }
 
 /**
@@ -1523,41 +1562,71 @@ function filterByQuery(metaArr, query) {
 function performQuery(metaArr, query, options) {
   const { allQuery, tagsQuery, categoriesQuery } = options;
   if (!query || query === categoriesQuery) {
-    const qDir = (options && options.queryDir) || settings.queryDir;
-    const cDir = toFilename(categoriesQuery);
-    return makeDirectory(`${qDir}/${cDir}`, options).then(dir =>
-      Promise.all(
-        metaArr.map(meta =>
-          processTagsAndCategories(meta, {
-            ...options,
-            categoryDir: dir
-          })
-        )
-      )
-    );
+    return performCategoriesQuery(metaArr, options);
   }
   if (query === tagsQuery) {
-    const tDir = toFilename(query);
-    return makeDirectory(tDir, options).then(dir =>
-      Promise.all(
-        metaArr.map(meta =>
-          processTags(meta, {
-            ...options,
-            tagDir: dir
-          })
-        )
-      )
-    );
+    return performTagsQuery(metaArr, options);
   }
   if (query === allQuery) {
-    const aDir = toFilename(query);
-    return makeDirectory(aDir, options).then(dir =>
-      Promise.all(metaArr.map(meta => makeLinkOrCopy(meta.file, dir, options)))
-    );
+    return performAllQuery(metaArr, options);
   }
   const matches = filterByQuery(metaArr, query);
   return Promise.all(
     matches.map(match => makeQueryLink(match, query, options))
+  );
+}
+
+/**
+ * Perform an all query (`settings.allQuery`).
+ * @param metaArr a metadata object array
+ * @param [options] an options object
+ */
+function performAllQuery(metaArr, options) {
+  const { allQuery } = options;
+  const aDir = toFilename(allQuery);
+  return makeDirectory(aDir, options).then(dir =>
+    Promise.all(metaArr.map(meta => makeLinkOrCopy(meta.file, dir, options)))
+  );
+}
+
+/**
+ * Perform a tags query (`settings.tagsQuery`).
+ * @param metaArr a metadata object array
+ * @param [options] an options object
+ */
+function performTagsQuery(metaArr, options) {
+  const { tagsQuery } = options;
+  const tDir = toFilename(tagsQuery);
+  return makeDirectory(tDir, options).then(dir =>
+    Promise.all(
+      metaArr.map(meta =>
+        processTags(meta, {
+          ...options,
+          tagDir: dir
+        })
+      )
+    )
+  );
+}
+
+/**
+ * Perform a categories query (`settings.categoriesQuery`).
+ * @param metaArr a metadata object array
+ * @param [options] an options object
+ */
+function performCategoriesQuery(metaArr, options) {
+  const { categoriesQuery } = options;
+  const qDir = (options && options.queryDir) || settings.queryDir;
+  const cDir = toFilename(categoriesQuery);
+  return makeDirectory(`${qDir}/${cDir}`, options).then(dir =>
+    Promise.all(
+      metaArr.map(meta =>
+        processTagsAndCategories(meta, {
+          ...options,
+          categoryDir: dir
+        })
+      )
+    )
   );
 }
 
