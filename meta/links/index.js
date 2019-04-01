@@ -1524,11 +1524,6 @@ function parseQuery(tagListStr) {
  * @return a filtered metadata object array
  */
 function filterByTagList(metaArr, tagList) {
-  const hasTag = (meta, tag) => {
-    const tags = meta.tags || [];
-    return _.includes(tags, tag);
-  };
-
   const filter = meta => {
     for (let i = 0; i < tagList.length; i++) {
       const tag = tagList[i];
@@ -1682,6 +1677,63 @@ function toFilename(str, options) {
   file = file.replace(/[^-0-9a-z_.,' ]/gi, '');
   file = _.truncate(file, { length: 100, omission: '', ...options });
   return file;
+}
+
+/**
+ * Whether a meta object has a tag.
+ * @param meta a meta object
+ * @param tag a tag
+ * @return `true` if it has the tag, `false` otherwise
+ */
+function hasTag(meta, tag) {
+  return hasProp(meta, 'tag', tag);
+}
+
+/**
+ * Whether a meta object has a category.
+ * @param meta a meta object
+ * @param category a category
+ * @return `true` if it has the category, `false` otherwise
+ */
+function hasCategory(meta, category) {
+  return hasProp(meta, 'category', category);
+}
+
+/**
+ * Whether a meta property contains a value.
+ * @param meta a meta object
+ * @param prop a property string
+ * @param val a value
+ * @return `true` if it contains the value, `false` otherwise
+ */
+function hasProp(meta, prop, val) {
+  if (!meta) {
+    return false;
+  }
+  if (meta[prop] === val) {
+    return true;
+  }
+  const arr = meta[plural(prop)];
+  return _.includes(arr, val);
+}
+
+/**
+ * Return the plural form of a string.
+ * @param str a singular string
+ * @return the plural form
+ * @example
+ *
+ * plural('tag');
+ * // => 'tags'
+ *
+ * plural('category');
+ * // => 'categories'
+ */
+function plural(str) {
+  if (str === 'category') {
+    return 'categories';
+  }
+  return str + 's';
 }
 
 // export functions for testing
