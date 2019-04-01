@@ -140,7 +140,17 @@ const settings = {
   metaExt: '.yml',
 
   /**
-   * The default query.
+   * Query for all files.
+   */
+  allQuery: '@',
+
+  /**
+   * Query for all tags.
+   */
+  tagsQuery: '#',
+
+  /**
+   * Query for all categories.
    */
   categoriesQuery: '*',
 
@@ -148,11 +158,6 @@ const settings = {
    * The default queries.
    */
   defaultQueries: ['#', '*'],
-
-  /**
-   * The default query.
-   */
-  tagsQuery: '#',
 
   /**
    * The default category.
@@ -1516,7 +1521,7 @@ function filterByQuery(metaArr, query) {
  * @param [options] an options object
  */
 function performQuery(metaArr, query, options) {
-  const { tagsQuery, categoriesQuery } = options;
+  const { allQuery, tagsQuery, categoriesQuery } = options;
   if (!query || query === categoriesQuery) {
     const qDir = (options && options.queryDir) || settings.queryDir;
     const cDir = toFilename(categoriesQuery);
@@ -1532,8 +1537,8 @@ function performQuery(metaArr, query, options) {
     );
   }
   if (query === tagsQuery) {
-    const aDir = toFilename(tagsQuery);
-    return makeDirectory(aDir, options).then(dir =>
+    const tDir = toFilename(query);
+    return makeDirectory(tDir, options).then(dir =>
       Promise.all(
         metaArr.map(meta =>
           processTags(meta, {
@@ -1542,6 +1547,12 @@ function performQuery(metaArr, query, options) {
           })
         )
       )
+    );
+  }
+  if (query === allQuery) {
+    const aDir = toFilename(query);
+    return makeDirectory(aDir, options).then(dir =>
+      Promise.all(metaArr.map(meta => makeLinkOrCopy(meta.file, dir, options)))
     );
   }
   const matches = filterByQuery(metaArr, query);
@@ -1590,7 +1601,7 @@ function makeQueryLink(meta, query, options) {
  */
 function toFilename(str, options) {
   let file = str;
-  if (file === '#' || file === '+') {
+  if (file === '#' || file === '+' || file === '@') {
     return file;
   }
   file = file.replace(/^https?:\/\//i, '');
