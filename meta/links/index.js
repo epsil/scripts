@@ -87,8 +87,37 @@ as soon as it arrives. This makes it easy to combine with other
 utilities, such as find and grep.
 
 Type metalinks --version to see the current version.
+Type metalinks --license to see the license.
+Type metalinks --riddle to see a riddle.
 
 See also: metatag, yarch.`;
+
+/**
+ * License to display when running with `--license`.
+ */
+const license = `Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`;
+
+/**
+ * Riddle to display when running with `--riddle`.
+ */
+const riddle = `The trick is to learn the trick.
+The key to the treasure is the treasure.
+The name of the thing is the thing itself.
+The name of the game is to name the game.`;
 
 /**
  * Default values that determine the behavior of the program.
@@ -262,7 +291,17 @@ const flags = {
     clean: {
       type: 'boolean',
       alias: 'c'
-    }
+    },
+
+    /**
+     * Whether to display the license (`license`).
+     */
+    license: {},
+
+    /**
+     * Whether to display a riddle (`riddle`).
+     */
+    riddle: {}
   }
 };
 
@@ -287,12 +326,24 @@ function main() {
     output,
     watch,
     clean,
+    license: licenseFlag,
+    riddle: riddleFlag,
     sourceDir,
     destinationDir,
     makeLinks
   } = options;
   const inputDir = input || sourceDir;
   const outputDir = output || destinationDir;
+
+  if (licenseFlag) {
+    printLicense();
+    shell.exit(0);
+  }
+
+  if (riddleFlag) {
+    printRiddle();
+    shell.exit(0);
+  }
 
   validateDirectories(inputDir, outputDir);
 
@@ -352,6 +403,20 @@ http://www.optimumx.com/downloads.html#Shortcut`);
 function cleanUp(outputDir) {
   console.log(`Deleting ${outputDir} ...\n`);
   deleteDirectory(outputDir);
+}
+
+/**
+ * Print the license.
+ */
+function printLicense() {
+  console.log(license);
+}
+
+/**
+ * Print a riddle.
+ */
+function printRiddle() {
+  console.log(riddle);
 }
 
 /**
