@@ -500,6 +500,54 @@ describe('toFilename', function() {
   });
 });
 
+describe('hasTag', function() {
+  it('should confirm whether a metadata object has a tag', function() {
+    metalinks
+      .hasTag(
+        {
+          tags: ['foo', 'bar']
+        },
+        'foo'
+      )
+      .should.eql(true);
+  });
+
+  it('should disconfirm whether a metadata object has a tag', function() {
+    metalinks
+      .hasTag(
+        {
+          tags: ['foo', 'bar']
+        },
+        'baz'
+      )
+      .should.eql(false);
+  });
+});
+
+describe('hasCategory', function() {
+  it('should confirm whether a metadata object has a category', function() {
+    metalinks
+      .hasCategory(
+        {
+          categories: ['foo', 'bar']
+        },
+        'foo'
+      )
+      .should.eql(true);
+  });
+
+  it('should disconfirm whether a metadata object has a category', function() {
+    metalinks
+      .hasCategory(
+        {
+          categories: ['foo', 'bar']
+        },
+        'baz'
+      )
+      .should.eql(false);
+  });
+});
+
 describe('hasProp', function() {
   it('should confirm whether a metadata object has a tag', function() {
     metalinks
