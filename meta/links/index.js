@@ -87,10 +87,9 @@ metalinks is fully stream-enabled and will begin processing input
 as soon as it arrives. This makes it easy to combine with other
 utilities, such as find and grep.
 
-Type metalinks --version for the current version.
-Type metalinks --license for the license.
-Type metalinks --hint for a hint.
-Type metalinks --quote for a quote.
+Type metalinks --version for the current version. For the license,
+type metalinks --license. For a hint, type metalinks --hint.
+For a random quote, type metalinks --quote.
 
 See also: metatag, yarch.`;
 
@@ -159,7 +158,13 @@ magic and think is performed by demons. Nothing is performed by
 demons; there are no demons. Anyone can perform magic. Anyone can
 reach his goals if he can think, if he can wait, if he can fast."
 
--- Hermann Hesse: *Siddhartha: An Indian Poem*, "Kamala"`
+-- Hermann Hesse: *Siddhartha: An Indian Poem*, "Kamala"`,
+
+  `No reference is truly direct---every reference depends on *some*
+kind of coding scheme. It's just a question of how implicit it is.
+
+-- Douglas Hofstadter: *Gödel, Escher, Bach: an Eternal Golden Braid*,
+   "Six-Part Ricercar"`
 ];
 
 /**
