@@ -150,6 +150,11 @@ const settings = {
   tagsQuery: '#',
 
   /**
+   * Query for all user tags.
+   */
+  userTagsQuery: '+',
+
+  /**
    * Query for all categories.
    */
   categoriesQuery: '*',
@@ -892,12 +897,33 @@ function processTagsAndCategories(meta, options) {
  * @param [options] an options object
  */
 function processTags(meta, options) {
+  return processProperty(meta, 'tag', makeTagLink, options);
+}
+
+/**
+ * Process the `_tags` properties of a metadata object.
+ * @param meta a metadata object
+ * @param [options] an options object
+ */
+function processUserTags(meta, options) {
+  const { userTagsQuery } = options;
+  const makeUserTagLink = (file, tag, opts) =>
+    makeTagLink(file, tag, { tagDir: userTagsQuery, ...opts });
+  return processProperty(meta, '_tag', makeUserTagLink, options);
+}
+
+/**
+ * Process the `tags` properties of a metadata object.
+ * @param meta a metadata object
+ * @param [options] an options object
+ */
+function processProperty(meta, prop, fn, options) {
   return new Promise((resolve, reject) => {
     const result = [];
-    let tags = (meta && meta.tags) || [];
-    tags = tags.filter(tag => typeof tag === 'string');
-    tags.forEach(tag => {
-      result.push(makeTagLink(meta.file, tag, options));
+    const iterator = fn || (x => x);
+    const vals = getProp(meta, prop);
+    vals.forEach(val => {
+      result.push(iterator(meta.file, val, options));
     });
     Promise.all(result).then(() => resolve(meta));
   });
@@ -1557,12 +1583,15 @@ function filterByQuery(metaArr, query) {
  * @param [options] an options object
  */
 function performQuery(metaArr, query, options) {
-  const { allQuery, tagsQuery, categoriesQuery } = options;
+  const { allQuery, tagsQuery, userTagsQuery, categoriesQuery } = options;
   if (!query || query === categoriesQuery) {
     return performCategoriesQuery(metaArr, options);
   }
   if (query === tagsQuery) {
     return performTagsQuery(metaArr, options);
+  }
+  if (query === userTagsQuery) {
+    return performUserTagsQuery(metaArr, options);
   }
   if (query === allQuery) {
     return performAllQuery(metaArr, options);
@@ -1598,6 +1627,26 @@ function performTagsQuery(metaArr, options) {
     Promise.all(
       metaArr.map(meta =>
         processTags(meta, {
+          ...options,
+          tagDir: dir
+        })
+      )
+    )
+  );
+}
+
+/**
+ * Perform a user tags query (`settings.userTagsQuery`).
+ * @param metaArr a metadata object array
+ * @param [options] an options object
+ */
+function performUserTagsQuery(metaArr, options) {
+  const { userTagsQuery } = options;
+  const tDir = toFilename(userTagsQuery);
+  return makeDirectory(tDir, options).then(dir =>
+    Promise.all(
+      metaArr.map(meta =>
+        processUserTags(meta, {
           ...options,
           tagDir: dir
         })
@@ -1667,7 +1716,11 @@ function makeQueryLink(meta, query, options) {
  */
 function toFilename(str, options) {
   let file = str;
-  if (file === '#' || file === '+' || file === '@') {
+  if (
+    file === settings.allQuery ||
+    file === settings.tagsQuery ||
+    file === settings.userTagsQuery
+  ) {
     return file;
   }
   file = file.replace(/^https?:\/\//i, '');
@@ -1682,8 +1735,8 @@ function toFilename(str, options) {
 }
 
 /**
- * Whether a meta object has a tag.
- * @param meta a meta object
+ * Whether a metadata object has a tag.
+ * @param meta a metadata object
  * @param tag a tag
  * @return `true` if it has the tag, `false` otherwise
  */
@@ -1692,8 +1745,8 @@ function hasTag(meta, tag) {
 }
 
 /**
- * Whether a meta object has a category.
- * @param meta a meta object
+ * Whether a metadata object has a category.
+ * @param meta a metadata object
  * @param category a category
  * @return `true` if it has the category, `false` otherwise
  */
@@ -1702,8 +1755,8 @@ function hasCategory(meta, category) {
 }
 
 /**
- * Whether a meta property contains a value.
- * @param meta a meta object
+ * Whether a metadata property contains a value.
+ * @param meta a metadata object
  * @param prop a property string
  * @param val a value
  * @return `true` if it contains the value, `false` otherwise
@@ -1717,6 +1770,28 @@ function hasProp(meta, prop, val) {
   }
   const arr = meta[plural(prop)];
   return _.includes(arr, val);
+}
+
+/**
+ * Get the value of a metadata property.
+ * @param meta a metadata object
+ * @param prop the property's name, a string
+ * @return an array of all values assigned to the property
+ */
+function getProp(meta, prop) {
+  let result = [];
+  if (!meta) {
+    return result;
+  }
+  if (meta[prop]) {
+    result.push(meta[prop]);
+  }
+  if (meta[plural(prop)]) {
+    result = result.concat(meta[plural(prop)]);
+  }
+  result = result.filter(tag => typeof tag === 'string');
+  result = _.uniq(result);
+  return result;
 }
 
 /**
