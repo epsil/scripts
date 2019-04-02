@@ -8,6 +8,7 @@ const nodeWatch = require('node-watch');
 const os = require('os');
 const path = require('path');
 const readline = require('readline');
+const redent = require('redent');
 const Rx = require('rxjs/Rx');
 const RxOp = require('rxjs/operators');
 const shell = require('shelljs');
@@ -117,7 +118,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`;
 const riddle = `The trick is to learn the trick.
 The key to the treasure is the treasure.
 The name of the thing is the thing itself.
-The name of the game is to name the game.`;
+The name of the game is to name the game.
+
+The finger that points at the moon
+points the way to the moon.`;
 
 /**
  * Default values that determine the behavior of the program.
@@ -409,14 +413,24 @@ function cleanUp(outputDir) {
  * Print the license.
  */
 function printLicense() {
-  console.log(license);
+  printHelpString(license);
 }
 
 /**
  * Print a riddle.
  */
 function printRiddle() {
-  console.log(riddle);
+  printHelpString(riddle);
+}
+
+/**
+ * Print a string nicely with indentation.
+ * @param str the string to print
+ * @param [indent] the number of spaces to indent
+ */
+function printHelpString(str, indent) {
+  const indentCount = indent || 2;
+  console.log('\n' + redent(str.trim(), indentCount) + '\n');
 }
 
 /**

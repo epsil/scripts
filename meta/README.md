@@ -1,10 +1,13 @@
 `meta.js`
 =========
 
-> *The trick is to learn the trick.<br>
-> The key to the treasure is the treasure.<br>
-> The name of the thing is the thing itself.<br>
+> *The trick is to learn the trick.
+> The key to the treasure is the treasure.
+> The name of the thing is the thing itself.
 > The name of the game is to name the game.*
+>
+> *The finger that points at the moon<br>
+> points the way to the moon.*
 >
 > -- `metalinks --riddle`
 
