@@ -157,17 +157,17 @@ const settings = {
   /**
    * Query for all categories.
    */
-  categoriesQuery: '*',
+  categoriesQuery: '_',
 
   /**
    * The default queries.
    */
-  defaultQueries: ['#', '*'],
+  defaultQueries: ['#', '+', '_'],
 
   /**
    * The default category.
    */
-  defaultCategory: '*',
+  defaultCategory: '_',
 
   /**
    * Whether to make links or copies.
@@ -406,7 +406,7 @@ function processStdin(queries, outputDir, options) {
 /**
  * Process queries on a metadata stream and create links in a given directory.
  * Also runs the `--run-before` and `--run-after` commands, if specified.
- * @param queries an array of queries, e.g., `['*', 'foo bar']`
+ * @param queries an array of queries, e.g., `['#', 'foo bar']`
  * @param stream$ an RxJS stream of metadata objects
  * @param inputDir the directory to look for metadata in
  * @param outputDir the directory to create links in
@@ -433,7 +433,7 @@ function processDirectory(queries, inputDir, outputDir, options) {
  * Process queries on a metadata stream and create links in a given directory.
  * If running on a system supporting it, this function uses a temporary directory
  * for its working directory. See `processQueriesInTempDir()` for details.
- * @param queries an array of queries, e.g., `['*', 'foo bar']`
+ * @param queries an array of queries, e.g., `['#', 'foo bar']`
  * @param stream$ an RxJS stream of metadata objects
  * @param outputDir the directory to create links in
  * @param [tempDir] the working directory, default `tmpDir`
@@ -453,7 +453,7 @@ function processQueries(queries, stream$, outputDir, options) {
  * Process queries on a metadata stream and create links in a given directory.
  * Note that this function does its work in a temporary directory, `tempDir`, and
  * then merges that directory into the output directory, `outputDir`.
- * @param queries an array of queries, e.g., `['*', 'foo bar']`
+ * @param queries an array of queries, e.g., `['#', 'foo bar']`
  * @param stream$ an RxJS stream of metadata objects
  * @param outputDir the directory to create links in
  * @param [tempDir] the working directory, default `tmpDir`
@@ -627,7 +627,7 @@ function mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options) {
 
 /**
  * Process queries on a metadata stream and create links in a given directory.
- * @param queries an array of queries, e.g., `['*', 'foo bar']`
+ * @param queries an array of queries, e.g., `['#', 'foo bar']`
  * @param stream$ an RxJS stream of metadata objects
  * @param outputDir the directory to create links in
  * @param [options] an options object
