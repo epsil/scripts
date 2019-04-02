@@ -1820,7 +1820,9 @@ module.exports = {
   filterByTagList,
   getFilenameFromMetadataFilename,
   getMetadataFilenameFromFilename,
+  getProp,
   hasCmd,
+  hasProp,
   invokeRsync,
   makeCategoryContainer,
   makeDirectory,
@@ -1829,6 +1831,7 @@ module.exports = {
   parseMetadata,
   parseQuery,
   parseYaml,
+  plural,
   settings,
   toFilename,
   validateDirectories

@@ -499,3 +499,74 @@ describe('toFilename', function() {
       );
   });
 });
+
+describe('hasProp', function() {
+  it('should confirm whether a metadata object has a tag', function() {
+    metalinks
+      .hasProp(
+        {
+          tags: ['foo', 'bar']
+        },
+        'tag',
+        'foo'
+      )
+      .should.eql(true);
+  });
+
+  it('should disconfirm whether a metadata object has a tag', function() {
+    metalinks
+      .hasProp(
+        {
+          tags: ['foo', 'bar']
+        },
+        'tag',
+        'baz'
+      )
+      .should.eql(false);
+  });
+});
+
+describe('getProp', function() {
+  it('should get all tags of a metadata object', function() {
+    metalinks
+      .getProp(
+        {
+          tags: ['foo', 'bar']
+        },
+        'tag'
+      )
+      .should.eql(['foo', 'bar']);
+  });
+
+  it('should get all user tags of a metadata object', function() {
+    metalinks
+      .getProp(
+        {
+          _tags: ['foo', 'bar']
+        },
+        '_tag'
+      )
+      .should.eql(['foo', 'bar']);
+  });
+
+  it('should get all categories of a metadata object', function() {
+    metalinks
+      .getProp(
+        {
+          categories: ['foo', 'bar']
+        },
+        'category'
+      )
+      .should.eql(['foo', 'bar']);
+  });
+});
+
+describe('plural', function() {
+  it('should pluralize "tag" as "tags"', function() {
+    metalinks.plural('tag').should.eql('tags');
+  });
+
+  it('should pluralize "category" as "categories"', function() {
+    metalinks.plural('category').should.eql('categories');
+  });
+});
