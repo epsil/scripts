@@ -87,9 +87,10 @@ metalinks is fully stream-enabled and will begin processing input
 as soon as it arrives. This makes it easy to combine with other
 utilities, such as find and grep.
 
-Type metalinks --version to see the current version.
-Type metalinks --license to see the license.
-Type metalinks --riddle to see a riddle.
+Type metalinks --version for the current version.
+Type metalinks --license for the license.
+Type metalinks --hint for a hint.
+Type metalinks --quote for a quote.
 
 See also: metatag, yarch.`;
 
@@ -113,15 +114,53 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`;
 
 /**
- * Riddle to display when running with `--riddle`.
+ * Hint to display when running with `--hint`.
  */
-const riddle = `The trick is to learn the trick.
+const hint = `The trick is to learn the trick.
 The key to the treasure is the treasure.
 The name of the thing is the thing itself.
 The name of the game is to name the game.
 
 The finger that points at the moon
 points the way to the moon.`;
+
+/**
+ * Quotes to display when running with `--quote`.
+ */
+const quotes = [
+  `Last night I invented a new pleasure, and as I was giving it the first
+trial an angel and a devil came rushing toward my house. They met at
+my door and fought with each other over my newly created pleasure;
+the one crying, "It is a sin!"---the other, "It is a virtue!"
+
+-- Kahlil Gibran: "The New Pleasure", *The Madman*`,
+
+  `... It's in words that the magic is---Abracadabra, Open Sesame, and
+the rest---but the magic words in one story aren't magical in the
+next. The real magic is to understand which words work, and when,
+and for what; the trick is to learn the trick.
+
+... And those words are made from the letters of our alphabet:
+a couple-dozen squiggles we can draw with the pen. This is the key!
+And the treasure, too, if we can only get our hands on it! It's as
+if---as if the key to the treasure *is* the treasure!
+
+-- John Barth, *Chimera*`,
+
+  `"You see, Kamala, when you throw a stone into the water, it hurries by
+the swiftest possible path to the bottom. It is like this when
+Siddhartha has a goal, a resolve. Siddhartha does nothing---he waits,
+he thinks, he fasts---but he passes through the things of this world
+like a stone through water, without doing anything, without moving; he
+is drawn and lets himself fall. His goal draws him to it, for he
+allows nothing into his soul that might conflict with this goal. This
+is what Siddhartha learned among the Samanas. It is what fools call
+magic and think is performed by demons. Nothing is performed by
+demons; there are no demons. Anyone can perform magic. Anyone can
+reach his goals if he can think, if he can wait, if he can fast."
+
+-- Hermann Hesse: *Siddhartha: An Indian Poem*, "Kamala"`
+];
 
 /**
  * Default values that determine the behavior of the program.
@@ -303,9 +342,9 @@ const flags = {
     license: {},
 
     /**
-     * Whether to display a riddle (`riddle`).
+     * Whether to display a hint (`hint`).
      */
-    riddle: {}
+    hint: {}
   }
 };
 
@@ -331,7 +370,8 @@ function main() {
     watch,
     clean,
     license: licenseFlag,
-    riddle: riddleFlag,
+    hint: hintFlag,
+    quote: quoteFlag,
     sourceDir,
     destinationDir,
     makeLinks
@@ -344,8 +384,13 @@ function main() {
     shell.exit(0);
   }
 
-  if (riddleFlag) {
-    printRiddle();
+  if (hintFlag) {
+    printHint();
+    shell.exit(0);
+  }
+
+  if (quoteFlag) {
+    printQuote();
     shell.exit(0);
   }
 
@@ -417,10 +462,15 @@ function printLicense() {
 }
 
 /**
- * Print a riddle.
+ * Print a hint.
  */
-function printRiddle() {
-  printHelpString(riddle);
+function printHint() {
+  printHelpString(hint);
+}
+
+function printQuote() {
+  const quote = quotes[Math.floor(Math.random() * quotes.length)];
+  printHelpString(quote);
 }
 
 /**

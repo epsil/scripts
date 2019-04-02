@@ -1,15 +1,15 @@
 `meta.js`
 =========
 
-> *The trick is to learn the trick.
-> The key to the treasure is the treasure.
-> The name of the thing is the thing itself.
+> *The trick is to learn the trick.<br>
+> The key to the treasure is the treasure.<br>
+> The name of the thing is the thing itself.<br>
 > The name of the game is to name the game.*
 >
 > *The finger that points at the moon<br>
 > points the way to the moon.*
 >
-> -- `metalinks --riddle`
+> -- `metalinks --hint`
 
 **`metatag`** er et Node-skript som lagrer metadata om en fil i et YAML-dokument. **`metalinks`**  er et skript som genererer symbolske lenker basert på slike metadata. Skriptene kan brukes som verktøy for organisering og tagging av filer.
 
@@ -205,7 +205,7 @@ Man kan også legge til prefiksoperatorene `+` og `-`, slik at f.eks. `+foo -bar
 
 Hvis man vil spørre etter kategorier, kan man skrive `category:foo`, som vil returnere alle filer i kategorien `foo`. Uttrykket `foo category:bar` vil returnere alle filer med taggen `foo` i kategorien `bar`.
 
-I tillegg definerer vi følgende *spesialspørringer*:
+I tillegg defineres følgende *spesialspørringer*:
 
 | Uttrykk | Betydning |
 | ------- | --------- |
