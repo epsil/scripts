@@ -621,7 +621,8 @@ describe('plural', function() {
 
 describe('makeQueryLink', function() {
   afterEach(function() {
-    const dir = `${metalinks.settings.queryDir}/foo`;
+    const qDir = metalinks.settings.queryDir;
+    const dir = `${qDir}/foo`;
     shell.rm('-rf', dir);
   });
   it('should make query links', function() {
