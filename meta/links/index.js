@@ -1993,6 +1993,7 @@ module.exports = {
   invokeRsync,
   makeCategoryContainer,
   makeDirectory,
+  makeQueryLink,
   makeTagContainer,
   mergeTmpDirAndOutputDirWithRsync,
   parseMetadata,

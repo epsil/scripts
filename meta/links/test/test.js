@@ -618,3 +618,32 @@ describe('plural', function() {
     metalinks.plural('category').should.eql('categories');
   });
 });
+
+describe('makeQueryLink', function() {
+  afterEach(function() {
+    const dir = `${metalinks.settings.queryDir}/foo`;
+    shell.rm('-rf', dir);
+  });
+  it('should make query links', function() {
+    return metalinks
+      .makeQueryLink(
+        {
+          file: './fixtures/lib/enfil.txt',
+          meta: './fixtures/lib/.meta/.enfil.txt.yml',
+          tags: ['foo', 'bar']
+        },
+        'foo'
+      )
+      .then(() => {
+        const { queryDir: queryContainerDir } = metalinks.settings;
+        const queryDir = `${queryContainerDir}/foo`;
+        const link = `${queryDir}/enfil.txt`;
+        const queryContainerExists = fs.existsSync(queryContainerDir);
+        const queryDirExists = fs.existsSync(queryDir);
+        const linkExists = fs.existsSync(link);
+        expect(queryContainerExists).to.be.true;
+        expect(queryDirExists).to.be.true;
+        expect(linkExists).to.be.true;
+      });
+  });
+});
