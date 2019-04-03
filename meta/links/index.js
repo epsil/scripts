@@ -252,6 +252,11 @@ const settings = {
   makeLinks: true,
 
   /**
+   * Whether to make shortcuts on Windows.
+   */
+  makeShortcuts: true,
+
+  /**
    * Globbing pattern for directories to ignore.
    */
   ignorePattern: 'node_modules/**',
@@ -1086,8 +1091,22 @@ function makeTagLinkInCategory(filePath, category, tag, options) {
  */
 function makeTagLink(filePath, tag, options) {
   return makeTagDirectory(tag, options).then(dir =>
-    makeLinkOrCopy(filePath, dir, options)
+    makeLink(filePath, dir, options)
   );
+}
+
+/**
+ * Make a symbolic link or a shortcut to a file.
+ * Does the former on Unix and the latter on Windows.
+ * @param source the file to link to
+ * @param destination the location of the link
+ * @param [options] an options object
+ */
+function makeLink(source, destination, options) {
+  if (options && options.makeShortcuts && isWindows()) {
+    return makeShortcut(source, destination, options);
+  }
+  return makeLinkOrCopy(source, destination, options);
 }
 
 /**
@@ -1105,20 +1124,6 @@ function makeLinkOrCopy(source, destination, options) {
     return makeLink(source, destination, options);
   }
   return makeCopy(source, destination, { ...options, force: true });
-}
-
-/**
- * Make a symbolic link or a shortcut to a file.
- * Does the former on Unix and the latter on Windows.
- * @param source the file to link to
- * @param destination the location of the link
- * @param [options] an options object
- */
-function makeLink(source, destination, options) {
-  if (isWindows()) {
-    return makeShortcut(source, destination, options);
-  }
-  return makeSymLink(source, destination, options);
 }
 
 /**
@@ -1752,7 +1757,7 @@ function performAllQuery(metaArr, options) {
   const { allQuery } = options;
   const aDir = toFilename(allQuery);
   return makeDirectory(aDir, options).then(dir =>
-    Promise.all(metaArr.map(meta => makeLinkOrCopy(meta.file, dir, options)))
+    Promise.all(metaArr.map(meta => makeLink(meta.file, dir, options)))
   );
 }
 
@@ -1838,7 +1843,7 @@ function makeQueryLink(meta, query, options) {
   const qDir = toFilename(query);
   return makeQueryContainer(options)
     .then(dir => makeDirectory(`${dir}/${qDir}`, options))
-    .then(dir => makeLinkOrCopy(meta.file, dir, options));
+    .then(dir => makeLink(meta.file, dir, options));
 }
 
 /**

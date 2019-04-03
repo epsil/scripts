@@ -632,7 +632,8 @@ describe('makeQueryLink', function() {
           meta: './fixtures/lib/.meta/.enfil.txt.yml',
           tags: ['foo', 'bar']
         },
-        'foo'
+        'foo',
+        { makeShortcuts: false }
       )
       .then(() => {
         const { queryDir: queryContainerDir } = metalinks.settings;
