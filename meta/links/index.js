@@ -127,12 +127,11 @@ points the way to the moon.`;
  * Quotes to display when running with `--quote`.
  */
 const quotes = [
-  `Last night I invented a new pleasure, and as I was giving it the first
-trial an angel and a devil came rushing toward my house. They met at
-my door and fought with each other over my newly created pleasure;
-the one crying, "It is a sin!"---the other, "It is a virtue!"
+  `No reference is truly direct---every reference depends on *some*
+kind of coding scheme. It's just a question of how implicit it is.
 
--- Kahlil Gibran: "The New Pleasure", *The Madman*`,
+-- Douglas Hofstadter: *Gödel, Escher, Bach: an Eternal Golden Braid*,
+   "Six-Part Ricercar"`,
 
   `... It's in words that the magic is---Abracadabra, Open Sesame, and
 the rest---but the magic words in one story aren't magical in the
@@ -146,12 +145,12 @@ if---as if the key to the treasure *is* the treasure!
 
 -- John Barth, *Chimera*`,
 
-  `"You see, Kamala, when you throw a stone into the water, it hurries by
-the swiftest possible path to the bottom. It is like this when
+  `"You see, Kamala, when you throw a stone into the water, it hurries
+by the swiftest possible path to the bottom. It is like this when
 Siddhartha has a goal, a resolve. Siddhartha does nothing---he waits,
 he thinks, he fasts---but he passes through the things of this world
-like a stone through water, without doing anything, without moving; he
-is drawn and lets himself fall. His goal draws him to it, for he
+like a stone through water, without doing anything, without moving;
+he is drawn and lets himself fall. His goal draws him to it, for he
 allows nothing into his soul that might conflict with this goal. This
 is what Siddhartha learned among the Samanas. It is what fools call
 magic and think is performed by demons. Nothing is performed by
@@ -160,11 +159,12 @@ reach his goals if he can think, if he can wait, if he can fast."
 
 -- Hermann Hesse: *Siddhartha: An Indian Poem*, "Kamala"`,
 
-  `No reference is truly direct---every reference depends on *some*
-kind of coding scheme. It's just a question of how implicit it is.
+  `Last night I invented a new pleasure, and as I was giving it the first
+trial an angel and a devil came rushing toward my house. They met at
+my door and fought with each other over my newly created pleasure;
+the one crying, "It is a sin!"---the other, "It is a virtue!"
 
--- Douglas Hofstadter: *Gödel, Escher, Bach: an Eternal Golden Braid*,
-   "Six-Part Ricercar"`
+-- Kahlil Gibran: "The New Pleasure", *The Madman*`
 ];
 
 /**
