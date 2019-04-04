@@ -1090,23 +1090,27 @@ function makeTagLinkInCategory(filePath, category, tag, options) {
  * @param [options] an options object
  */
 function makeTagLink(filePath, tag, options) {
-  return makeTagDirectory(tag, options).then(dir =>
-    makeLink(filePath, dir, options)
-  );
+  const tDir = (options && options.tagDir) || toFilename(settings.tagDir);
+  const dir = toFilename(tag);
+  return makeLinkInDirectory(filePath, `${tDir}/${dir}`, options);
 }
 
 /**
- * Make a symbolic link or a shortcut to a file.
- * Does the former on Unix and the latter on Windows.
- * @param source the file to link to
- * @param destination the location of the link
+ * Make a link to a file in a given directory.
+ * @param file The file to link to
+ * @param dir The directory to place the link in
  * @param [options] an options object
  */
-function makeLink(source, destination, options) {
-  if (options && options.makeShortcuts && isWindows()) {
-    return makeShortcut(source, destination, options);
-  }
-  return makeLinkOrCopy(source, destination, options);
+function makeLinkInDirectory(file, dir, options) {
+  return new Promise((resolve, reject) => {
+    const cwd = (options && options.cwd) || '.';
+    const dirPath = joinPaths(cwd, dir);
+    const dirExists = fs.existsSync(dirPath);
+    if (!dirExists) {
+      shell.mkdir('-p', dirPath);
+    }
+    makeLink(file, dirPath, options).then(resolve);
+  });
 }
 
 /**
@@ -1119,11 +1123,14 @@ function makeLink(source, destination, options) {
  * @param destination the location of the link
  * @param [options] an options object
  */
-function makeLinkOrCopy(source, destination, options) {
-  if (options && options.makeLinks) {
-    return makeLink(source, destination, options);
+function makeLink(source, destination, options) {
+  if (options && options.makeShortcuts && isWindows()) {
+    return makeShortcut(source, destination, options);
   }
-  return makeCopy(source, destination, { ...options, force: true });
+  if (options && options.makeLinks) {
+    return makeSymLink(source, destination, options);
+  }
+  return makeCopy(source, destination, options);
 }
 
 /**
@@ -1755,9 +1762,9 @@ function performQuery(metaArr, query, options) {
  */
 function performAllQuery(metaArr, options) {
   const { allQuery } = options;
-  const aDir = toFilename(allQuery);
-  return makeDirectory(aDir, options).then(dir =>
-    Promise.all(metaArr.map(meta => makeLink(meta.file, dir, options)))
+  const dir = toFilename(allQuery);
+  return Promise.all(
+    metaArr.map(meta => makeLinkInDirectory(meta.file, dir, options))
   );
 }
 
@@ -1840,10 +1847,9 @@ function performQueryOnFile(meta, query, options) {
  * @param [options] an options object
  */
 function makeQueryLink(meta, query, options) {
-  const qDir = toFilename(query);
-  return makeQueryContainer(options)
-    .then(dir => makeDirectory(`${dir}/${qDir}`, options))
-    .then(dir => makeLink(meta.file, dir, options));
+  const qDir = (options && options.queryDir) || toFilename(settings.queryDir);
+  const dir = toFilename(query);
+  return makeLinkInDirectory(meta.file, `${qDir}/${dir}`, options);
 }
 
 /**
