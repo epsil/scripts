@@ -310,7 +310,7 @@ function convertJSONtoYAML(json, url, file) {
     }
     obj.url = normUrl;
   }
-  obj = reorderProperties(obj);
+  obj = reorderProperties(obj, { prefix: true });
   let yml = yaml.safeDump(obj);
   yml = addYAMLHeader(yml, file);
   return yml;
@@ -414,11 +414,15 @@ function normalizeUrl(url) {
  * @param obj a metadata object
  * @return a reordered metadata object
  */
-function reorderProperties(obj) {
+function reorderProperties(obj, options) {
   // FIXME: there should be a less tedious way to write this,
   // but shorthand property syntax results in `undefined` values
   // that are rejected by js-yaml's `safeDump()` method ...
   const result = {};
+  let prefix = '';
+  if (options && options.prefix && obj.url) {
+    prefix = sitename(obj.url) + '_';
+  }
   if (obj['_filename']) {
     result['_filename'] = obj['_filename'];
   }
@@ -453,16 +457,18 @@ function reorderProperties(obj) {
     result['upload_date'] = obj['upload_date'];
   }
   if (obj.tags) {
-    result.tags = obj.tags;
+    result[prefix + 'tags'] = obj.tags;
     if (Array.isArray(result.tags)) {
-      result.tags = result.tags.sort();
+      result[prefix + 'tags'] = result[prefix + 'tags'].sort();
     }
+    delete obj.tags;
   }
   if (obj.categories) {
-    result.categories = obj.categories;
+    result[prefix + 'categories'] = obj.categories;
     if (Array.isArray(result.categories)) {
-      result.categories = result.categories.sort();
+      result.categories = result[prefix + 'categories'].sort();
     }
+    delete obj.categories;
   }
   if (obj.url) {
     result.url = obj.url;
@@ -483,6 +489,22 @@ function reorderProperties(obj) {
     result['dislike_count'] = obj['dislike_count'];
   }
   return { ...result, ...obj };
+}
+
+/**
+ * Return the site name of an URL.
+ * @param url an URL
+ * @return the sitename
+ * @example
+ *
+ * sitename('https://www.youtube.com/');
+ * // => 'youtube'
+ */
+function sitename(url) {
+  let site = url;
+  site = site.replace(/^https?:\/\//i, '');
+  site = site.replace(/^www\./i, '');
+  return site.split('.')[0];
 }
 
 // invoke the "main" function
