@@ -1749,10 +1749,10 @@ function performQuery(metaArr, query, options) {
   if (query === allQuery) {
     return performAllQuery(metaArr, options);
   }
-  const matches = filterByQuery(metaArr, query);
-  return Promise.all(
-    matches.map(match => makeQueryLink(match, query, options))
-  );
+  if (isPropQuery(query)) {
+    return performPropQuery(metaArr, query, options);
+  }
+  return performFilterQuery(metaArr, query, options);
 }
 
 /**
@@ -1830,6 +1830,36 @@ function performCategoriesQuery(metaArr, options) {
 }
 
 /**
+ * Perform a property query.
+ * @param metaArr a metadata object array
+ * @param query a query
+ * @param [options] an options object
+ */
+function performPropQuery(metaArr, query, options) {
+  const prop = query.replace(/^_/, '');
+  return Promise.all(
+    metaArr.map(meta =>
+      getProp(meta, prop).map(val =>
+        makeLinkInDirectory(meta.file, `_/${prop}/${val}`, options)
+      )
+    )
+  );
+}
+
+/**
+ * Perform a filter query.
+ * @param meta a metadata object
+ * @param query a query
+ * @param [options] an options object
+ */
+function performFilterQuery(metaArr, query, options) {
+  const matches = filterByQuery(metaArr, query);
+  return Promise.all(
+    matches.map(match => makeQueryLink(match, query, options))
+  );
+}
+
+/**
  * Make a query link for a file if the file
  * is matched by the query.
  * @param meta a metadata object
@@ -1850,6 +1880,15 @@ function makeQueryLink(meta, query, options) {
   const qDir = (options && options.queryDir) || toFilename(settings.queryDir);
   const dir = toFilename(query);
   return makeLinkInDirectory(meta.file, `${qDir}/${dir}`, options);
+}
+
+/**
+ * Whether a query is a property query.
+ * @param query a query
+ * @return `true` if the query is a property query, `false` otherwise
+ */
+function isPropQuery(query) {
+  return typeof query === 'string' && query.match(/^_/);
 }
 
 /**

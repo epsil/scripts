@@ -607,6 +607,17 @@ describe('getProp', function() {
       )
       .should.eql(['foo', 'bar']);
   });
+
+  it('should return the empty array if the property is not found', function() {
+    metalinks
+      .getProp(
+        {
+          categories: ['foo', 'bar']
+        },
+        'invalidprop'
+      )
+      .should.eql([]);
+  });
 });
 
 describe('plural', function() {
