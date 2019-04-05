@@ -61,6 +61,22 @@ const settings = {
 };
 
 /**
+ * User-adjustable settings.
+ */
+const flags = {
+  flags: {
+    /**
+     * Whether to prefix tags and categories.
+     */
+    prefix: {
+      type: 'boolean',
+      alias: 'p',
+      default: true
+    }
+  }
+};
+
+/**
  * The "main" function.
  *
  * Execution begins here when the script is run from the command line
@@ -68,12 +84,13 @@ const settings = {
  */
 function main() {
   checkDependencies();
-  const cli = meow(help);
+  const cli = meow(help, flags);
+  const options = { ...settings, ...cli.flags };
   const hasStdin = !process.stdin.isTTY;
   if (hasStdin) {
     getStdin().then(str => {
       const urls = str.trim().split('\n');
-      downloadUrls(urls);
+      downloadUrls(urls, options);
       shell.exit(0);
     });
   } else {
@@ -81,7 +98,7 @@ function main() {
     if (noArgs) {
       promptForURLs()
         .then(urls => {
-          downloadUrls(urls);
+          downloadUrls(urls, options);
           shell.exit(0);
         })
         .catch(err => {
@@ -89,7 +106,7 @@ function main() {
         });
     } else {
       const urls = cli.input;
-      downloadUrls(urls);
+      downloadUrls(urls, options);
       shell.exit(0);
     }
   }
@@ -169,22 +186,22 @@ function promptForURLs() {
  * Download URLs.
  * @param urls an array of URLs
  */
-function downloadUrls(urls) {
-  urls.forEach(download);
+function downloadUrls(urls, options) {
+  urls.forEach(url => download(url, options));
 }
 
 /**
  * Download a URL.
  * @param url the URL to download
  */
-function download(url) {
+function download(url, options) {
   const dir = convertUrlToFilename(url);
   shell.mkdir('-p', dir);
   shell.pushd('-q', dir);
   const file = youtubeDl(url);
   const downloadWasSuccessful = file !== '';
   if (downloadWasSuccessful) {
-    fixMetadata(url);
+    fixMetadata(url, options);
     shell.popd('-q');
     const directory = file.replace(/\.mp4$/i, '');
     shell.mv(dir, directory);
@@ -271,10 +288,10 @@ function findJsonFile() {
 /**
  * Look for a JSON metadata file and convert it to YAML.
  */
-function fixMetadata(url) {
+function fixMetadata(url, options) {
   const jsonFile = findJsonFile();
   if (jsonFile) {
-    convertJSONFileToYAMLFile(jsonFile, url);
+    convertJSONFileToYAMLFile(jsonFile, url, options);
   }
 }
 
@@ -283,13 +300,13 @@ function fixMetadata(url) {
  * This deletes the original file.
  * @param file a JSON file
  */
-function convertJSONFileToYAMLFile(file, url) {
+function convertJSONFileToYAMLFile(file, url, options) {
   const json = fs.readFileSync(file);
   let ymlFileName = file;
   ymlFileName = ymlFileName.replace(/\.info\.json$/, '');
   ymlFileName = '.' + ymlFileName + '.mp4' + '.yml';
   const ymlPath = settings.metaDir + '/' + ymlFileName;
-  const yml = convertJSONtoYAML(json, url, ymlFileName);
+  const yml = convertJSONtoYAML(json, url, ymlFileName, options);
   shell.mkdir('-p', settings.metaDir);
   fs.writeFileSync(ymlPath, yml);
   shell.rm('-f', file);
@@ -300,7 +317,7 @@ function convertJSONFileToYAMLFile(file, url) {
  * @param json a JSON string
  * @return a YAML string
  */
-function convertJSONtoYAML(json, url, file) {
+function convertJSONtoYAML(json, url, file, options) {
   let obj = JSON.parse(json);
   if (url) {
     const normUrl = normalizeUrl(url);
@@ -310,7 +327,7 @@ function convertJSONtoYAML(json, url, file) {
     }
     obj.url = normUrl;
   }
-  obj = reorderProperties(obj, { prefix: true });
+  obj = reorderProperties(obj, options);
   let yml = yaml.safeDump(obj);
   yml = addYAMLHeader(yml, file);
   return yml;
