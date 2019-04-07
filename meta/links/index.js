@@ -404,7 +404,7 @@ function main() {
   if (clean) {
     cleanUp(outputDir);
   } else if (isWindows()) {
-    console.log('On Windows, --clean should be specified.\n');
+    printYamlComment('On Windows, --clean should be specified.\n');
   }
 
   printParameters(queries, inputDir, outputDir);
@@ -422,7 +422,7 @@ function main() {
     } else {
       // process metadata in directory and exit
       processDirectory(queries, inputDir, outputDir, options).then(() => {
-        console.log('\nDone.\n');
+        printYamlComment('\nDone.\n');
       });
     }
   });
@@ -455,7 +455,7 @@ http://www.optimumx.com/downloads.html#Shortcut`);
  * @param outputDir the output directory
  */
 function cleanUp(outputDir) {
-  console.log(`Deleting ${outputDir} ...\n`);
+  printYamlComment(`Deleting ${outputDir} ...\n`);
   deleteDirectory(outputDir);
 }
 
@@ -495,9 +495,9 @@ function printHelpString(str, indent) {
  * @param outputDir the directory to create links in
  */
 function printParameters(queries, inputDir, outputDir) {
-  console.log(`Input directory: ${inputDir}`);
-  console.log(`Output directory: ${outputDir}`);
-  console.log(`Queries: ${queries.join(', ')}\n`);
+  printYamlComment(`Input directory: ${inputDir}`);
+  printYamlComment(`Output directory: ${outputDir}`);
+  printYamlComment(`Queries: ${queries.join(', ')}\n`);
 }
 
 /**
@@ -510,7 +510,7 @@ function printParameters(queries, inputDir, outputDir) {
  */
 function watchDirectory(queries, inputDir, outputDir, options) {
   processDirectory(queries, inputDir, outputDir, options).then(() => {
-    console.log('\nRunning in watch mode, press Ctrl+C to quit\n');
+    printYamlComment('\nRunning in watch mode, press Ctrl+C to quit\n');
   });
   const stream$ = metadataChangesInDirectory(inputDir, options);
   stream$
@@ -520,7 +520,7 @@ function watchDirectory(queries, inputDir, outputDir, options) {
       )
     )
     .subscribe(() => {
-      console.log('\nRunning in watch mode, press Ctrl+C to quit\n');
+      printYamlComment('\nRunning in watch mode, press Ctrl+C to quit\n');
     });
 }
 
@@ -532,7 +532,7 @@ function watchDirectory(queries, inputDir, outputDir, options) {
  * @param [options] an options object
  */
 function processStdin(queries, outputDir, options) {
-  console.log('Reading from standard input ...\n');
+  printYamlComment('Reading from standard input ...\n');
   const stream$ = metadataForFiles(stdin(), options);
   processQueries(queries, stream$, outputDir, options);
 }
@@ -549,14 +549,14 @@ function processStdin(queries, outputDir, options) {
 function processDirectory(queries, inputDir, outputDir, options) {
   const { runBefore, runAfter } = options;
   if (runBefore) {
-    console.log(`Executing --run-before: ${runBefore}\n`);
+    printYamlComment(`Executing --run-before: ${runBefore}\n`);
     shell.exec(runBefore);
     console.log();
   }
   const stream$ = metadataInDirectory(inputDir, options);
   return processQueries(queries, stream$, outputDir, options).then(() => {
     if (runAfter) {
-      console.log(`\nExecuting --run-after: ${runAfter}\n`);
+      printYamlComment(`\nExecuting --run-after: ${runAfter}\n`);
       shell.exec(runAfter);
       console.log();
     }
@@ -605,7 +605,9 @@ function processQueriesInTempDir(
     tempDirectory =>
       processQueriesInDir(queries, stream$, tempDirectory, options).then(() => {
         if (runBeforeMerge) {
-          console.log(`\nExecuting --run-before-merge: ${runBeforeMerge}\n`);
+          printYamlComment(
+            `\nExecuting --run-before-merge: ${runBeforeMerge}\n`
+          );
           shell.exec(runBeforeMerge);
           console.log();
         }
@@ -701,7 +703,7 @@ function validateRsyncParams(tempDir, outputDir, options) {
   }
   const tempDirIsEmpty = _.isEmpty(fs.readdirSync(tempDir));
   if (tempDirIsEmpty) {
-    console.log('Working directory is empty, aborting merge.');
+    printYamlComment('Working directory is empty, aborting merge.');
     if (options && options.delete) {
       deleteDirectory(tempDir);
     }
@@ -734,7 +736,7 @@ function mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options) {
   if (!outputDirExists) {
     return moveFile(tempDir, outputDir, options).catch(() => {
       // the wonders of working with files on Windows ...
-      console.log('Windows is locking the directory, copying instead.');
+      printYamlComment('Windows is locking the directory, copying instead.');
       shell.cp('-r', tempDir, outputDir);
     });
   }
@@ -742,11 +744,11 @@ function mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options) {
   return moveFile(outputDir, trashDir)
     .then(() => moveFile(tempDir, outputDir))
     .catch(() => {
-      console.log('Windows is locking the directory, copying instead.');
+      printYamlComment('Windows is locking the directory, copying instead.');
       const outputDirStillExists = fs.existsSync(outputDir);
       if (outputDirStillExists) {
         // moveFile() didn't succeed either, acting accordingly
-        console.log('Copying into previous directory ...');
+        printYamlComment('Copying into previous directory ...');
         shell.cp('-r', tempDir + '/*', outputDir);
       } else {
         shell.cp('-r', tempDir, outputDir);
@@ -936,7 +938,7 @@ function filterInvalidMetadata(stream$, options) {
     RxOp.filter(metaFile => {
       const metaFileExists = fs.existsSync(metaFile);
       if (!metaFileExists) {
-        console.log(`${metaFile} does not exist!`);
+        printYamlComment(`${metaFile} does not exist!`);
         return false;
       }
       if (normalize) {
@@ -945,7 +947,7 @@ function filterInvalidMetadata(stream$, options) {
       const origFile = getFilenameFromMetadataFilename(metaFile);
       const origFileExists = fs.existsSync(origFile);
       if (!origFileExists) {
-        console.log(`${origFile} does not exist!
+        printYamlComment(`${origFile} does not exist!
   (referenced by ${metaFile})`);
         return false;
       }
@@ -1287,7 +1289,7 @@ function makeCopy(source, destination, options) {
         if (options && options.force) {
           resolve(destination); // ignore errors
         } else {
-          console.log(err);
+          printYamlComment(err);
           reject(destination);
         }
       } else {
@@ -1437,12 +1439,17 @@ function hasCmd(command, options) {
  * @param [options] an options object
  */
 function printMetadata(meta, options) {
-  console.log(meta && meta.file);
-  if (options && options.debug) {
-    // test
-    console.log(meta);
-    console.log('');
+  const obj = {};
+  const props = {};
+  if (meta && meta.tags) {
+    props.tags = meta.tags;
   }
+  if (meta && meta.categories) {
+    props.categories = meta.categories;
+  }
+  obj[meta.file] = props;
+  const yml = yaml.safeDump(obj, { lineWidth: 255, flowLevel: 2 }).trim();
+  console.log(yml);
 }
 
 /**
@@ -1474,7 +1481,7 @@ function parseYaml(str) {
   try {
     meta = yaml.safeLoad(yml);
   } catch (err) {
-    console.log(err);
+    printYamlComment(err);
     return {};
   }
   return meta || {};
@@ -1495,7 +1502,7 @@ function normalizeYamlFile(file) {
   yml = yaml.safeDump(meta);
   yml = '---\n' + yml.trim();
   fs.writeFileSync(file, yml);
-  console.log('Normalized ' + file);
+  printYamlComment('Normalized ' + file);
 }
 
 /**
@@ -1945,6 +1952,24 @@ function plural(str) {
     return 'categories';
   }
   return str + 's';
+}
+
+function printYamlComment(str) {
+  if (str === '') {
+    console.log();
+  }
+  const hasLeadingWhitespace = str.match(/^\s+/);
+  const hasTrailingWhitespace = str.match(/\s+$/);
+  const lineBeginnings = /^/gm;
+  const commentMarker = '# ';
+  const yml = str.trim().replace(lineBeginnings, commentMarker);
+  if (hasLeadingWhitespace) {
+    console.log();
+  }
+  console.log(yml);
+  if (hasTrailingWhitespace) {
+    console.log();
+  }
 }
 
 // export functions for testing
