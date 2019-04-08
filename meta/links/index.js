@@ -87,6 +87,11 @@ metalinks is fully stream-enabled and will begin processing input
 as soon as it arrives. This makes it easy to combine with other
 utilities, such as find and grep.
 
+The output of metalinks is plain YAML. To save all the metadata in
+a directory to a single file, simply do:
+
+    metalinks > metadata.yml
+
 Type metalinks --version for the current version. For the license,
 type metalinks --license. For a hint, type metalinks --hint.
 For a random quote, type metalinks --quote.
