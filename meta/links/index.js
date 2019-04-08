@@ -981,16 +981,6 @@ function createGlobPattern(mDir, mExt) {
 }
 
 /**
- * Process the metadata for a file in the context of a query.
- * @param file a file
- * @param query a query
- * @param [options] an options object
- */
-function processMetadataQuery(meta, query, options) {
-  return performQueryOnFile(meta, query, options).then(() => query);
-}
-
-/**
  * Read the metadata for a file.
  * If `print: true` is specified in `options`,
  * then the metadata is printed to the console.
@@ -1735,118 +1725,103 @@ function filterByQuery(metaArr, query) {
 }
 
 /**
- * Make query links for a metadata object array.
- * @param metaArr a metadata object array
+ * Process the metadata for a file in the context of a query.
+ * @param meta a metadata object
  * @param query a query
  * @param [options] an options object
  */
-function performQuery(metaArr, query, options) {
+function processMetadataQuery(meta, query, options) {
   const { allQuery, tagsQuery, userTagsQuery, categoriesQuery } = options;
   if (!query || query === categoriesQuery) {
-    return performCategoriesQuery(metaArr, options);
+    return performCategoriesQuery(meta, options);
   }
   if (query === tagsQuery) {
-    return performTagsQuery(metaArr, options);
+    return performTagsQuery(meta, options);
   }
   if (query === userTagsQuery) {
-    return performUserTagsQuery(metaArr, options);
+    return performUserTagsQuery(meta, options);
   }
   if (query === allQuery) {
-    return performAllQuery(metaArr, options);
+    return performAllQuery(meta, options);
   }
   if (isPropQuery(query)) {
-    return performPropQuery(metaArr, query, options);
+    return performPropQuery(meta, query, options);
   }
-  return performFilterQuery(metaArr, query, options);
+  return performFilterQuery(meta, query, options);
 }
 
 /**
  * Perform an all query (`settings.allQuery`).
- * @param metaArr a metadata object array
+ * @param meta a metadata object
  * @param [options] an options object
  */
-function performAllQuery(metaArr, options) {
+function performAllQuery(meta, options) {
   const { allQuery } = options;
   const dir = toFilename(allQuery);
-  return Promise.all(
-    metaArr.map(meta => makeLinkInDirectory(meta.file, dir, options))
-  );
+  return makeLinkInDirectory(meta.file, dir, options);
 }
 
 /**
  * Perform a tags query (`settings.tagsQuery`).
- * @param metaArr a metadata object array
+ * @param meta a metadata object
  * @param [options] an options object
  */
-function performTagsQuery(metaArr, options) {
+function performTagsQuery(meta, options) {
   const { tagsQuery } = options;
   const tDir = toFilename(tagsQuery);
   return makeDirectory(tDir, options).then(dir =>
-    Promise.all(
-      metaArr.map(meta =>
-        processTags(meta, {
-          ...options,
-          tagDir: dir
-        })
-      )
-    )
+    processTags(meta, {
+      ...options,
+      tagDir: dir
+    })
   );
 }
 
 /**
  * Perform a user tags query (`settings.userTagsQuery`).
- * @param metaArr a metadata object array
+ * @param meta a metadata object array
  * @param [options] an options object
  */
-function performUserTagsQuery(metaArr, options) {
+function performUserTagsQuery(meta, options) {
   const { userTagsQuery } = options;
   const tDir = toFilename(userTagsQuery);
   return makeDirectory(tDir, options).then(dir =>
-    Promise.all(
-      metaArr.map(meta =>
-        processUserTags(meta, {
-          ...options,
-          tagDir: dir
-        })
-      )
-    )
+    processUserTags(meta, {
+      ...options,
+      tagDir: dir
+    })
   );
 }
 
 /**
  * Perform a categories query (`settings.categoriesQuery`).
- * @param metaArr a metadata object array
+ * @param meta a metadata object array
  * @param [options] an options object
  */
-function performCategoriesQuery(metaArr, options) {
+function performCategoriesQuery(meta, options) {
   const { categoriesQuery } = options;
   const qDir = (options && options.queryDir) || settings.queryDir;
   const cDir = toFilename(categoriesQuery);
   return makeDirectory(`${qDir}/${cDir}`, options).then(dir =>
-    Promise.all(
-      metaArr.map(meta =>
-        processTagsAndCategories(meta, {
-          ...options,
-          categoryDir: dir
-        })
-      )
-    )
+    processTagsAndCategories(meta, {
+      ...options,
+      categoryDir: dir
+    })
   );
 }
 
 /**
  * Perform a property query.
- * @param metaArr a metadata object array
+ * @param meta a metadata object array
  * @param query a query
  * @param [options] an options object
  */
-function performPropQuery(metaArr, query, options) {
-  const prop = query.replace(/^_/, '');
+function performPropQuery(meta, query, options) {
+  const underscore = /^_/;
+  const prop = query.replace(underscore, '');
   return Promise.all(
-    metaArr.map(meta =>
-      getProp(meta, prop).map(val =>
-        makeLinkInDirectory(meta.file, `_/${prop}/${val}`, options)
-      )
+    getProp(meta, prop).map(val =>
+      makeLinkInDirectory(meta.file, `_/${prop}/${val}`, options)
     )
   );
 }
@@ -1857,22 +1832,11 @@ function performPropQuery(metaArr, query, options) {
  * @param query a query
  * @param [options] an options object
  */
-function performFilterQuery(metaArr, query, options) {
-  const matches = filterByQuery(metaArr, query);
+function performFilterQuery(meta, query, options) {
+  const matches = filterByQuery([meta], query);
   return Promise.all(
     matches.map(match => makeQueryLink(match, query, options))
   );
-}
-
-/**
- * Make a query link for a file if the file
- * is matched by the query.
- * @param meta a metadata object
- * @param query a query
- * @param [options] an options object
- */
-function performQueryOnFile(meta, query, options) {
-  return performQuery([meta], query, options);
 }
 
 /**
@@ -2014,6 +1978,16 @@ function plural(str) {
  * The string is prefixed with `# `. If it spans multiple lines,
  * then each line is prefixed.
  * @param str a string
+ * @example
+ *
+ * printYamlComment();
+ * // => console.log();
+ *
+ * printYamlComment('foo');
+ * // => console.log('# foo');
+ *
+ * printYamlComment('foo\nbar');
+ * // => console.log('# foo\n# bar');
  */
 function printYamlComment(str) {
   if (str === '') {
