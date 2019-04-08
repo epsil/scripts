@@ -1954,6 +1954,12 @@ function plural(str) {
   return str + 's';
 }
 
+/**
+ * Print a string as a YAML comment.
+ * The string is prefixed with `# `. If it spans multiple lines,
+ * then each line is prefixed.
+ * @param str a string
+ */
 function printYamlComment(str) {
   if (str === '') {
     console.log();
