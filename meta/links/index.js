@@ -1820,9 +1820,13 @@ function performPropQuery(meta, query, options) {
   const underscore = /^_/;
   const prop = query.replace(underscore, '');
   return Promise.all(
-    getProp(meta, prop).map(val =>
-      makeLinkInDirectory(meta.file, `_/${prop}/${val}`, options)
-    )
+    getProp(meta, prop).map(val => {
+      const dir = toFilename(val);
+      if (!dir) {
+        return Promise.resolve(null);
+      }
+      return makeLinkInDirectory(meta.file, `_/${prop}/${dir}`, options);
+    })
   );
 }
 
