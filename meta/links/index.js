@@ -92,6 +92,15 @@ a directory to a single file, simply do:
 
     metalinks > metadata.yml
 
+It is also possible to pipe metalinks' output to another program:
+
+    metalinks | myprog
+
+Here, myprog will receive a stream of metadata from metalinks.
+metalinks outputs metadata as soon as it is available, so if the
+implementation of myprog is stream-enabled, it can begin processing
+the metadata immediately, without delay.
+
 Type metalinks --version for the current version. For the license,
 type metalinks --license. For a hint, type metalinks --hint.
 For a random quote, type metalinks --quote.
