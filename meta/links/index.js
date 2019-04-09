@@ -96,10 +96,10 @@ It is also possible to pipe metalinks' output to another program:
 
     metalinks | myprog
 
-Here, myprog will receive a stream of metadata from metalinks.
-metalinks outputs metadata as soon as it is available, so if the
-implementation of myprog is stream-enabled, it can begin processing
-the metadata immediately, without delay.
+Here, the myprog program will receive a stream of metadata from
+standard input. As always, metalinks outputs metadata as soon as
+it is available. Provided the myprog program can read YAML streams
+incrementally, it can begin processing right away, without delay.
 
 Type metalinks --version for the current version. For the license,
 type metalinks --license. For a hint, type metalinks --hint.
