@@ -1831,15 +1831,9 @@ function performCategoriesQuery(meta, options) {
 function performUnderscoreQuery(meta, query, options) {
   const underscore = /^_/;
   const prop = query.replace(underscore, '');
-  return Promise.all(
-    getProp(meta, prop).map(val => {
-      const dir = toFilename(val);
-      if (!dir) {
-        return Promise.resolve(null);
-      }
-      return makeLinkInDirectory(meta.file, `_/${prop}/${dir}`, options);
-    })
-  );
+  const cwd = (options && options.cwd) || '.';
+  const dir = joinPaths(cwd, `_/${prop}`);
+  return performColonQuery(meta, `:${prop}`, { ...options, cwd: dir });
 }
 
 /**
