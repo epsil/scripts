@@ -1744,6 +1744,9 @@ function processMetadataQuery(meta, query, options) {
   if (isUnderscoreQuery(query)) {
     return performUnderscoreQuery(meta, query, options);
   }
+  if (isPercentQuery(query)) {
+    return performPercentQuery(meta, query, options);
+  }
   if (isColonQuery(query)) {
     return performColonQuery(meta, query, options);
   }
@@ -1820,7 +1823,21 @@ function performUnderscoreQuery(meta, query, options) {
   const underscorePrefix = /^_/;
   const prop = query.replace(underscorePrefix, '');
   const cwd = (options && options.cwd) || '.';
-  const dir = joinPaths(cwd, `_/${prop}`);
+  const dir = joinPaths(cwd, '_');
+  return performPercentQuery(meta, `%${prop}`, { ...options, cwd: dir });
+}
+
+/**
+ * Perform a percent query.
+ * @param meta a metadata object array
+ * @param query a query
+ * @param [options] an options object
+ */
+function performPercentQuery(meta, query, options) {
+  const percentPrefix = /^%/;
+  const prop = query.replace(percentPrefix, '');
+  const cwd = (options && options.cwd) || '.';
+  const dir = joinPaths(cwd, `${prop}`);
   return performColonQuery(meta, `:${prop}`, { ...options, cwd: dir });
 }
 
@@ -1913,6 +1930,16 @@ function isAllQuery(query) {
 function isUnderscoreQuery(query) {
   const underscorePrefix = /^_/;
   return typeof query === 'string' && query.match(underscorePrefix);
+}
+
+/**
+ * Whether a query is a percent query.
+ * @param query a query
+ * @return `true` if the query is a percent query, `false` otherwise
+ */
+function isPercentQuery(query) {
+  const percentPrefix = /^%/;
+  return typeof query === 'string' && query.match(percentPrefix);
 }
 
 /**
