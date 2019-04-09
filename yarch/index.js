@@ -460,6 +460,9 @@ function reorderProperties(obj, options) {
   }
   if (obj.uploader) {
     result.uploader = obj.uploader;
+    if (!result.author) {
+      result.author = obj.uploader;
+    }
   }
   if (obj['uploader_id']) {
     result['uploader_id'] = obj['uploader_id'];
