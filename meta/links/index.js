@@ -1729,17 +1729,16 @@ function filterByQuery(metaArr, query) {
  * @param [options] an options object
  */
 function processMetadataQuery(meta, query, options) {
-  const { allQuery, tagsQuery, userTagsQuery, categoriesQuery } = options;
-  if (!query || query === categoriesQuery) {
+  if (!query || isCategoriesQuery(query)) {
     return performCategoriesQuery(meta, options);
   }
-  if (query === tagsQuery) {
+  if (isTagsQuery(query)) {
     return performTagsQuery(meta, options);
   }
-  if (query === userTagsQuery) {
+  if (isUserTagsQuery(query)) {
     return performUserTagsQuery(meta, options);
   }
-  if (query === allQuery) {
+  if (isAllQuery(query)) {
     return performAllQuery(meta, options);
   }
   if (isUnderscoreQuery(query)) {
@@ -1868,6 +1867,42 @@ function makeQueryLink(meta, query, options) {
   const qDir = (options && options.queryDir) || toFilename(settings.queryDir);
   const dir = toFilename(query);
   return makeLinkInDirectory(meta.file, `${qDir}/${dir}`, options);
+}
+
+/**
+ * Whether a query is a tags query.
+ * @param query a query
+ * @return `true` if the query is a tags query, `false` otherwise
+ */
+function isTagsQuery(query) {
+  return query === settings.tagsQuery;
+}
+
+/**
+ * Whether a query is a user tags query.
+ * @param query a query
+ * @return `true` if the query is a user tags query, `false` otherwise
+ */
+function isUserTagsQuery(query) {
+  return query === settings.userTagsQuery;
+}
+
+/**
+ * Whether a query is a categories query.
+ * @param query a query
+ * @return `true` if the query is a categories query, `false` otherwise
+ */
+function isCategoriesQuery(query) {
+  return query === settings.categoriesQuery;
+}
+
+/**
+ * Whether a query is an all query.
+ * @param query a query
+ * @return `true` if the query is an all query, `false` otherwise
+ */
+function isAllQuery(query) {
+  return query === settings.allQuery;
 }
 
 /**
