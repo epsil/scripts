@@ -1753,8 +1753,11 @@ function processMetadataQuery(meta, query, options) {
   if (query === allQuery) {
     return performAllQuery(meta, options);
   }
-  if (isPropQuery(query)) {
-    return performPropQuery(meta, query, options);
+  if (isUnderscoreQuery(query)) {
+    return performUnderscoreQuery(meta, query, options);
+  }
+  if (isColonQuery(query)) {
+    return performColonQuery(meta, query, options);
   }
   return performFilterQuery(meta, query, options);
 }
@@ -1820,12 +1823,12 @@ function performCategoriesQuery(meta, options) {
 }
 
 /**
- * Perform a property query.
+ * Perform an underscore query.
  * @param meta a metadata object array
  * @param query a query
  * @param [options] an options object
  */
-function performPropQuery(meta, query, options) {
+function performUnderscoreQuery(meta, query, options) {
   const underscore = /^_/;
   const prop = query.replace(underscore, '');
   return Promise.all(
@@ -1835,6 +1838,26 @@ function performPropQuery(meta, query, options) {
         return Promise.resolve(null);
       }
       return makeLinkInDirectory(meta.file, `_/${prop}/${dir}`, options);
+    })
+  );
+}
+
+/**
+ * Perform a colon query.
+ * @param meta a metadata object array
+ * @param query a query
+ * @param [options] an options object
+ */
+function performColonQuery(meta, query, options) {
+  const colon = /^:/;
+  const prop = query.replace(colon, '');
+  return Promise.all(
+    getProp(meta, prop).map(val => {
+      const dir = toFilename(val);
+      if (!dir) {
+        return Promise.resolve(null);
+      }
+      return makeLinkInDirectory(meta.file, dir, options);
     })
   );
 }
@@ -1865,12 +1888,23 @@ function makeQueryLink(meta, query, options) {
 }
 
 /**
- * Whether a query is a property query.
+ * Whether a query is an underscore query.
  * @param query a query
- * @return `true` if the query is a property query, `false` otherwise
+ * @return `true` if the query is an underscore query, `false` otherwise
  */
-function isPropQuery(query) {
-  return typeof query === 'string' && query.match(/^_/);
+function isUnderscoreQuery(query) {
+  const underscore = /^_/;
+  return typeof query === 'string' && query.match(underscore);
+}
+
+/**
+ * Whether a query is a colon query.
+ * @param query a query
+ * @return `true` if the query is a colon query, `false` otherwise
+ */
+function isColonQuery(query) {
+  const colon = /^:/;
+  return typeof query === 'string' && query.match(colon);
 }
 
 /**
