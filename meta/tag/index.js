@@ -486,10 +486,10 @@ function normalizeYamlFile(file) {
     return;
   }
   if (meta.tags) {
-    meta.tags = meta.tags.sort();
+    meta.tags = _.uniq(meta.tags.sort());
   }
   if (meta.categories) {
-    meta.categories = meta.categories.sort();
+    meta.categories = _.uniq(meta.categories.sort());
   }
   yml = yaml.safeDump(meta);
   const ymlDoc = addYAMLHeader(yml, file);
