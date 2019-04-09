@@ -1829,8 +1829,8 @@ function performCategoriesQuery(meta, options) {
  * @param [options] an options object
  */
 function performUnderscoreQuery(meta, query, options) {
-  const underscore = /^_/;
-  const prop = query.replace(underscore, '');
+  const underscorePrefix = /^_/;
+  const prop = query.replace(underscorePrefix, '');
   const cwd = (options && options.cwd) || '.';
   const dir = joinPaths(cwd, `_/${prop}`);
   return performColonQuery(meta, `:${prop}`, { ...options, cwd: dir });
@@ -1843,8 +1843,8 @@ function performUnderscoreQuery(meta, query, options) {
  * @param [options] an options object
  */
 function performColonQuery(meta, query, options) {
-  const colon = /^:/;
-  const prop = query.replace(colon, '');
+  const colonPrefix = /^:/;
+  const prop = query.replace(colonPrefix, '');
   return Promise.all(
     getProp(meta, prop).map(val => {
       const dir = toFilename(val);
@@ -1887,8 +1887,8 @@ function makeQueryLink(meta, query, options) {
  * @return `true` if the query is an underscore query, `false` otherwise
  */
 function isUnderscoreQuery(query) {
-  const underscore = /^_/;
-  return typeof query === 'string' && query.match(underscore);
+  const underscorePrefix = /^_/;
+  return typeof query === 'string' && query.match(underscorePrefix);
 }
 
 /**
@@ -1897,8 +1897,8 @@ function isUnderscoreQuery(query) {
  * @return `true` if the query is a colon query, `false` otherwise
  */
 function isColonQuery(query) {
-  const colon = /^:/;
-  return typeof query === 'string' && query.match(colon);
+  const colonPrefix = /^:/;
+  return typeof query === 'string' && query.match(colonPrefix);
 }
 
 /**
