@@ -103,7 +103,6 @@ the metadata immediately, without delay.
 
 Type metalinks --version for the current version. For the license,
 type metalinks --license. For a hint, type metalinks --hint.
-For a random quote, type metalinks --quote.
 
 See also: metatag, yarch.`;
 
@@ -127,20 +126,20 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`;
 
 /**
- * Hint to display when running with `--hint`.
+ * Hints to display when running with `--hint`.
  */
-const hint = `The trick is to learn the trick.
+const hints = [
+  `The Key Is the Gate
+-------------------
+
+The trick is to learn the trick.
 The key to the treasure is the treasure.
 The name of the thing is the thing itself.
 The name of the game is to name the game.
 
 The finger that points at the moon
-points the way to the moon.`;
+points the way to the moon.`,
 
-/**
- * Quotes to display when running with `--quote`.
- */
-const quotes = [
   `No reference is truly direct---every reference depends on *some*
 kind of coding scheme. It's just a question of how implicit it is.
 
@@ -395,7 +394,6 @@ function main() {
     clean,
     license: licenseFlag,
     hint: hintFlag,
-    quote: quoteFlag,
     sourceDir,
     destinationDir,
     makeLinks
@@ -410,11 +408,6 @@ function main() {
 
   if (hintFlag) {
     printHint();
-    shell.exit(0);
-  }
-
-  if (quoteFlag) {
-    printQuote();
     shell.exit(0);
   }
 
@@ -489,12 +482,8 @@ function printLicense() {
  * Print a hint.
  */
 function printHint() {
+  const hint = hints[Math.floor(Math.random() * hints.length)];
   printHelpString(hint);
-}
-
-function printQuote() {
-  const quote = quotes[Math.floor(Math.random() * quotes.length)];
-  printHelpString(quote);
 }
 
 /**
