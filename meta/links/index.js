@@ -1861,13 +1861,21 @@ function performSlashQuery(meta, query, options) {
 
   subQueries.forEach(subQuery => {
     prom = prom.then(result => {
-      const links = getProp(result, 'link');
-      const proms = links.map(link => {
+      const proms = getProp(result, 'link').map(link => {
         const isDirectory = fs.lstatSync(link).isDirectory();
         const dir = isDirectory ? link : path.dirname(link);
-        return processMetadataQuery(result, subQuery, { ...options, cwd: dir });
+        return processMetadataQuery(meta, subQuery, {
+          ...options,
+          cwd: dir
+        });
       });
-      return Promise.all(proms).then(() => ({ links, ...result }));
+      return Promise.all(proms).then(results => {
+        const links = _.flatten(results.map(res => getProp(res, 'link')));
+        return {
+          links,
+          ...meta
+        };
+      });
     });
   });
 
