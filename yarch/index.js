@@ -475,6 +475,9 @@ function reorderProperties(obj, options) {
   }
   if (obj['upload_date']) {
     result['upload_date'] = obj['upload_date'];
+    if (!result.date) {
+      result.date = obj['upload_date'];
+    }
   }
   if (obj.tags) {
     result[prefix + 'tags'] = obj.tags;

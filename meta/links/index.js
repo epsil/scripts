@@ -2089,20 +2089,33 @@ function hasProp(meta, prop, val) {
  * Get the value of a metadata property.
  * @param meta a metadata object
  * @param prop the property's name, a string
- * @return an array of all values assigned to the property
+ * @return an array of all values assigned to the property,
+ * or the empty array if nothing is found
  */
 function getProp(meta, prop) {
   let result = [];
   if (!meta) {
+    // nothing found, return an empty array
     return result;
   }
+  // get `prop` value
   if (meta[prop]) {
     result.push(meta[prop]);
   }
+  // get `props` values
   if (meta[plural(prop)]) {
     result = result.concat(meta[plural(prop)]);
   }
+  // convert numbers to strings
+  result = result.map(tag => {
+    if (typeof tag === 'number') {
+      return tag + '';
+    }
+    return tag;
+  });
+  // filter out non-string values
   result = result.filter(tag => typeof tag === 'string');
+  // filter out duplicate values
   result = _.uniq(result);
   return result;
 }
