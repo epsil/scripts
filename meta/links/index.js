@@ -1759,9 +1759,12 @@ function processMetadataQuery(meta, query, options) {
  * @param [options] an options object
  */
 function performAllQuery(meta, options) {
-  const { allQuery } = options;
-  const dir = toFilename(allQuery);
-  return makeLinkInDirectory(meta.file, dir, options);
+  const result = { links: [], ...meta };
+  const dir = toFilename(settings.allQuery);
+  return makeLinkInDirectory(meta.file, dir, options).then(link => {
+    result.links.push(link);
+    return result;
+  });
 }
 
 /**
@@ -1770,14 +1773,9 @@ function performAllQuery(meta, options) {
  * @param [options] an options object
  */
 function performTagsQuery(meta, options) {
-  const { tagsQuery } = options;
-  const tDir = toFilename(tagsQuery);
-  return makeDirectory(tDir, options).then(dir =>
-    processTags(meta, {
-      ...options,
-      tagDir: dir
-    })
-  );
+  const cwd = (options && options.cwd) || '.';
+  const dir = joinPaths(cwd, toFilename(settings.tagsQuery));
+  return performColonQuery(meta, ':tag', { ...options, cwd: dir });
 }
 
 /**
@@ -1786,14 +1784,9 @@ function performTagsQuery(meta, options) {
  * @param [options] an options object
  */
 function performUserTagsQuery(meta, options) {
-  const { userTagsQuery } = options;
-  const tDir = toFilename(userTagsQuery);
-  return makeDirectory(tDir, options).then(dir =>
-    processUserTags(meta, {
-      ...options,
-      tagDir: dir
-    })
-  );
+  const cwd = (options && options.cwd) || '.';
+  const dir = joinPaths(cwd, toFilename(settings.userTagsQuery));
+  return performColonQuery(meta, ':_tag', { ...options, cwd: dir });
 }
 
 /**
@@ -1802,15 +1795,21 @@ function performUserTagsQuery(meta, options) {
  * @param [options] an options object
  */
 function performCategoriesQuery(meta, options) {
+  const result = { links: [], ...meta };
   const { categoriesQuery } = options;
   const qDir = (options && options.queryDir) || settings.queryDir;
   const cDir = toFilename(categoriesQuery);
-  return makeDirectory(`${qDir}/${cDir}`, options).then(dir =>
-    processTagsAndCategories(meta, {
-      ...options,
-      categoryDir: dir
-    })
-  );
+  return makeDirectory(`${qDir}/${cDir}`, options)
+    .then(dir =>
+      processTagsAndCategories(meta, {
+        ...options,
+        categoryDir: dir
+      })
+    )
+    .then(links => {
+      result.links = links;
+      return result;
+    });
 }
 
 /**
@@ -1848,6 +1847,7 @@ function performPercentQuery(meta, query, options) {
  * @param [options] an options object
  */
 function performColonQuery(meta, query, options) {
+  const result = { links: [], ...meta };
   const colonPrefix = /^:/;
   const prop = query.replace(colonPrefix, '');
   return Promise.all(
@@ -1856,9 +1856,11 @@ function performColonQuery(meta, query, options) {
       if (!dir) {
         return Promise.resolve(null);
       }
-      return makeLinkInDirectory(meta.file, dir, options);
+      return makeLinkInDirectory(meta.file, dir, options).then(link =>
+        result.links.push(link)
+      );
     })
-  );
+  ).then(() => result);
 }
 
 /**
@@ -1868,10 +1870,13 @@ function performColonQuery(meta, query, options) {
  * @param [options] an options object
  */
 function performFilterQuery(meta, query, options) {
+  const result = { links: [], ...meta };
   const matches = filterByQuery([meta], query);
   return Promise.all(
-    matches.map(match => makeQueryLink(match, query, options))
-  );
+    matches.map(match =>
+      makeQueryLink(match, query, options).then(link => result.links.push(link))
+    )
+  ).then(() => result);
 }
 
 /**
