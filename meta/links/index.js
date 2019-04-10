@@ -1264,9 +1264,25 @@ function makeShortcut(source, destination, options) {
   return new Promise((resolve, reject) => {
     const cwd = (options && options.cwd) || '.';
     const sourcePath = joinPaths(cwd, source);
-    const destinationPath = joinPaths(cwd, destination);
-    ws.create(destinationPath, sourcePath);
-    resolve(destination);
+    let destinationPath = joinPaths(cwd, destination);
+    const isDirectory = fs.lstatSync(destinationPath).isDirectory();
+    if (isDirectory) {
+      // If `destinationPath` is a directory, append the file name
+      // of the shortcut to the path. This ensures that the original
+      // file extension is part of the shortcut's file name -- i.e.,
+      // `file.txt.lnk` instead of the ambiguous `file.lnk`.
+      // (The latter could cause problems if we wanted to link to both
+      // `file.txt` and `file.pdf` in the same directory.)
+      const file = path.basename(source);
+      const shortcut = `${file}.lnk`;
+      destinationPath = joinPaths(destinationPath, shortcut);
+    }
+    try {
+      ws.create(destinationPath, sourcePath);
+      resolve(destination);
+    } catch (err) {
+      reject(err);
+    }
   });
 }
 
