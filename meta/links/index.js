@@ -1741,6 +1741,9 @@ function processMetadataQuery(meta, query, options) {
   if (isAllQuery(query)) {
     return performAllQuery(meta, options);
   }
+  if (isSlashQuery(query)) {
+    return performSlashQuery(meta, query, options);
+  }
   if (isUnderscoreQuery(query)) {
     return performUnderscoreQuery(meta, query, options);
   }
@@ -1810,6 +1813,37 @@ function performCategoriesQuery(meta, options) {
       result.links = links;
       return result;
     });
+}
+
+/**
+ * Perform an slash query.
+ * @param meta a metadata object array
+ * @param query a query
+ * @param [options] an options object
+ */
+function performSlashQuery(meta, query, options) {
+  const subQueries = query.split('/');
+
+  if (subQueries.length === 0) {
+    return Promise.resolve(meta);
+  }
+
+  const firstQuery = subQueries.shift();
+  let prom = processMetadataQuery(meta, firstQuery, options);
+
+  subQueries.forEach(subQuery => {
+    prom = prom.then(result => {
+      const links = getProp(result, 'link');
+      const proms = links.map(link => {
+        const isDirectory = fs.lstatSync(link).isDirectory();
+        const dir = isDirectory ? link : path.dirname(link);
+        return processMetadataQuery(result, subQuery, { ...options, cwd: dir });
+      });
+      return Promise.all(proms).then(() => ({ links, ...result }));
+    });
+  });
+
+  return prom;
 }
 
 /**
@@ -1925,6 +1959,16 @@ function isCategoriesQuery(query) {
  */
 function isAllQuery(query) {
   return query === settings.allQuery;
+}
+
+/**
+ * Whether a query is an slash query.
+ * @param query a query
+ * @return `true` if the query is a slash query, `false` otherwise
+ */
+function isSlashQuery(query) {
+  const slashes = /\//;
+  return typeof query === 'string' && query.match(slashes);
 }
 
 /**
