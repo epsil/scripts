@@ -1563,6 +1563,9 @@ function getFilenameFromMetadataFilename(filePath, options) {
   const origName = metaName
     .replace(metadataPreRegExp(), '')
     .replace(metadataPostRegExp(), '');
+  if (origName === '_dir') {
+    return origDir;
+  }
   let origFile = path.join(origDir, origName);
   if (options && options.unix) {
     origFile = origFile.replace(/\\/g, '/'); // test

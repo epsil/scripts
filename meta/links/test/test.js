@@ -192,6 +192,14 @@ describe('getFilenameFromMetadataFilename', function() {
       })
       .should.eql('lib/file.txt');
   });
+
+  it('should translate ._dir.yml to the parent directory', function() {
+    metalinks
+      .getFilenameFromMetadataFilename('lib/.meta/._dir.yml', {
+        unix: true
+      })
+      .should.eql('lib');
+  });
 });
 
 describe('getMetadataFilenameFromFilename', function() {
