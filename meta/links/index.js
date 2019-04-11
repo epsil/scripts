@@ -2169,17 +2169,27 @@ function hasProp(meta, prop, val) {
  */
 function getProp(meta, prop) {
   let result = [];
+  // if nothing is found, return an empty array
   if (!meta) {
-    // nothing found, return an empty array
     return result;
   }
   // get `prop` value
-  if (meta[prop]) {
-    result.push(meta[prop]);
+  const singularVal = meta[prop];
+  if (singularVal) {
+    if (Array.isArray(singularVal)) {
+      result = result.concat(singularVal);
+    } else {
+      result.push(singularVal);
+    }
   }
   // get `props` values
-  if (meta[plural(prop)]) {
-    result = result.concat(meta[plural(prop)]);
+  const pluralVal = meta[plural(prop)];
+  if (pluralVal) {
+    if (Array.isArray(pluralVal)) {
+      result = result.concat(pluralVal);
+    } else {
+      result.push(pluralVal);
+    }
   }
   // convert numbers to strings
   result = result.map(tag => {
@@ -2192,6 +2202,7 @@ function getProp(meta, prop) {
   result = result.filter(tag => typeof tag === 'string');
   // filter out duplicate values
   result = _.uniq(result);
+  // return array of values
   return result;
 }
 
