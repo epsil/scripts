@@ -5,6 +5,7 @@ const getStdin = require('get-stdin');
 const meow = require('meow');
 const path = require('path');
 const shell = require('shelljs');
+const ws = require('windows-shortcuts');
 const yaml = require('js-yaml');
 const _ = require('lodash');
 
@@ -229,6 +230,31 @@ function setTagForFile(tag, file) {
   }
   continuation();
   return null;
+}
+
+/**
+ * Dereference a symbolic link or Windows shortcut.
+ * @param file the file to dereference
+ * @return a deferenced file path
+ */
+function dereference(file) {
+  const isShortcut = file.match(/\.lnk$/i);
+  if (isShortcut) {
+    return dereferenceShortcut(file);
+  }
+  const realFile = fs.realpathSync(file);
+  return Promise.resolve(realFile);
+}
+
+/**
+ * Dereference a Windows shortcut.
+ * @param file the shortcut to dereference
+ * @return a deferenced file path
+ */
+function dereferenceShortcut(file) {
+  return new Promise((resolve, reject) =>
+    ws.query(file, info => resolve(info.target))
+  );
 }
 
 /**

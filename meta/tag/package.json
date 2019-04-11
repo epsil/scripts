@@ -7,7 +7,7 @@
     "metatag": "index.js"
   },
   "scripts": {
-    "clean": "rm -rf doc lib cat q tmp tmp2 trash .meta && cp -r test/fixtures/lib .",
+    "clean": "rm -rf doc lib cat q tmp tmp2 trash .meta",
     "start": "npm run clean && node index.js",
     "query": "node index.js lib . \"foo bar\"",
     "uninstall": "rm -rf node_modules && npm run clean",
@@ -40,7 +40,8 @@
     "os": "^0.1.1",
     "path": "^0.12.7",
     "rimraf": "^2.6.3",
-    "shelljs": "^0.8.3"
+    "shelljs": "^0.8.3",
+    "windows-shortcuts": "^0.1.6"
   },
   "devDependencies": {
     "babel-eslint": "^10.0.1",
