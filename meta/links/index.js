@@ -1214,7 +1214,12 @@ function makeDirectory(dir, options) {
     fs.mkdir(dirPath, { recursive: true }, err => {
       if (err) {
         const dirAlreadyExists = err.code === 'EEXIST';
+        const noSuchFileOrDirectory = err.code === 'ENOENT';
         if (dirAlreadyExists) {
+          resolve(dirPath);
+        } else if (noSuchFileOrDirectory) {
+          // `recursive: true` doesn't work on Linux
+          shell.mkdir('-p', dirPath);
           resolve(dirPath);
         } else {
           reject(dirPath);
@@ -1840,18 +1845,12 @@ function performCategoriesQuery(meta, options) {
     });
   }
   const result = { links: [], ...meta };
-  const cDir = toFilename(settings.defaultCategory);
-  return makeDirectory(cDir, options)
-    .then(dir =>
-      processTagsAndCategories(meta, {
-        ...options,
-        categoryDir: dir
-      })
-    )
-    .then(links => {
+  return processTagsAndCategories(meta, { ...options, categoryDir: '.' }).then(
+    links => {
       result.links = links;
       return result;
-    });
+    }
+  );
 }
 
 /**
