@@ -219,7 +219,7 @@ const settings = {
   /**
    * The subdirectory to store categories in.
    */
-  categoryDir: '=',
+  categoryDir: '%',
 
   /**
    * The subdirectory to store underscore queries in.
@@ -269,7 +269,7 @@ const settings = {
   /**
    * Query for all categories.
    */
-  categoriesQuery: '=',
+  categoriesQuery: '%',
 
   /**
    * The default queries.
