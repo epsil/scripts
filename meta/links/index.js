@@ -34,12 +34,15 @@ Examples:
     metalinks "*"
 
 These commands are identical. They create links for all tagged files
-in the current directory. The links are placed in the directory _q/_/:
+in the current directory. The links are placed in the directory _q/:
 
     _q/
       _/
-        file1.txt -> /path/to/file1.txt
-        file2.txt -> /path/to/file2.txt
+        tag/
+          foo/
+            file1.txt -> /path/to/file1.txt
+          bar/
+            file2.txt -> /path/to/file2.txt
 
 The default input directory is . (meaning the current directory).
 The default output directory is _q (where the q stands for "query").
@@ -53,12 +56,13 @@ both "foo" and "bar":
 
     metalinks "foo bar"
 
-The links are placed in the directory _q/foo bar/:
+The links are placed in the directory _q/!/foo bar/:
 
     _q/
-      foo bar/
-        file3.txt -> /path/to/file3.txt
-        file4.txt -> /path/to/file4.txt
+      !/
+        foo bar/
+          file3.txt -> /path/to/file3.txt
+          file4.txt -> /path/to/file4.txt
 
 The next command executes multiple queries in one go,
 which is faster since the metadata is read only once:
@@ -87,17 +91,18 @@ metalinks is fully stream-enabled and will begin processing input
 as soon as it arrives. This makes it easy to combine with other
 utilities, such as find and grep.
 
-The output of metalinks is plain YAML. To save all the metadata in
-a directory to a single file, simply do:
+The output of metalinks is valid YAML and can be saved to a file:
 
     metalinks > metadata.yml
 
-It is also possible to pipe metalinks' output to another program:
+This reads all the metadata in the current directory and
+saves it to the file metadata.yml. It is also possible to
+pipe the output of metalinks to another program:
 
     metalinks | myprog
 
 Here, the myprog program will receive a stream of metadata from
-standard input. As always, metalinks outputs metadata as soon as
+metalinks. As always, metalinks outputs metadata as soon as
 it is available. Provided the myprog program can read YAML streams
 incrementally, it can begin processing right away, without delay.
 
@@ -238,6 +243,11 @@ const settings = {
    * Query for all files.
    */
   allQuery: '@',
+
+  /**
+   * Query for `settings.defaultQueries`.
+   */
+  starQuery: '*',
 
   /**
    * Query for all tags.
@@ -397,7 +407,7 @@ function main() {
   const cli = meow(help, flags);
   let queries = cli.input;
   if (_.isEmpty(queries)) {
-    queries = settings.defaultQueries;
+    queries = [settings.starQuery];
   }
 
   let options = { ...settings, ...cli.flags };
@@ -1739,10 +1749,13 @@ function filterByQuery(metaArr, query) {
  */
 function processMetadataQuery(meta, query, options) {
   if (!query) {
-    return performAllQuery(meta, options);
+    return performStarQuery(meta, options);
   }
   if (isSlashQuery(query)) {
     return performSlashQuery(meta, query, options);
+  }
+  if (isStarQuery(query)) {
+    return performStarQuery(meta, options);
   }
   if (isAllQuery(query)) {
     return performAllQuery(meta, options);
@@ -1877,6 +1890,20 @@ function performSlashQuery(meta, query, options) {
 }
 
 /**
+ * Perform a star query.
+ * @param meta a metadata object array
+ * @param query a query
+ * @param [options] an options object
+ */
+function performStarQuery(meta, options) {
+  let prom = Promise.resolve(null);
+  settings.defaultQueries.forEach(query => {
+    prom = prom.then(() => processMetadataQuery(meta, query, options));
+  });
+  return prom;
+}
+
+/**
  * Perform an underscore query.
  * @param meta a metadata object array
  * @param query a query
@@ -2004,6 +2031,15 @@ function isCategoriesQuery(query) {
  */
 function isAllQuery(query) {
   return query === settings.allQuery;
+}
+
+/**
+ * Whether a query is a star query.
+ * @param query a query
+ * @return `true` if the query is a star query, `false` otherwise
+ */
+function isStarQuery(query) {
+  return query === settings.starQuery;
 }
 
 /**
