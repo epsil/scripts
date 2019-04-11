@@ -247,12 +247,12 @@ const settings = {
   /**
    * Query for all categories.
    */
-  categoriesQuery: '_',
+  categoriesQuery: '=',
 
   /**
    * The default queries.
    */
-  defaultQueries: ['#', '+', '_'],
+  defaultQueries: ['#', '='],
 
   /**
    * The default category.
@@ -1814,10 +1814,18 @@ function performUserTagsQuery(meta, options) {
  * @param [options] an options object
  */
 function performCategoriesQuery(meta, options) {
+  if (!(options && options.container)) {
+    const cwd = (options && options.cwd) || '.';
+    const dir = joinPaths(cwd, toFilename('='));
+    return performCategoriesQuery(meta, {
+      ...options,
+      cwd: dir,
+      container: true
+    });
+  }
   const result = { links: [], ...meta };
-  const { categoriesQuery } = options;
   const qDir = (options && options.queryDir) || settings.queryDir;
-  const cDir = toFilename(categoriesQuery);
+  const cDir = toFilename(settings.defaultCategory);
   return makeDirectory(`${qDir}/${cDir}`, options)
     .then(dir =>
       processTagsAndCategories(meta, {
@@ -1866,7 +1874,8 @@ function performSlashQuery(meta, query, options) {
         const dir = isDirectory ? link : path.dirname(link);
         return processMetadataQuery(meta, subQuery, {
           ...options,
-          cwd: dir
+          cwd: dir,
+          container: true
         });
       });
       return Promise.all(proms).then(results => {
@@ -1891,9 +1900,16 @@ function performSlashQuery(meta, query, options) {
 function performUnderscoreQuery(meta, query, options) {
   const underscorePrefix = /^_/;
   const prop = query.replace(underscorePrefix, '');
+  if (options && options.container) {
+    return performPercentQuery(meta, `%${prop}`, options);
+  }
   const cwd = (options && options.cwd) || '.';
   const dir = joinPaths(cwd, '_');
-  return performPercentQuery(meta, `%${prop}`, { ...options, cwd: dir });
+  return performPercentQuery(meta, `%${prop}`, {
+    ...options,
+    cwd: dir,
+    container: true
+  });
 }
 
 /**
@@ -1942,6 +1958,15 @@ function performColonQuery(meta, query, options) {
 function performFilterQuery(meta, query, options) {
   const result = { links: [], ...meta };
   const matches = filterByQuery([meta], query);
+  if (!(options && options.container)) {
+    const cwd = (options && options.cwd) || '.';
+    const dir = joinPaths(cwd, '!');
+    return performFilterQuery(meta, query, {
+      ...options,
+      cwd: dir,
+      container: true
+    });
+  }
   return Promise.all(
     matches.map(match =>
       makeQueryLink(match, query, options).then(link => result.links.push(link))
@@ -2056,7 +2081,8 @@ function toFilename(str, options) {
   if (
     file === settings.allQuery ||
     file === settings.tagsQuery ||
-    file === settings.userTagsQuery
+    file === settings.userTagsQuery ||
+    file === settings.categoriesQuery
   ) {
     return file;
   }
