@@ -245,9 +245,9 @@ const settings = {
   tagsQuery: '#',
 
   /**
-   * Query for all user tags.
+   * Query for all user labels.
    */
-  userTagsQuery: '+',
+  labelsQuery: '~',
 
   /**
    * Query for all categories.
@@ -257,7 +257,16 @@ const settings = {
   /**
    * The default queries.
    */
-  defaultQueries: ['#', '='],
+  defaultQueries: [
+    '#',
+    '@',
+    '~',
+    '=',
+    '_tag',
+    '_category',
+    '_title',
+    '_author'
+  ],
 
   /**
    * The default category.
@@ -1040,18 +1049,6 @@ function processTags(meta, options) {
 }
 
 /**
- * Process the `_tags` properties of a metadata object.
- * @param meta a metadata object
- * @param [options] an options object
- */
-function processUserTags(meta, options) {
-  const { userTagsQuery } = options;
-  const makeUserTagLink = (file, tag, opts) =>
-    makeTagLink(file, tag, { tagDir: userTagsQuery, ...opts });
-  return processProperty(meta, '_tag', makeUserTagLink, options);
-}
-
-/**
  * Process the `tags` properties of a metadata object.
  * @param meta a metadata object
  * @param [options] an options object
@@ -1747,8 +1744,8 @@ function processMetadataQuery(meta, query, options) {
   if (isTagsQuery(query)) {
     return performTagsQuery(meta, options);
   }
-  if (isUserTagsQuery(query)) {
-    return performUserTagsQuery(meta, options);
+  if (isLabelsQuery(query)) {
+    return performLabelsQuery(meta, options);
   }
   if (isAllQuery(query)) {
     return performAllQuery(meta, options);
@@ -1794,14 +1791,16 @@ function performTagsQuery(meta, options) {
 }
 
 /**
- * Perform a user tags query (`settings.userTagsQuery`).
+ * Perform a user tags query (`settings.labelsQuery`).
  * @param meta a metadata object array
  * @param [options] an options object
  */
-function performUserTagsQuery(meta, options) {
+function performLabelsQuery(meta, options) {
   const cwd = (options && options.cwd) || '.';
-  const dir = joinPaths(cwd, toFilename(settings.userTagsQuery));
-  return performColonQuery(meta, ':_tag', { ...options, cwd: dir });
+  const dir = joinPaths(cwd, toFilename(settings.labelsQuery));
+  return performColonQuery(meta, ':label', { ...options, cwd: dir })
+    .then(() => performColonQuery(meta, ':_label', { ...options, cwd: dir }))
+    .then(() => performColonQuery(meta, ':_tag', { ...options, cwd: dir }));
 }
 
 /**
@@ -1994,8 +1993,8 @@ function isTagsQuery(query) {
  * @param query a query
  * @return `true` if the query is a user tags query, `false` otherwise
  */
-function isUserTagsQuery(query) {
-  return query === settings.userTagsQuery;
+function isLabelsQuery(query) {
+  return query === settings.labelsQuery;
 }
 
 /**
@@ -2075,7 +2074,7 @@ function toFilename(str, options) {
   if (
     file === settings.allQuery ||
     file === settings.tagsQuery ||
-    file === settings.userTagsQuery ||
+    file === settings.labelsQuery ||
     file === settings.categoriesQuery
   ) {
     return file;
