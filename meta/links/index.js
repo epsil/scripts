@@ -202,12 +202,17 @@ const settings = {
   /**
    * The subdirectory to store queries in.
    */
-  queryDir: '.',
+  queryDir: '!',
 
   /**
    * The subdirectory to store categories in.
    */
-  categoryDir: 'cat',
+  categoryDir: '=',
+
+  /**
+   * The subdirectory to store underscore queries in.
+   */
+  underscoreDir: '_',
 
   /**
    * The subdirectory to store tags in.
@@ -1158,7 +1163,7 @@ function makeTagDirectory(tag, options) {
  * @param [options] an options object
  */
 function makeCategoryContainer(options) {
-  const dir = (options && options.categoryDir) || settings.categoryDir;
+  const dir = (options && options.categoryDir) || '.';
   return makeDirectory(dir, options);
 }
 
@@ -1168,15 +1173,6 @@ function makeCategoryContainer(options) {
  */
 function makeTagContainer(options) {
   const dir = (options && options.tagDir) || settings.tagDir;
-  return makeDirectory(dir, options);
-}
-
-/**
- * Make a query container directory (usually `q/`).
- * @param [options] an options object
- */
-function makeQueryContainer(options) {
-  const dir = (options && options.queryDir) || settings.queryDir;
   return makeDirectory(dir, options);
 }
 
@@ -1816,7 +1812,7 @@ function performUserTagsQuery(meta, options) {
 function performCategoriesQuery(meta, options) {
   if (!(options && options.container)) {
     const cwd = (options && options.cwd) || '.';
-    const dir = joinPaths(cwd, toFilename('='));
+    const dir = joinPaths(cwd, toFilename(settings.categoryDir));
     return performCategoriesQuery(meta, {
       ...options,
       cwd: dir,
@@ -1824,9 +1820,8 @@ function performCategoriesQuery(meta, options) {
     });
   }
   const result = { links: [], ...meta };
-  const qDir = (options && options.queryDir) || settings.queryDir;
   const cDir = toFilename(settings.defaultCategory);
-  return makeDirectory(`${qDir}/${cDir}`, options)
+  return makeDirectory(cDir, options)
     .then(dir =>
       processTagsAndCategories(meta, {
         ...options,
@@ -1904,7 +1899,7 @@ function performUnderscoreQuery(meta, query, options) {
     return performPercentQuery(meta, `%${prop}`, options);
   }
   const cwd = (options && options.cwd) || '.';
-  const dir = joinPaths(cwd, '_');
+  const dir = joinPaths(cwd, settings.underscoreDir);
   return performPercentQuery(meta, `%${prop}`, {
     ...options,
     cwd: dir,
@@ -1960,7 +1955,7 @@ function performFilterQuery(meta, query, options) {
   const matches = filterByQuery([meta], query);
   if (!(options && options.container)) {
     const cwd = (options && options.cwd) || '.';
-    const dir = joinPaths(cwd, '!');
+    const dir = joinPaths(cwd, settings.queryDir);
     return performFilterQuery(meta, query, {
       ...options,
       cwd: dir,
@@ -1981,9 +1976,8 @@ function performFilterQuery(meta, query, options) {
  * @param [options] an options object
  */
 function makeQueryLink(meta, query, options) {
-  const qDir = (options && options.queryDir) || toFilename(settings.queryDir);
   const dir = toFilename(query);
-  return makeLinkInDirectory(meta.file, `${qDir}/${dir}`, options);
+  return makeLinkInDirectory(meta.file, dir, options);
 }
 
 /**
