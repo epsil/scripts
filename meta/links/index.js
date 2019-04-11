@@ -134,8 +134,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`;
  * Hints to display when running with `--hint`.
  */
 const hints = [
-  `The Key Is the Gate
--------------------
+  `THE KEY IS THE GATE
 
 The trick is to learn the trick.
 The key to the treasure is the treasure.
@@ -150,6 +149,14 @@ kind of coding scheme. It's just a question of how implicit it is.
 
 -- Douglas Hofstadter: *Gödel, Escher, Bach: an Eternal Golden Braid*,
    "Six-Part Ricercar"`,
+
+  `You should be able to communicate with your system of notes.
+Your system will *respond* to your *queries* in a meaningful
+manner to which you both can relate. You ask, your notes answer.
+Ideally, both learn.
+
+-- Christian Tietze: "Create a Zettelkasten for your Notes
+   to Improve Thinking and Writing"`,
 
   `... It's in words that the magic is---Abracadabra, Open Sesame, and
 the rest---but the magic words in one story aren't magical in the
@@ -508,10 +515,11 @@ function printLicense() {
 }
 
 /**
- * Print a hint.
+ * Print a random hint.
  */
 function printHint() {
-  const hint = hints[Math.floor(Math.random() * hints.length)];
+  const index = Math.floor(Math.random() * hints.length);
+  const hint = hints[index];
   printHelpString(hint);
 }
 
