@@ -1047,13 +1047,9 @@ function readMetadataForFile(file, options) {
  */
 function processTagsAndCategories(meta, options) {
   return new Promise((resolve, reject) => {
-    const { defaultCategory } = options;
     const result = [];
     const tags = getProp(meta, 'tag');
-    let categories = getProp(meta, 'category');
-    if (_.isEmpty(categories)) {
-      categories = [defaultCategory];
-    }
+    const categories = getProp(meta, 'category', settings.defaultCategory);
     categories.forEach(category => {
       tags.forEach(tag => {
         result.push(makeTagLinkInCategory(meta.file, category, tag, options));
@@ -2172,10 +2168,11 @@ function hasProp(meta, prop, val) {
  * Get the value of a metadata property.
  * @param meta a metadata object
  * @param prop the property's name, a string
+ * @param [def] a default value to return instead of nothing
  * @return an array of all values assigned to the property,
  * or the empty array if nothing is found
  */
-function getProp(meta, prop) {
+function getProp(meta, prop, def) {
   let result = [];
   // if nothing is found, return an empty array
   if (!meta) {
@@ -2211,6 +2208,9 @@ function getProp(meta, prop) {
   // filter out duplicate values
   result = _.uniq(result);
   // return array of values
+  if (def && _.isEmpty(result)) {
+    return [def];
+  }
   return result;
 }
 
