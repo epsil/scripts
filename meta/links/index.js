@@ -1041,10 +1041,11 @@ function processTagsAndCategories(meta, options) {
   return new Promise((resolve, reject) => {
     const { defaultCategory } = options;
     const result = [];
-    let tags = (meta && meta.tags) || [];
-    tags = tags.filter(tag => typeof tag === 'string');
-    let categories = (meta && meta.categories) || [defaultCategory];
-    categories = categories.filter(category => typeof category === 'string');
+    const tags = getProp(meta, 'tag');
+    let categories = getProp(meta, 'category');
+    if (_.isEmpty(categories)) {
+      categories = [defaultCategory];
+    }
     categories.forEach(category => {
       tags.forEach(tag => {
         result.push(makeTagLinkInCategory(meta.file, category, tag, options));
