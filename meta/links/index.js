@@ -518,9 +518,9 @@ function printLicense() {
  * Print a random hint.
  */
 function printHint() {
-  const index = Math.floor(Math.random() * hints.length);
-  const hint = hints[index];
-  printHelpString(hint);
+  const randomIndex = Math.floor(Math.random() * hints.length);
+  const randomHint = hints[randomIndex];
+  printHelpString(randomHint);
 }
 
 /**
