@@ -1738,8 +1738,14 @@ function filterByQuery(metaArr, query) {
  * @param [options] an options object
  */
 function processMetadataQuery(meta, query, options) {
-  if (!query || isCategoriesQuery(query)) {
-    return performCategoriesQuery(meta, options);
+  if (!query) {
+    return performAllQuery(meta, options);
+  }
+  if (isSlashQuery(query)) {
+    return performSlashQuery(meta, query, options);
+  }
+  if (isAllQuery(query)) {
+    return performAllQuery(meta, options);
   }
   if (isTagsQuery(query)) {
     return performTagsQuery(meta, options);
@@ -1747,11 +1753,8 @@ function processMetadataQuery(meta, query, options) {
   if (isLabelsQuery(query)) {
     return performLabelsQuery(meta, options);
   }
-  if (isAllQuery(query)) {
-    return performAllQuery(meta, options);
-  }
-  if (isSlashQuery(query)) {
-    return performSlashQuery(meta, query, options);
+  if (isCategoriesQuery(query)) {
+    return performCategoriesQuery(meta, options);
   }
   if (isUnderscoreQuery(query)) {
     return performUnderscoreQuery(meta, query, options);
@@ -1840,7 +1843,7 @@ function performCategoriesQuery(meta, options) {
  * @param [options] an options object
  */
 function performSlashQuery(meta, query, options) {
-  let subQueries = query.split('/');
+  const subQueries = query.split('/');
 
   if (subQueries.length === 0) {
     return Promise.resolve(meta);
@@ -1848,18 +1851,6 @@ function performSlashQuery(meta, query, options) {
 
   const firstQuery = subQueries.shift();
   let prom = processMetadataQuery(meta, firstQuery, options);
-
-  // replace remaining underscore queries with percent queries
-  // (i.e., _tag/_title = _tag/%bar = _/tag/:tag/title/:title
-  subQueries = subQueries.map(subQuery => {
-    if (isUnderscoreQuery(subQuery)) {
-      const underscorePrefix = /^_/;
-      const prop = subQuery.replace(underscorePrefix, '');
-      const percentQuery = `%${prop}`;
-      return percentQuery;
-    }
-    return subQuery;
-  });
 
   subQueries.forEach(subQuery => {
     prom = prom.then(result => {
