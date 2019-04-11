@@ -326,7 +326,8 @@ const flags = {
      */
     input: {
       type: 'string',
-      alias: 'i'
+      alias: 'i',
+      default: settings.sourceDir
     },
 
     /**
@@ -335,7 +336,8 @@ const flags = {
      */
     output: {
       type: 'string',
-      alias: 'o'
+      alias: 'o',
+      default: settings.destinationDir
     },
 
     /**
@@ -344,7 +346,8 @@ const flags = {
      */
     watch: {
       type: 'boolean',
-      alias: 'w'
+      alias: 'w',
+      default: false
     },
 
     /**
@@ -386,12 +389,18 @@ const flags = {
     /**
      * Whether to display the license (`license`).
      */
-    license: {},
+    license: {
+      type: 'boolean',
+      default: false
+    },
 
     /**
      * Whether to display a hint (`hint`).
      */
-    hint: {}
+    hint: {
+      type: 'boolean',
+      default: false
+    }
   }
 };
 
@@ -412,18 +421,14 @@ function main() {
 
   let options = { ...settings, ...cli.flags };
   const {
-    input,
-    output,
+    input: inputDir,
+    output: outputDir,
     watch,
     clean,
     license: licenseFlag,
     hint: hintFlag,
-    sourceDir,
-    destinationDir,
     makeLinks
   } = options;
-  const inputDir = input || sourceDir;
-  const outputDir = output || destinationDir;
 
   if (licenseFlag) {
     printLicense();
