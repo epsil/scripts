@@ -34,7 +34,9 @@ Examples:
     metalinks "*"
 
 These commands are identical. They create links for all tagged files
-in the current directory. The links are placed in the directory _q/:
+in the current directory. The links are placed in the directory _q/,
+with _q/_/tag/foo/ containing links to files tagged with "foo" and
+_q/_/tag/bar/ containing links to files tagged with "bar":
 
     _q/
       _/
@@ -42,6 +44,17 @@ in the current directory. The links are placed in the directory _q/:
           foo/
             file1.txt -> /path/to/file1.txt
           bar/
+            file2.txt -> /path/to/file2.txt
+
+Similarly, if the "title" property is specified in the metadata,
+then it is listed under _q/_/title/:
+
+    _q/
+      _/
+        title/
+          Full Title of File 1/
+            file1.txt -> /path/to/file1.txt
+          Full Title of File 2/
             file2.txt -> /path/to/file2.txt
 
 The default input directory is . (meaning the current directory).
