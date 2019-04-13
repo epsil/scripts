@@ -964,6 +964,7 @@ function metadataChangesInDirectory(dir, options) {
   });
   watcher.on('change', function(evt, name) {
     const file = path.join(directory, name);
+    // { evt: 'update', name: '/path/to/file' }
     stream$.next({ evt, name: file });
   });
   return stream$;
