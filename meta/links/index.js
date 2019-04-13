@@ -20,34 +20,34 @@ const _ = require('lodash');
 /**
  * Help message to display when running with `--help`.
  */
-const help = `y performs queries on files tagged with ytag.
+const help = `q performs queries on files tagged with qtag.
 The files matching a query are listed in a "smart folder"
 containing symbolic links (or shortcuts on Windows).
 
 Usage:
 
-    y [OPTIONS...] [!] [QUERIES...]
+    q [OPTIONS...] [!] [QUERIES...]
 
 Examples:
 
-    y
+    q
 
 This command reads all the metadata in the current directory
 and prints it to standard output as YAML. To save it to a file,
-just do y > metadata.yml.
+just do q > metadata.yaml.
 
-    y foo
+    q foo
 
 This command prints out the metadata for all files that are
 tagged with "foo".
 
-    y ! "foo"
+    q ! "foo"
 
 This command creates a smart folder containing symbolic links to
 all files that are tagged with "foo". The links are placed in the
-directory _y/!/foo/:
+directory _q/!/foo/:
 
-    _y/
+    _q/
       !/
         foo/
           file3.txt -> /path/to/file1.txt
@@ -55,12 +55,12 @@ directory _y/!/foo/:
 
 The following command creates symbolic links for all tags:
 
-    y !
+    q !
 
-All files tagged "foo" are listed under _y/_/tag/foo/, while
-all files tagged "bar" are listed under _y/_/tag/bar:
+All files tagged "foo" are listed under _q/_/tag/foo/, while
+all files tagged "bar" are listed under _q/_/tag/bar:
 
-    _y/
+    _q/
       _/
         tag/
           bar/
@@ -70,9 +70,9 @@ all files tagged "bar" are listed under _y/_/tag/bar:
             file2.txt -> /path/to/file2.txt
 
 Similarly, symbolic links based on the "title" property are placed
-under _/y/_/title/:
+under _/q/_/title/:
 
-    _y/
+    _q/
       _/
         title/
           Full Title of File 1/
@@ -81,54 +81,52 @@ under _/y/_/title/:
             file2.txt -> /path/to/file2.txt
 
 The default input directory is . (meaning the current directory).
-The default output directory is _y (where the y stands for "why",
-as in "ask why" or "query" or "question"; or "double-'w'", as in
-"the double-'w's" -- "where", "who", "when", "which", etc.).
+The default output directory is _q (where the q stands for "query").
 
 If necessary, the --input and --output options can be used to specify
 different directories:
 
-    y --input "download" --output "_links" ! "*"
+    q --input "download" --output "_links" ! "*"
 
 The next command executes multiple queries in one go,
 which is faster since the metadata is read only once:
 
-    y ! "*" "foo bar"
+    q ! "*" "foo bar"
 
 To continually monitor a directory for metadata changes, use --watch:
 
-    y --watch ! "*" "foo bar"
+    q --watch ! "*" "foo bar"
 
 Also, to split a long list of queries across multiple lines,
 it is useful to escape newlines with a backslash:
 
-    y --watch ! \\
+    q --watch ! \\
       "*" \\
       "foo bar" \\
       "baz quux"
 
 Files can also be read from standard input. If files.txt is a
 text file containing a newline-separated list of files to process,
-then it can be piped to y:
+then it can be piped to q:
 
-    cat files.txt | y ! "foo bar"
+    cat files.txt | q ! "foo bar"
 
-y is fully stream-enabled and will begin processing input
+q is fully stream-enabled and will begin processing input
 as soon as it arrives. This makes it easy to combine with other
 utilities, such as find and grep. It is also possible to pipe
-the output of y to another program:
+the output of q to another program:
 
-    y | myprog
+    q | myprog
 
-Here, the myprog program will receive a stream of metadata from y.
-As always, y outputs metadata as soon as it is available. Provided
+Here, the myprog program will receive a stream of metadata from q.
+As always, q outputs metadata as soon as it is available. Provided
 the myprog program can read YAML streams incrementally, it can
 begin processing right away, without delay.
 
-Type y --version for the current version. For the license,
-type y --license. For a hint, type y --hint.
+Type q --version for the current version. For the license,
+type q --license. For a hint, type q --hint.
 
-See also: ytag, yarch.`;
+See also: qtag, yarch.`;
 
 /**
  * License to display when running with `--license`.
@@ -223,7 +221,7 @@ const settings = {
   /**
    * The directory to store links in.
    */
-  destinationDir: '_y',
+  destinationDir: '_q',
 
   /**
    * Bang character.
