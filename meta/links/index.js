@@ -223,6 +223,11 @@ const settings = {
   destinationDir: '_y',
 
   /**
+   * Bang character.
+   */
+  bang: '!',
+
+  /**
    * Temporary directory to generate links in.
    */
   tmpDir: '_tmp',
@@ -438,6 +443,8 @@ function main() {
 
   const cli = meow(help, flags);
   let queries = cli.input;
+  const hasBang = _.includes(queries, settings.bang);
+  queries = queries.filter(x => !isBang(x));
   if (_.isEmpty(queries)) {
     queries = [settings.starQuery];
   }
@@ -1786,6 +1793,9 @@ function processMetadataQuery(meta, query, options) {
   if (!query) {
     return performStarQuery(meta, options);
   }
+  if (isBang(query)) {
+    return Promise.resolve(meta);
+  }
   if (isSlashQuery(query)) {
     return performSlashQuery(meta, query, options);
   }
@@ -2024,6 +2034,15 @@ function performFilterQuery(meta, query, options) {
 function makeQueryLink(meta, query, options) {
   const dir = toFilename(query);
   return makeLinkInDirectory(meta.file, dir, options);
+}
+
+/**
+ * Whether a string is the bang character.
+ * @param str a string
+ * @return `true` if the string is a bang, `false` otherwise
+ */
+function isBang(str) {
+  return str === settings.bang;
 }
 
 /**
