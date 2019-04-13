@@ -58,7 +58,10 @@ then it is listed under _y/_/title/:
             file2.txt -> /path/to/file2.txt
 
 The default input directory is . (meaning the current directory).
-The default output directory is _y (where the y stands for "why").
+The default output directory is _y (where the y stands for "why",
+as in "ask why" or "query", or double-"why", as in "the 'why's":
+ "where", "what", "who", "when", "which", and so on).
+
 If necessary, the --input and --output options can be used to specify
 different directories:
 
