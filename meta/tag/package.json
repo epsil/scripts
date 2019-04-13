@@ -5,6 +5,8 @@
   "main": "index.js",
   "bin": {
     "metatag": "index.js",
+    "qtag": "index.js",
+    "qt": "index.js",
     "ytag": "index.js",
     "yt": "index.js"
   },

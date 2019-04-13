@@ -5,6 +5,7 @@
   "main": "index.js",
   "bin": {
     "metalinks": "index.js",
+    "q": "index.js",
     "y": "index.js"
   },
   "scripts": {
