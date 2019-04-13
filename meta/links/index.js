@@ -59,8 +59,8 @@ then it is listed under _y/_/title/:
 
 The default input directory is . (meaning the current directory).
 The default output directory is _y (where the y stands for "why",
-as in "ask why" or "query", or double-"why", as in "the double-
-'why's": "where", "what", "who", "when", "which", and so on).
+as in "ask why" or "query" or "question", or double-"why", as in
+"the double-'why's": "where", "what", "who", "when", "which", etc.).
 
 If necessary, the --input and --output options can be used to specify
 different directories:
