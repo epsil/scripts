@@ -34,11 +34,11 @@ Examples:
     metalinks "*"
 
 These commands are identical. They create links for all tagged files
-in the current directory. The links are placed in the directory _q/,
-with _q/_/tag/foo/ containing links to files tagged with "foo" and
-_q/_/tag/bar/ containing links to files tagged with "bar":
+in the current directory. The links are placed in the directory _y/,
+with _y/_/tag/foo/ containing links to files tagged with "foo" and
+_y/_/tag/bar/ containing links to files tagged with "bar":
 
-    _q/
+    _y/
       _/
         tag/
           foo/
@@ -47,9 +47,9 @@ _q/_/tag/bar/ containing links to files tagged with "bar":
             file2.txt -> /path/to/file2.txt
 
 Similarly, if the "title" property is specified in the metadata,
-then it is listed under _q/_/title/:
+then it is listed under _y/_/title/:
 
-    _q/
+    _y/
       _/
         title/
           Full Title of File 1/
@@ -58,7 +58,7 @@ then it is listed under _q/_/title/:
             file2.txt -> /path/to/file2.txt
 
 The default input directory is . (meaning the current directory).
-The default output directory is _q (where the q stands for "query").
+The default output directory is _y (where the y stands for "why").
 If necessary, the --input and --output options can be used to specify
 different directories:
 
@@ -69,9 +69,9 @@ both "foo" and "bar":
 
     metalinks "foo bar"
 
-The links are placed in the directory _q/!/foo bar/:
+The links are placed in the directory _y/!/foo bar/:
 
-    _q/
+    _y/
       !/
         foo bar/
           file3.txt -> /path/to/file3.txt
@@ -217,7 +217,7 @@ const settings = {
   /**
    * The directory to store links in.
    */
-  destinationDir: '_q',
+  destinationDir: '_y',
 
   /**
    * Temporary directory to generate links in.
