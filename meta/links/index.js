@@ -20,18 +20,18 @@ const _ = require('lodash');
 /**
  * Help message to display when running with `--help`.
  */
-const help = `metalinks performs queries on files tagged with metatag.
+const help = `y performs queries on files tagged with ytag.
 The files matching a query are listed in a "smart folder"
 containing symbolic links (or shortcuts on Windows).
 
 Usage:
 
-    metalinks [OPTIONS...] [QUERIES...]
+    y [OPTIONS...] [QUERIES...]
 
 Examples:
 
-    metalinks
-    metalinks "*"
+    y
+    y "*"
 
 These commands are identical. They create links for all tagged files
 in the current directory. The links are placed in the directory _y/,
@@ -62,12 +62,12 @@ The default output directory is _y (where the y stands for "why").
 If necessary, the --input and --output options can be used to specify
 different directories:
 
-    metalinks --input "download" --output "_links" "*"
+    y --input "download" --output "_links" "*"
 
 The following command performs a query for files tagged with
 both "foo" and "bar":
 
-    metalinks "foo bar"
+    y "foo bar"
 
 The links are placed in the directory _y/!/foo bar/:
 
@@ -80,49 +80,49 @@ The links are placed in the directory _y/!/foo bar/:
 The next command executes multiple queries in one go,
 which is faster since the metadata is read only once:
 
-    metalinks "*" "foo bar"
+    y "*" "foo bar"
 
 To continually monitor a directory for metadata changes, use --watch:
 
-    metalinks --watch "*" "foo bar"
+    y --watch "*" "foo bar"
 
 Also, to split a long list of queries across multiple lines,
 it is useful to escape newlines with a backslash:
 
-    metalinks --watch \\
+    y --watch \\
       "*" \\
       "foo bar" \\
       "baz quux"
 
 Files can also be read from standard input. If files.txt is a
 text file containing a newline-separated list of files to process,
-then it can be piped to metalinks:
+then it can be piped to y:
 
-    cat files.txt | metalinks "foo bar"
+    cat files.txt | y "foo bar"
 
-metalinks is fully stream-enabled and will begin processing input
+y is fully stream-enabled and will begin processing input
 as soon as it arrives. This makes it easy to combine with other
 utilities, such as find and grep.
 
-The output of metalinks is valid YAML and can be saved to a file:
+The output of y is valid YAML and can be saved to a file:
 
-    metalinks > metadata.yml
+    y > metadata.yml
 
 This reads all the metadata in the current directory and
 saves it to the file metadata.yml. It is also possible to
-pipe the output of metalinks to another program:
+pipe the output of y to another program:
 
-    metalinks | myprog
+    y | myprog
 
 Here, the myprog program will receive a stream of metadata from
-metalinks. As always, metalinks outputs metadata as soon as
-it is available. Provided the myprog program can read YAML streams
-incrementally, it can begin processing right away, without delay.
+y. As always, y outputs metadata as soon as it is available.
+Provided the myprog program can read YAML streams incrementally,
+it can begin processing right away, without delay.
 
-Type metalinks --version for the current version. For the license,
-type metalinks --license. For a hint, type metalinks --hint.
+Type y --version for the current version. For the license,
+type y --license. For a hint, type y --hint.
 
-See also: metatag, yarch.`;
+See also: ytag, yarch.`;
 
 /**
  * License to display when running with `--license`.
