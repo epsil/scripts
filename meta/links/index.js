@@ -31,7 +31,7 @@ Usage:
 Examples:
 
     y
-    y "*"
+    y !
 
 These commands are identical. They create links for all tagged files
 in the current directory. The links are placed in the directory _y/,
@@ -65,12 +65,12 @@ as in "ask why" or "query" or "question", or double-"why", as in
 If necessary, the --input and --output options can be used to specify
 different directories:
 
-    y --input "download" --output "_links" "*"
+    y --input "download" --output "_links" ! "*"
 
 The following command performs a query for files tagged with
 both "foo" and "bar":
 
-    y "foo bar"
+    y ! "foo bar"
 
 The links are placed in the directory _y/!/foo bar/:
 
@@ -83,16 +83,16 @@ The links are placed in the directory _y/!/foo bar/:
 The next command executes multiple queries in one go,
 which is faster since the metadata is read only once:
 
-    y "*" "foo bar"
+    y ! "*" "foo bar"
 
 To continually monitor a directory for metadata changes, use --watch:
 
-    y --watch "*" "foo bar"
+    y --watch ! "*" "foo bar"
 
 Also, to split a long list of queries across multiple lines,
 it is useful to escape newlines with a backslash:
 
-    y --watch \\
+    y --watch ! \\
       "*" \\
       "foo bar" \\
       "baz quux"
@@ -101,7 +101,7 @@ Files can also be read from standard input. If files.txt is a
 text file containing a newline-separated list of files to process,
 then it can be piped to y:
 
-    cat files.txt | y "foo bar"
+    cat files.txt | y ! "foo bar"
 
 y is fully stream-enabled and will begin processing input
 as soon as it arrives. This makes it easy to combine with other
