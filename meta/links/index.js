@@ -33,20 +33,40 @@ Examples:
     y
 
 This command reads all the metadata in the current directory
-and prints it to standard output as YAML. To save it to a file, do
-y > metadata.yml.
+and prints it to standard output as YAML. To save it to a file,
+just do y > metadata.yml.
+
+    y foo
+
+This command prints out the metadata for all files that are
+tagged with "foo".
+
+    y ! "foo"
+
+This command creates a smart folder containing symbolic links to
+all files that are tagged with "foo". The links are placed in the
+directory _y/!/foo/:
+
+    _y/
+      !/
+        foo/
+          file3.txt -> /path/to/file1.txt
+          file4.txt -> /path/to/file2.txt
+
+The following command creates symbolic links for all tags:
 
     y !
 
-This command creates a smart folder containing symbolic links to
-files according to their metadata. For example, all files tagged
-"foo" are listed under _y/_/tag/foo/:
+All files tagged "foo" are listed under _y/_/tag/foo/, while
+all files tagged "bar" are listed under _y/_/tag/bar:
 
     _y/
       _/
         tag/
+          bar/
+            file1.txt -> /path/to/file3.txt
           foo/
-            file1.txt -> /path/to/file1.txt
+            file2.txt -> /path/to/file1.txt
             file2.txt -> /path/to/file2.txt
 
 Similarly, symbolic links based on the "title" property are placed
@@ -62,26 +82,13 @@ under _/y/_/title/:
 
 The default input directory is . (meaning the current directory).
 The default output directory is _y (where the y stands for "why",
-as in "ask why" or "query" or "question", or "double-'w'", as in
-"the double-'w's": "where", "what", "who", "when", "which", etc.).
+as in "ask why" or "query" or "question"; or "double-'w'", as in
+"the double-'w's" -- "where", "who", "when", "which", etc.).
 
 If necessary, the --input and --output options can be used to specify
 different directories:
 
     y --input "download" --output "_links" ! "*"
-
-The following command performs a query for files tagged with
-both "foo" and "bar":
-
-    y ! "foo bar"
-
-The links are placed in the directory _y/!/foo bar/:
-
-    _y/
-      !/
-        foo bar/
-          file3.txt -> /path/to/file3.txt
-          file4.txt -> /path/to/file4.txt
 
 The next command executes multiple queries in one go,
 which is faster since the metadata is read only once:
