@@ -26,28 +26,31 @@ containing symbolic links (or shortcuts on Windows).
 
 Usage:
 
-    y [OPTIONS...] [QUERIES...]
+    y [OPTIONS...] [!] [QUERIES...]
 
 Examples:
 
     y
+
+This command reads all the metadata in the current directory
+and prints it to standard output as YAML. To save it to a file, do
+y > metadata.yml.
+
     y !
 
-These commands are identical. They create links for all tagged files
-in the current directory. The links are placed in the directory _y/,
-with _y/_/tag/foo/ containing links to files tagged with "foo" and
-_y/_/tag/bar/ containing links to files tagged with "bar":
+This command creates a smart folder containing symbolic links to
+files according to their metadata. For example, all files tagged
+"foo" are listed under _y/_/tag/foo/:
 
     _y/
       _/
         tag/
           foo/
             file1.txt -> /path/to/file1.txt
-          bar/
             file2.txt -> /path/to/file2.txt
 
-Similarly, if the "title" property is specified in the metadata,
-then it is listed under _y/_/title/:
+Similarly, symbolic links based on the "title" property are placed
+under _/y/_/title/:
 
     _y/
       _/
@@ -59,7 +62,7 @@ then it is listed under _y/_/title/:
 
 The default input directory is . (meaning the current directory).
 The default output directory is _y (where the y stands for "why",
-as in "ask why" or "query" or "question", or double-"w", as in
+as in "ask why" or "query" or "question", or "double-'w'", as in
 "the double-'w's": "where", "what", "who", "when", "which", etc.).
 
 If necessary, the --input and --output options can be used to specify
@@ -105,22 +108,15 @@ then it can be piped to y:
 
 y is fully stream-enabled and will begin processing input
 as soon as it arrives. This makes it easy to combine with other
-utilities, such as find and grep.
-
-The output of y is valid YAML and can be saved to a file:
-
-    y > metadata.yml
-
-This reads all the metadata in the current directory and
-saves it to the file metadata.yml. It is also possible to
-pipe the output of y to another program:
+utilities, such as find and grep. It is also possible to pipe
+the output of y to another program:
 
     y | myprog
 
-Here, the myprog program will receive a stream of metadata from
-y. As always, y outputs metadata as soon as it is available.
-Provided the myprog program can read YAML streams incrementally,
-it can begin processing right away, without delay.
+Here, the myprog program will receive a stream of metadata from y.
+As always, y outputs metadata as soon as it is available. Provided
+the myprog program can read YAML streams incrementally, it can
+begin processing right away, without delay.
 
 Type y --version for the current version. For the license,
 type y --license. For a hint, type y --hint.
@@ -369,6 +365,14 @@ const flags = {
     },
 
     /**
+     * Whether to skip link creation.
+     */
+    noLinks: {
+      type: 'boolean',
+      default: false
+    },
+
+    /**
      * Whether to run in watch mode.
      * The default value is `false`.
      */
@@ -455,6 +459,7 @@ function main() {
     output: outputDir,
     watch,
     clean,
+    noLinks,
     license: licenseFlag,
     hint: hintFlag,
     makeLinks
@@ -478,13 +483,13 @@ function main() {
     printYamlComment('On Windows, --clean should be specified.\n');
   }
 
-  printParameters(queries, inputDir, outputDir);
-
   return hasLink().then(link => {
     options = {
       ...options,
-      makeLinks: makeLinks && link
+      makeLinks: makeLinks && link,
+      noLinks: !hasBang || noLinks
     };
+    printParameters(queries, inputDir, outputDir, options);
     const hasStdin = !process.stdin.isTTY;
     if (hasStdin) {
       processStdin(queries, outputDir, options);
@@ -562,9 +567,11 @@ function printHelpString(str, indent) {
  * @param inputDir the directory to look for metadata in
  * @param outputDir the directory to create links in
  */
-function printParameters(queries, inputDir, outputDir) {
+function printParameters(queries, inputDir, outputDir, options) {
   printYamlComment(`Input directory: ${inputDir}`);
-  printYamlComment(`Output directory: ${outputDir}`);
+  if (!(options && options.noLinks)) {
+    printYamlComment(`Output directory: ${outputDir}`);
+  }
   printYamlComment(`Queries: ${queries.join(', ')}\n`);
 }
 
@@ -771,7 +778,9 @@ function validateRsyncParams(tempDir, outputDir, options) {
   }
   const tempDirIsEmpty = _.isEmpty(fs.readdirSync(tempDir));
   if (tempDirIsEmpty) {
-    printYamlComment('Working directory is empty, aborting merge.');
+    if (!(options && options.noLinks)) {
+      printYamlComment('Working directory is empty, aborting merge.');
+    }
     if (options && options.delete) {
       deleteDirectory(tempDir);
     }
@@ -1790,6 +1799,9 @@ function filterByQuery(metaArr, query) {
  * @param [options] an options object
  */
 function processMetadataQuery(meta, query, options) {
+  if (options && options.noLinks) {
+    return Promise.resolve(meta);
+  }
   if (!query) {
     return performStarQuery(meta, options);
   }
