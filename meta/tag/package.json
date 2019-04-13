@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "bin": {
-    "metatag": "index.js"
+    "metatag": "index.js",
+    "ytag": "index.js",
+    "yt": "index.js"
   },
   "scripts": {
     "clean": "rm -rf doc lib cat q tmp tmp2 trash .meta",
