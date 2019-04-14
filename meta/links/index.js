@@ -524,7 +524,13 @@ function main() {
           let dir = outputDir || settings.destinationDir;
           if (hasBang && hasQueries) {
             dir = joinPaths(dir, settings.queryDir);
-            if (queries[0] !== settings.defaultQuery) {
+            if (
+              queries[0] !== settings.defaultQuery &&
+              queries[0] !== settings.categoriesQuery &&
+              queries[0] !== settings.labelsQuery &&
+              queries[0] !== settings.tagsQuery &&
+              queries[0] !== settings.allQuery
+            ) {
               dir = joinPaths(dir, toFilename(queries[0]));
             }
           }
