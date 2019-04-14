@@ -514,7 +514,7 @@ function main() {
       ...options,
       batch: batch || hasDot,
       makeLinks: makeLinks && link,
-      noLinks: hasDot || noLinks
+      noLinks: (hasDot && !hasBang) || noLinks
     };
     printParameters(queries, inputDir, outputDir, options);
     const hasStdin = !process.stdin.isTTY;
