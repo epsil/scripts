@@ -517,7 +517,7 @@ function main() {
       watchDirectory(queries, inputDir, outputDir, options);
     } else {
       // process metadata in directory and exit
-      processDirectory(queries, inputDir, outputDir, options).then(() => {
+      processDirectory(queries, inputDir, outputDir, options).then(result => {
         printYamlComment('\nDone.\n');
         if (options && options.openFlag) {
           open(outputDir || settings.destinationDir);
@@ -652,12 +652,13 @@ function processDirectory(queries, inputDir, outputDir, options) {
     console.log();
   }
   const stream$ = metadataInDirectory(inputDir, options);
-  return processQueries(queries, stream$, outputDir, options).then(() => {
+  return processQueries(queries, stream$, outputDir, options).then(result => {
     if (runAfter) {
       printYamlComment(`\nExecuting --run-after: ${runAfter}\n`);
       shell.exec(runAfter);
       console.log();
     }
+    return result;
   });
 }
 
@@ -701,19 +702,21 @@ function processQueriesInTempDir(
   const { runBeforeMerge } = options;
   return makeTemporaryDirectory(tempDir || settings.tmpDir, options).then(
     tempDirectory =>
-      processQueriesInDir(queries, stream$, tempDirectory, options).then(() => {
-        if (runBeforeMerge) {
-          printYamlComment(
-            `\nExecuting --run-before-merge: ${runBeforeMerge}\n`
-          );
-          shell.exec(runBeforeMerge);
-          console.log();
+      processQueriesInDir(queries, stream$, tempDirectory, options).then(
+        result => {
+          if (runBeforeMerge) {
+            printYamlComment(
+              `\nExecuting --run-before-merge: ${runBeforeMerge}\n`
+            );
+            shell.exec(runBeforeMerge);
+            console.log();
+          }
+          return mergeTmpDirAndOutputDir(tempDirectory, outputDir, {
+            ...options,
+            delete: true
+          }).then(() => result);
         }
-        return mergeTmpDirAndOutputDir(tempDirectory, outputDir, {
-          ...options,
-          delete: true
-        });
-      })
+      )
   );
 }
 
