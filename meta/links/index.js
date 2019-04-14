@@ -467,7 +467,8 @@ function main() {
   let queries = cli.input;
   const hasBang = _.includes(queries, settings.bang);
   queries = queries.filter(x => !isBang(x));
-  if (_.isEmpty(queries)) {
+  const hasQueries = !_.isEmpty(queries);
+  if (!hasQueries) {
     queries = [settings.defaultQuery];
   }
 
@@ -520,7 +521,11 @@ function main() {
       processDirectory(queries, inputDir, outputDir, options).then(result => {
         printYamlComment('\nDone.\n');
         if (options && options.openFlag) {
-          open(outputDir || settings.destinationDir);
+          let dir = outputDir || settings.destinationDir;
+          if (hasBang) {
+            dir = joinPaths(dir, settings.queryDir);
+          }
+          open(dir);
         }
       });
     }
