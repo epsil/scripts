@@ -431,7 +431,7 @@ const flags = {
      * Whether to open the resulting folder
      * with `open`/`xdg-open`/`start`.
      */
-    open: {
+    batch: {
       type: 'boolean',
       default: false
     },
@@ -478,8 +478,8 @@ function main() {
     output: outputDir,
     watch,
     clean,
-    open: openFlag,
     noLinks,
+    batch,
     license: licenseFlag,
     hint: hintFlag,
     makeLinks
@@ -506,7 +506,7 @@ function main() {
   return hasLink().then(link => {
     options = {
       ...options,
-      openFlag,
+      batch: batch || !hasBang,
       makeLinks: makeLinks && link,
       noLinks: !hasBang || noLinks
     };
@@ -520,10 +520,13 @@ function main() {
       // process metadata in directory and exit
       processDirectory(queries, inputDir, outputDir, options).then(result => {
         printYamlComment('\nDone.\n');
-        if (options && options.openFlag) {
+        if (!(options && options.batch)) {
           let dir = outputDir || settings.destinationDir;
-          if (hasBang) {
+          if (hasBang && hasQueries) {
             dir = joinPaths(dir, settings.queryDir);
+            if (queries[0] !== settings.defaultQuery) {
+              dir = joinPaths(dir, toFilename(queries[0]));
+            }
           }
           open(dir);
         }
