@@ -46,9 +46,9 @@ tagged with "foo".
 
 This command creates a smart folder containing symbolic links to
 all files that are tagged with "foo". The links are placed in the
-directory !q/!/foo/:
+directory _q/!/foo/:
 
-    !q/
+    _q/
       !/
         foo/
           file3.txt -> /path/to/file1.txt
@@ -63,10 +63,10 @@ It is shorthand for:
     q ! _
 
 Which performs the special query "_". This query takes all files
-tagged "foo" and lists them under !q/_/tag/foo/, while all files
-tagged "bar" are listed under !q/_/tag/bar:
+tagged "foo" and lists them under _q/_/tag/foo/, while all files
+tagged "bar" are listed under _q/_/tag/bar:
 
-    !q/
+    _q/
       _/
         tag/
           bar/
@@ -76,9 +76,9 @@ tagged "bar" are listed under !q/_/tag/bar:
             file2.txt -> /path/to/file2.txt
 
 Similarly, symbolic links based on the "title" property are placed
-under !q/_/title/:
+under _q/_/title/:
 
-    !q/
+    _q/
       _/
         title/
           Full Title of File 1/
@@ -87,7 +87,7 @@ under !q/_/title/:
             file2.txt -> /path/to/file2.txt
 
 The default input directory is . (meaning the current directory).
-The default output directory is !q (where the q stands for "query").
+The default output directory is _q (where the q stands for "query").
 Diffent values may be specified with the --input and --output options:
 
     q --input "download" --output "_links" ! _
@@ -225,7 +225,7 @@ const settings = {
   /**
    * The directory to store links in.
    */
-  destinationDir: '!q',
+  destinationDir: '_q',
 
   /**
    * Bang character.
