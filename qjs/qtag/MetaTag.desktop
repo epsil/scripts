@@ -1,6 +1,6 @@
 [Desktop Entry]
 Comment=
-Exec=metatag
+Exec=qtag
 Name=MetaTag
 NoDisplay=false
 Path[$e]=

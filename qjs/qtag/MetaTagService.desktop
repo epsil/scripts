@@ -9,4 +9,4 @@ Encoding=UTF-8
 [Desktop Action helloWorld]
 Name=MetaTag
 Icon=smiley-shape
-Exec=metatag "%f"
+Exec=qtag "%f"
