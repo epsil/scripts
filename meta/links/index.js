@@ -233,6 +233,11 @@ const settings = {
   bang: '!',
 
   /**
+   * Dot character.
+   */
+  dot: '.',
+
+  /**
    * Temporary directory to generate links in.
    */
   tmpDir: '_tmp',
@@ -466,7 +471,8 @@ function main() {
   const cli = meow(help, flags);
   let queries = cli.input;
   const hasBang = _.includes(queries, settings.bang);
-  queries = queries.filter(x => !isBang(x));
+  const hasDot = _.includes(queries, settings.dot);
+  queries = queries.filter(x => !isBang(x) && !isDot(x));
   const hasQueries = !_.isEmpty(queries);
   if (!hasQueries) {
     queries = [settings.defaultQuery];
@@ -506,9 +512,9 @@ function main() {
   return hasLink().then(link => {
     options = {
       ...options,
-      batch: batch || !hasBang,
+      batch: batch || hasDot,
       makeLinks: makeLinks && link,
-      noLinks: !hasBang || noLinks
+      noLinks: hasDot || noLinks
     };
     printParameters(queries, inputDir, outputDir, options);
     const hasStdin = !process.stdin.isTTY;
@@ -522,7 +528,7 @@ function main() {
         printYamlComment('\nDone.\n');
         if (!(options && options.batch)) {
           let dir = outputDir || settings.destinationDir;
-          if (hasBang && hasQueries) {
+          if (hasQueries) {
             dir = joinPaths(dir, settings.queryDir);
             if (
               queries[0] !== settings.defaultQuery &&
@@ -2095,6 +2101,15 @@ function makeQueryLink(meta, query, options) {
  */
 function isBang(str) {
   return str === settings.bang;
+}
+
+/**
+ * Whether a string is the dot character.
+ * @param str a string
+ * @return `true` if the string is a dot, `false` otherwise
+ */
+function isDot(str) {
+  return str === settings.dot;
 }
 
 /**
