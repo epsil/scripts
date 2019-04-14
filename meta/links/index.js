@@ -5,6 +5,7 @@ const fg = require('fast-glob');
 const fs = require('fs');
 const meow = require('meow');
 const nodeWatch = require('node-watch');
+const open = require('open');
 const os = require('os');
 const path = require('path');
 const readline = require('readline');
@@ -427,6 +428,15 @@ const flags = {
     },
 
     /**
+     * Whether to open the resulting folder
+     * with `open`/`xdg-open`/`start`.
+     */
+    open: {
+      type: 'boolean',
+      default: false
+    },
+
+    /**
      * Whether to display the license (`license`).
      */
     license: {
@@ -467,6 +477,7 @@ function main() {
     output: outputDir,
     watch,
     clean,
+    open: openFlag,
     noLinks,
     license: licenseFlag,
     hint: hintFlag,
@@ -494,6 +505,7 @@ function main() {
   return hasLink().then(link => {
     options = {
       ...options,
+      openFlag,
       makeLinks: makeLinks && link,
       noLinks: !hasBang || noLinks
     };
@@ -507,6 +519,9 @@ function main() {
       // process metadata in directory and exit
       processDirectory(queries, inputDir, outputDir, options).then(() => {
         printYamlComment('\nDone.\n');
+        if (options && options.openFlag) {
+          open(outputDir || settings.destinationDir);
+        }
       });
     }
   });
