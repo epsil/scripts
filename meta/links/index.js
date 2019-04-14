@@ -57,8 +57,13 @@ The following command creates symbolic links for all tags:
 
     q !
 
-All files tagged "foo" are listed under !q/_/tag/foo/, while
-all files tagged "bar" are listed under !q/_/tag/bar:
+It is shorthand for:
+
+    q ! _
+
+Which performs the special query "_". This query takes all files
+tagged "foo" and lists them under !q/_/tag/foo/, while all files
+tagged "bar" are listed under !q/_/tag/bar:
 
     !q/
       _/
@@ -82,26 +87,24 @@ under !q/_/title/:
 
 The default input directory is . (meaning the current directory).
 The default output directory is !q (where the q stands for "query").
+Diffent values may be specified with the --input and --output options:
 
-If necessary, the --input and --output options can be used to specify
-different directories:
-
-    q --input "download" --output "_links" ! "*"
+    q --input "download" --output "_links" ! _
 
 The next command executes multiple queries in one go,
 which is faster since the metadata is read only once:
 
-    q ! "*" "foo bar"
+    q ! _ "foo bar"
 
 To continually monitor a directory for metadata changes, use --watch:
 
-    q --watch ! "*" "foo bar"
+    q --watch ! _ "foo bar"
 
 Also, to split a long list of queries across multiple lines,
 it is useful to escape newlines with a backslash:
 
     q --watch ! \\
-      "*" \\
+      _ \\
       "foo bar" \\
       "baz quux"
 
@@ -276,7 +279,7 @@ const settings = {
   /**
    * Query for `settings.defaultQueries`.
    */
-  starQuery: '*',
+  defaultQuery: '_',
 
   /**
    * Query for all tags.
@@ -455,7 +458,7 @@ function main() {
   const hasBang = _.includes(queries, settings.bang);
   queries = queries.filter(x => !isBang(x));
   if (_.isEmpty(queries)) {
-    queries = [settings.starQuery];
+    queries = [settings.defaultQuery];
   }
 
   let options = { ...settings, ...cli.flags };
@@ -1808,7 +1811,7 @@ function processMetadataQuery(meta, query, options) {
     return Promise.resolve(meta);
   }
   if (!query) {
-    return performStarQuery(meta, options);
+    return performDefaultQuery(meta, options);
   }
   if (isBang(query)) {
     return Promise.resolve(meta);
@@ -1816,8 +1819,8 @@ function processMetadataQuery(meta, query, options) {
   if (isSlashQuery(query)) {
     return performSlashQuery(meta, query, options);
   }
-  if (isStarQuery(query)) {
-    return performStarQuery(meta, options);
+  if (isDefaultQuery(query)) {
+    return performDefaultQuery(meta, options);
   }
   if (isAllQuery(query)) {
     return performAllQuery(meta, options);
@@ -1951,7 +1954,7 @@ function performSlashQuery(meta, query, options) {
  * @param query a query
  * @param [options] an options object
  */
-function performStarQuery(meta, options) {
+function performDefaultQuery(meta, options) {
   let prom = Promise.resolve(null);
   settings.defaultQueries.forEach(query => {
     prom = prom.then(() => processMetadataQuery(meta, query, options));
@@ -2103,8 +2106,8 @@ function isAllQuery(query) {
  * @param query a query
  * @return `true` if the query is a star query, `false` otherwise
  */
-function isStarQuery(query) {
-  return query === settings.starQuery;
+function isDefaultQuery(query) {
+  return query === settings.defaultQuery;
 }
 
 /**
