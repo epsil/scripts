@@ -88,7 +88,7 @@ under _q/_/title/:
 
 The default input directory is . (meaning the current directory).
 The default output directory is _q (where the q stands for "query").
-Diffent values may be specified with the --input and --output options:
+Different values may be specified with --input and --output:
 
     q --input "download" --output "_links" ! _
 
