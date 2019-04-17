@@ -525,25 +525,26 @@ function main() {
       watchDirectory(queries, inputDir, outputDir, options);
     } else {
       // process metadata in directory and exit
-      processDirectory(queries, inputDir, outputDir, options).then(result => {
+      processDirectory(queries, inputDir, outputDir, options).then(() => {
         printYamlComment('\nDone.\n');
-        if (!(options && options.batch)) {
-          let dir = outputDir || settings.destinationDir;
-          if (hasQueries) {
-            dir = joinPaths(dir, settings.queryDir);
-            if (
-              queries[0] !== settings.defaultQuery &&
-              queries[0] !== settings.categoriesQuery &&
-              queries[0] !== settings.labelsQuery &&
-              queries[0] !== settings.tagsQuery &&
-              queries[0] !== settings.allQuery
-            ) {
-              dir = joinPaths(dir, toFilename(queries[0]));
-            }
-          }
-          open(dir);
-        }
       });
+      if (!(options && options.batch)) {
+        let dir = outputDir || settings.destinationDir;
+        if (hasQueries) {
+          dir = joinPaths(dir, settings.queryDir);
+          if (
+            queries[0] !== settings.defaultQuery &&
+            queries[0] !== settings.categoriesQuery &&
+            queries[0] !== settings.labelsQuery &&
+            queries[0] !== settings.tagsQuery &&
+            queries[0] !== settings.allQuery
+          ) {
+            dir = joinPaths(dir, toFilename(queries[0]));
+          }
+        }
+        shell.mkdir('-p', dir);
+        open(dir);
+      }
     }
   });
 }
