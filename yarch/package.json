@@ -5,6 +5,8 @@
   "main": "index.js",
   "bin": {
     "yarch": "index.js",
+    "qd": "index.js",
+    "qdl": "index.js",
     "ydl": "index.js",
     "yd": "index.js"
   },
