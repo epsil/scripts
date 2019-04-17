@@ -513,6 +513,7 @@ function main() {
     options = {
       ...options,
       batch: batch || hasDot,
+      delete: hasBang,
       makeLinks: makeLinks && link,
       noLinks: (hasDot && !hasBang) || noLinks
     };
@@ -731,10 +732,11 @@ function processQueriesInTempDir(
             shell.exec(runBeforeMerge);
             console.log();
           }
-          return mergeTmpDirAndOutputDir(tempDirectory, outputDir, {
-            ...options,
-            delete: true
-          }).then(() => result);
+          return mergeTmpDirAndOutputDir(
+            tempDirectory,
+            outputDir,
+            options
+          ).then(() => result);
         }
       )
   );
@@ -777,7 +779,6 @@ function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
     .then(() =>
       invokeRsync(temporaryDir, outputDir, {
         errorValue: true,
-        delete: true, // destructive!
         ...options
       })
     )
