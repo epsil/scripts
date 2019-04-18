@@ -7,6 +7,7 @@
     "yarch": "index.js",
     "qd": "index.js",
     "qdl": "index.js",
+    "qget": "index.js",
     "ydl": "index.js",
     "yd": "index.js"
   },
