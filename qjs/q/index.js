@@ -130,7 +130,7 @@ begin processing right away, without delay.
 Type q --version for the current version. For the license,
 type q --license. For a hint, type q --hint.
 
-See also: qtag, yarch.`;
+See also: qtag, qget.`;
 
 /**
  * License to display when running with `--license`.

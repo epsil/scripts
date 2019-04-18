@@ -14,26 +14,26 @@ const _ = require('lodash');
  */
 const help = `Usage:
 
-    yarch [URL]
-    yarch [URL1] [URL2] [URL3] ...
+    qget [URL]
+    qget [URL1] [URL2] [URL3] ...
 
-If invoked without arguments, yarch prompts the user for URLs.
+If invoked without arguments, qget prompts the user for URLs.
 
-yarch can also read URLs from standard input. If urls.txt is a
+qget can also read URLs from standard input. If urls.txt is a
 text file containing a newline-separated list of URLs to download,
-then the following instructs yarch to read URLs from urls.txt:
+then the following instructs qget to read URLs from urls.txt:
 
-    cat urls.txt | yarch
+    cat urls.txt | qget
 
 Each URL is saved to its own directory, named after the URL.
 Metadata is stored in the subdirectory .meta.
 
-yarch requires youtube-dl, AtomicParsley and wget.
+qget requires youtube-dl, AtomicParsley and wget.
 It will complain if these are missing.
 
-Type yarch --version to see the current version.
+Type qget --version to see the current version.
 
-See also: metalinks, metatag.`;
+See also: q, qtag.`;
 
 /**
  * Default values that determine the behavior of the program.

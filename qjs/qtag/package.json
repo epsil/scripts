@@ -1,14 +1,14 @@
 {
-  "name": "metatag",
+  "name": "qtag",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "bin": {
-    "metatag": "index.js",
     "qtag": "index.js",
     "qt": "index.js",
     "ytag": "index.js",
-    "yt": "index.js"
+    "yt": "index.js",
+    "metatag": "index.js"
   },
   "scripts": {
     "clean": "rm -rf doc lib cat q tmp tmp2 trash .meta",

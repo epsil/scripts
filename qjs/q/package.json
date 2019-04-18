@@ -1,12 +1,12 @@
 {
-  "name": "metalinks",
+  "name": "q",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "bin": {
-    "metalinks": "index.js",
     "q": "index.js",
-    "y": "index.js"
+    "y": "index.js",
+    "metalinks": "index.js"
   },
   "scripts": {
     "clean": "rm -rf doc lib cat q tmp tmp2 trash _q _meta _tmp _tmp2 .meta",

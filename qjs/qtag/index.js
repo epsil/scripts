@@ -14,26 +14,26 @@ const _ = require('lodash');
  */
 const help = `Usage:
 
-    metatag [FILES...]
+    qtag [FILES...]
 
 Example:
 
-    metatag FILE
+    qtag FILE
 
 This launches a text editor for editing the metadata of FILE.
 
-    metatag FILE1 FILE2 FILE3
+    qtag FILE1 FILE2 FILE3
 
 This launches text editors for editing the metadata of FILE1,
 FILE2 and FILE3.
 
-    metatag --tag foo FILE1 FILE2 FILE3
+    qtag --tag foo FILE1 FILE2 FILE3
 
 This adds the tag foo to FILE1, FILE2 and FILE3.
 
-Type metatag --version to see the current version.
+Type qtag --version to see the current version.
 
-See also: metalinks, yarch.`;
+See also: q, qget.`;
 
 /**
  * Default values that determine the behavior of the program.
