@@ -5,6 +5,8 @@
   "main": "index.js",
   "bin": {
     "qget": "index.js",
+    "qet": "index.js",
+    "qg": "index.js",
     "qd": "index.js",
     "qdl": "index.js",
     "ydl": "index.js",

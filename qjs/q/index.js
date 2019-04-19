@@ -784,9 +784,7 @@ function mergeTmpDirAndOutputDirWithRsync(tempDir, outputDir, options) {
       })
     )
     .then(() => {
-      if (options && options.delete) {
-        deleteDirectory(tempDir); // destructive!
-      }
+      deleteDirectory(tempDir); // destructive!
     });
 }
 
@@ -829,9 +827,7 @@ function validateRsyncParams(tempDir, outputDir, options) {
     if (!(options && options.noLinks)) {
       printYamlComment('Working directory is empty, aborting merge.');
     }
-    if (options && options.delete) {
-      deleteDirectory(tempDir);
-    }
+    deleteDirectory(tempDir);
     return false;
   }
   return true;
@@ -880,9 +876,7 @@ function mergeTmpDirAndOutputDirWithMv(tempDir, outputDir, options) {
       }
     })
     .then(() => {
-      if (options && options.delete) {
-        deleteDirectory(trashDir);
-      }
+      deleteDirectory(trashDir);
     });
 }
 
