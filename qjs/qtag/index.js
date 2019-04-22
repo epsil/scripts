@@ -50,7 +50,7 @@ const settings = {
   audioTemplate:
     `---
 tags:
-  - ` + // whitespace
+  - ...` + // whitespace
     `
 categories:
   - audio`,
@@ -61,7 +61,7 @@ categories:
   imgTemplate:
     `---
 tags:
-  - ` + // whitespace
+  - ...` + // whitespace
     `
 categories:
   - img`,
@@ -71,7 +71,7 @@ categories:
    */
   defTemplate: `---
 tags:
-  - `,
+  - ...`,
 
   /**
    * File extensions for audio files.
