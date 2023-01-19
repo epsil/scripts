@@ -13,7 +13,7 @@ CLOUD="vegardye@ananke.feralhosting.com:www/vegardye.ananke.feralhosting.com/pub
 # Preparations
 function prepare {
     echo "Preparing backup ..."
-    rsync $ARCHIVE $HOME/wiki/lib/books/index.md $HOME/Calibre\ Library/Ukjent/Leseliste\ \(1700\)/Leseliste\ -\ Ukjent.txt
+    # rsync $ARCHIVE $HOME/wiki/lib/books/index.md $HOME/Calibre\ Library/Ukjent/Leseliste\ \(1700\)/Leseliste\ -\ Ukjent.txt
 }
 
 # Disk backup
@@ -42,10 +42,11 @@ function disk {
 function cloud {
     echo "Backing up to cloud ..."
     # rsync $DELETE $HOME/GoogleDrive/ $CLOUD
-    rsync $DELETE $HOME/Calibre\ Library/ "$CLOUD/Calibre\ Library"
+    # rsync $DELETE $HOME/Calibre\ Library/ "$CLOUD/Calibre\ Library"
     # rsync $DELETE $HOME/GoogleDrive/Documents/ $CLOUD/Documents
-    rsync $DELETE $HOME/wiki/ $CLOUD/wiki
+    # rsync $DELETE $HOME/wiki/ $CLOUD/wiki
     # rsync $ARCHIVE $HOME/Downloads/stuff/stuff/ $CLOUD/stuff/stuff
+    rsync $DELETE --links /media/vegard/\(download\)/b/\(book\) "$CLOUD"
     echo "Backup completed"
 }
 
